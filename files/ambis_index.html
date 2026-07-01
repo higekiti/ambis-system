@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AMBIs システム一覧</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0a1628; --navy-mid:#1a2a48; --navy-light:#2a3a60;
+  --gold:#c9a96e; --gold-light:#e8cfa0;
+  --bg:#f4f6fa; --card:#ffffff;
+  --text-primary:#0a1628; --text-secondary:#6a7a9a; --text-muted:#aab0c0;
+  --border:#e8eaf0;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);min-height:100vh;padding-bottom:48px;}
+
+.header{background:var(--navy);padding:24px 32px 20px;}
+.header-brand{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:5px;color:var(--gold);}
+.header-sub{font-size:9px;letter-spacing:2px;color:#4a5a7a;margin-top:3px;}
+.header-desc{font-size:12px;color:#4a5a7a;margin-top:10px;line-height:1.7;}
+
+.accent-line{height:3px;background:linear-gradient(90deg,#c9a96e 40%,#1a2a48 100%);}
+
+.content{max-width:800px;margin:0 auto;padding:32px 20px;}
+
+.section-title{
+  font-size:10px;letter-spacing:2px;color:var(--text-muted);
+  margin-bottom:16px;padding-bottom:8px;
+  border-bottom:1px solid var(--border);
+}
+
+.app-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;margin-bottom:32px;}
+
+.app-card{
+  background:var(--card);border-radius:14px;
+  border:1px solid var(--border);overflow:hidden;
+  box-shadow:0 2px 12px rgba(10,22,40,0.06);
+  transition:all .18s;
+}
+.app-card:hover{box-shadow:0 6px 24px rgba(10,22,40,0.12);transform:translateY(-2px);}
+
+.app-card-header{
+  background:var(--navy);padding:16px 18px;
+  display:flex;align-items:center;gap:12px;
+}
+.app-icon{display:flex;align-items:center;justify-content:center;color:var(--navy);}
+.app-card-title{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:var(--gold);}
+.app-card-target{font-size:9px;letter-spacing:1.5px;color:#4a5a7a;margin-top:2px;}
+
+.app-card-body{padding:16px 18px;}
+.app-desc{font-size:12px;color:var(--text-secondary);line-height:1.8;margin-bottom:14px;}
+
+.feature-list{display:flex;flex-direction:column;gap:4px;margin-bottom:16px;}
+.feature-item{
+  display:flex;align-items:center;gap:8px;
+  font-size:11px;color:var(--text-secondary);
+}
+.feature-dot{width:5px;height:5px;border-radius:50%;background:var(--gold);flex-shrink:0;}
+
+.app-link{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  background:var(--navy);color:var(--gold);
+  border-radius:8px;padding:10px 16px;
+  text-decoration:none;font-size:12px;font-weight:500;
+  transition:all .15s;letter-spacing:.5px;
+  font-family:'Noto Sans JP',sans-serif;
+}
+.app-link:hover{background:var(--navy-mid);}
+.app-link.secondary{background:transparent;color:var(--text-secondary);border:1px solid var(--border);}
+.app-link.secondary:hover{background:var(--bg);}
+.link-row{display:flex;gap:8px;}
+
+.badge{
+  display:inline-block;font-size:9px;letter-spacing:1px;
+  padding:2px 8px;border-radius:2px;margin-left:8px;
+  vertical-align:middle;
+}
+.badge-admin{background:rgba(201,169,110,0.15);color:var(--gold);border:1px solid rgba(201,169,110,0.3);}
+.badge-member{background:#eef2ff;color:#3a5fc8;border:1px solid #c5d0f5;}
+.badge-tablet{background:#f0fff0;color:#27ae60;border:1px solid #c3edc3;}
+.badge-demo{background:#fff8e6;color:#e67e22;border:1px solid #f5d9a3;}
+
+/* FLOW */
+.flow-card{background:var(--card);border-radius:14px;border:1px solid var(--border);padding:20px 22px;margin-bottom:32px;box-shadow:0 2px 12px rgba(10,22,40,0.06);}
+.flow-title{font-size:10px;letter-spacing:2px;color:var(--text-muted);margin-bottom:16px;}
+.flow-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.flow-item{
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:8px;padding:10px 14px;
+  font-size:11px;color:var(--text-primary);
+  text-align:center;min-width:120px;
+}
+.flow-item .fi-icon{display:flex;justify-content:center;margin-bottom:4px;color:var(--navy);}
+.flow-item .fi-name{font-weight:500;}
+.flow-item .fi-sub{font-size:9px;color:var(--text-muted);margin-top:2px;}
+.flow-arrow{font-size:18px;color:var(--text-muted);}
+
+/* PHASE */
+.phase-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.phase-card{background:var(--card);border-radius:12px;border:1px solid var(--border);padding:16px 18px;box-shadow:0 2px 8px rgba(10,22,40,0.05);}
+.phase-label{font-size:9px;letter-spacing:2px;color:var(--text-muted);margin-bottom:8px;}
+.phase-title{font-size:13px;font-weight:500;color:var(--text-primary);margin-bottom:8px;}
+.phase-items{display:flex;flex-direction:column;gap:5px;}
+.phase-item{font-size:11px;color:var(--text-secondary);display:flex;gap:6px;}
+.phase-check{color:var(--gold);}
+.phase-pending{color:var(--text-muted);}
+
+/* RESPONSIVE */
+@media (max-width:700px){
+  .header{padding:20px 20px 16px;}
+  .header-brand{font-size:26px;}
+  .content{padding:24px 16px;}
+  .app-grid{grid-template-columns:1fr;}
+  .phase-row{grid-template-columns:1fr;}
+  .flow-row{flex-direction:column;align-items:stretch;}
+  .flow-arrow{transform:rotate(90deg);text-align:center;}
+  .flow-item{min-width:auto;}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-brand">AMBIs</div>
+  <div class="header-sub">JIU-JITSU ACADEMY · KUMAMOTO — SYSTEM INDEX</div>
+  <div class="header-desc">顧客管理システム一覧。各アプリのリンクから直接アクセスできます。</div>
+</div>
+<div class="accent-line"></div>
+
+<div class="content">
+
+  <!-- APPS -->
+  <div class="section-title">APPLICATIONS</div>
+  <div class="app-grid">
+
+    <!-- 管理アプリ -->
+    <div class="app-card">
+      <div class="app-card-header">
+        <div class="app-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+        <div>
+          <div class="app-card-title">管理アプリ <span class="badge badge-admin">ADMIN</span></div>
+          <div class="app-card-target">対象：道場長（Shota）専用</div>
+        </div>
+      </div>
+      <div class="app-card-body">
+        <div class="app-desc">会員の登録・管理からシステム全体の運営を行う管理者専用アプリ。</div>
+        <div class="feature-list">
+          <div class="feature-item"><div class="feature-dot"></div>会員登録・編集・退会処理・写真管理</div>
+          <div class="feature-item"><div class="feature-dot"></div>帯・ストライプ・昇格履歴管理</div>
+          <div class="feature-item"><div class="feature-dot"></div>出席記録・月別グラフ・CSV出力</div>
+          <div class="feature-item"><div class="feature-dot"></div>注目大会登録（会員アプリに反映）</div>
+          <div class="feature-item"><div class="feature-dot"></div>支払い管理・月次確認</div>
+          <div class="feature-item"><div class="feature-dot"></div>会員個別QRコード発行</div>
+          <div class="feature-item"><div class="feature-dot"></div>レンタルスペース予約・支払い管理</div>
+          <div class="feature-item"><div class="feature-dot"></div>体験・ビジター（出稽古）管理</div>
+        </div>
+        <a class="app-link" href="ambis_admin.html" target="_blank">管理アプリを開く →</a>
+      </div>
+    </div>
+
+    <!-- 会員アプリ -->
+    <div class="app-card">
+      <div class="app-card-header">
+        <div class="app-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="14" x2="10" y2="14"/></svg></div>
+        <div>
+          <div class="app-card-title">会員アプリ <span class="badge badge-member">MEMBER</span></div>
+          <div class="app-card-target">対象：会員のスマホ</div>
+        </div>
+      </div>
+      <div class="app-card-body">
+        <div class="app-desc">会員が自分のスマホで確認できるアプリ。個別URLで各会員のデータを表示。</div>
+        <div class="feature-list">
+          <div class="feature-item"><div class="feature-dot"></div>会員証（帯・ストライプ・出席数・在籍期間）</div>
+          <div class="feature-item"><div class="feature-dot"></div>QRコード表示（チェックイン用）</div>
+          <div class="feature-item"><div class="feature-dot"></div>出席カレンダー（直近3ヶ月）</div>
+          <div class="feature-item"><div class="feature-dot"></div>昇格履歴（Belt History）</div>
+          <div class="feature-item"><div class="feature-dot"></div>メンバー一覧・試合情報・柔術ルール</div>
+        </div>
+        <a class="app-link" href="ambis_member_card.html" target="_blank">会員アプリを開く →</a>
+        <a class="app-link secondary" href="ambis_member_card_demo.html" target="_blank">体験用デモ版を開く →</a>
+      </div>
+    </div>
+
+    <!-- チェックインアプリ（本番） -->
+    <div class="app-card">
+      <div class="app-card-header">
+        <div class="app-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></div>
+        <div>
+          <div class="app-card-title">チェックイン <span class="badge badge-tablet">TABLET</span></div>
+          <div class="app-card-target">対象：道場設置タブレット専用</div>
+        </div>
+      </div>
+      <div class="app-card-body">
+        <div class="app-desc">道場入口に設置するタブレット用。会員のQRをカメラで読み取り出席登録。</div>
+        <div class="feature-list">
+          <div class="feature-item"><div class="feature-dot"></div>カメラでQRコードを自動読み取り</div>
+          <div class="feature-item"><div class="feature-dot"></div>会員情報の自動表示・クラス選択</div>
+          <div class="feature-item"><div class="feature-dot"></div>二重チェックイン防止</div>
+          <div class="feature-item"><div class="feature-dot"></div>本日ログ・クラス別集計をリアルタイム表示</div>
+          <div class="feature-item"><div class="feature-dot"></div>時計・日付表示（常時表示に対応）</div>
+        </div>
+        <div class="link-row">
+          <a class="app-link" href="ambis_checkin.html" target="_blank" style="flex:1;">本番版を開く →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- チェックインデモ -->
+    <div class="app-card">
+      <div class="app-card-header">
+        <div class="app-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+        <div>
+          <div class="app-card-title">チェックイン デモ <span class="badge badge-demo">DEMO</span></div>
+          <div class="app-card-target">対象：動作確認・プレゼン用</div>
+        </div>
+      </div>
+      <div class="app-card-body">
+        <div class="app-desc">カメラなしで動作確認できるデモ版。会員カードをタップしてスキャンをシミュレート。</div>
+        <div class="feature-list">
+          <div class="feature-item"><div class="feature-dot"></div>タップでQRスキャンをシミュレート</div>
+          <div class="feature-item"><div class="feature-dot"></div>本番と同じ動作・UIで確認可能</div>
+          <div class="feature-item"><div class="feature-dot"></div>管理アプリのデータと連動</div>
+          <div class="feature-item"><div class="feature-dot"></div>サンプルデータで即試せる</div>
+        </div>
+        <a class="app-link secondary" href="ambis_checkin_demo.html" target="_blank">デモ版を開く →</a>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- DATA FLOW -->
+  <div class="section-title">データの流れ（現状）</div>
+  <div class="flow-card">
+    <div class="flow-title">CURRENT DATA FLOW — ブラウザ内のみ共有</div>
+    <div class="flow-row">
+      <div class="flow-item"><div class="fi-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div><div class="fi-name">管理アプリ</div><div class="fi-sub">登録・編集</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-item"><div class="fi-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg></div><div class="fi-name">localStorage</div><div class="fi-sub">ブラウザ内保存</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-item"><div class="fi-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="14" x2="10" y2="14"/></svg></div><div class="fi-name">会員アプリ</div><div class="fi-sub">表示・参照</div></div>
+    </div>
+    <div style="margin-top:10px;" class="flow-row">
+      <div class="flow-item"><div class="fi-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></div><div class="fi-name">チェックイン</div><div class="fi-sub">出席登録</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-item"><div class="fi-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg></div><div class="fi-name">localStorage</div><div class="fi-sub">ブラウザ内保存</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-item"><div class="fi-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div><div class="fi-name">管理アプリ</div><div class="fi-sub">出席記録に反映</div></div>
+    </div>
+  </div>
+
+  <!-- PHASES -->
+  <div class="section-title">開発フェーズ</div>
+  <div class="phase-row">
+    <div class="phase-card">
+      <div class="phase-label">PHASE 1 — 現在</div>
+      <div class="phase-title">アプリ機能の完成</div>
+      <div class="phase-items">
+        <div class="phase-item"><span class="phase-check">✓</span>管理アプリ（基本機能）</div>
+        <div class="phase-item"><span class="phase-check">✓</span>会員アプリ（会員証・ルール・試合）</div>
+        <div class="phase-item"><span class="phase-check">✓</span>チェックインアプリ</div>
+        <div class="phase-item"><span class="phase-pending">○</span>追加機能の実装・調整</div>
+      </div>
+    </div>
+    <div class="phase-card">
+      <div class="phase-label">PHASE 2 — 完成後</div>
+      <div class="phase-title">クラウド連携</div>
+      <div class="phase-items">
+        <div class="phase-item"><span class="phase-pending">○</span>Firebase / Supabase 導入</div>
+        <div class="phase-item"><span class="phase-pending">○</span>全端末リアルタイム同期</div>
+        <div class="phase-item"><span class="phase-pending">○</span>HTTPS環境へデプロイ</div>
+        <div class="phase-item"><span class="phase-pending">○</span>本番稼働</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,1599 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>AMBIs Member</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBA3sfUh7i2gldOXaHILJYlS4cu3YmnIyg",
+  authDomain: "ambis-jiu-jitsu.firebaseapp.com",
+  projectId: "ambis-jiu-jitsu",
+  storageBucket: "ambis-jiu-jitsu.firebasestorage.app",
+  messagingSenderId: "950081158370",
+  appId: "1:950081158370:web:8e33879ed3b429a99272bb"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+const auth = getAuth(fbApp);
+const googleProvider = new GoogleAuthProvider();
+
+async function loadFromFirestore(collName){
+  try {
+    const snap = await getDocs(collection(db, collName));
+    return snap.docs.map(d => d.data());
+  } catch(e) { return null; }
+}
+
+// ── 状態管理 ──
+let appReady = false; // アプリ表示済みフラグ
+
+// ── 画面切替 ──
+function showMemberApp(){
+  document.getElementById('member-login-screen').style.display = 'none';
+  document.getElementById('member-app-screen').style.display = 'block';
+  appReady = true;
+}
+function showMemberLogin(errorMsg){
+  document.getElementById('member-login-screen').style.display = 'flex';
+  document.getElementById('member-app-screen').style.display = 'none';
+  appReady = false;
+  if(errorMsg){
+    document.getElementById('member-login-error').style.display = 'block';
+    document.getElementById('member-login-error').textContent = errorMsg;
+  }
+}
+
+// ── データ読み込みと会員照合 ──
+async function loadAndInit(user){
+  const email = user.email.toLowerCase();
+
+  const [fbMembers, fbAttendance, fbTournaments, fbBeltHistory,
+         fbNews, fbSchedule, fbScheduleEx, fbMatchRecords] = await Promise.all([
+    loadFromFirestore('members'),
+    loadFromFirestore('attendance'),
+    loadFromFirestore('tournaments'),
+    loadFromFirestore('belt_history'),
+    loadFromFirestore('news'),
+    loadFromFirestore('schedule'),
+    loadFromFirestore('schedule_exceptions'),
+    loadFromFirestore('match_records'),
+  ]);
+
+  if(fbMembers && fbMembers.length)          { members = fbMembers;     localStorage.setItem('ambis_members',             JSON.stringify(members)); }
+  if(fbAttendance && fbAttendance.length)    { attendance = fbAttendance; localStorage.setItem('ambis_attendance',        JSON.stringify(attendance)); }
+  if(fbTournaments && fbTournaments.length)  { localStorage.setItem('ambis_tournaments',        JSON.stringify(fbTournaments)); }
+  if(fbBeltHistory && fbBeltHistory.length)  { localStorage.setItem('ambis_belt_history',       JSON.stringify(fbBeltHistory)); }
+  if(fbNews && fbNews.length)                { localStorage.setItem('ambis_news',               JSON.stringify(fbNews)); }
+  if(fbSchedule && fbSchedule.length)        { localStorage.setItem('ambis_schedule',           JSON.stringify(fbSchedule)); }
+  if(fbScheduleEx && fbScheduleEx.length)    { localStorage.setItem('ambis_schedule_exceptions',JSON.stringify(fbScheduleEx)); }
+  if(fbMatchRecords && fbMatchRecords.length){ localStorage.setItem('ambis_match_records',      JSON.stringify(fbMatchRecords)); }
+
+  // メール照合
+  const matched = members.find(function(m){
+    return (m.email||'').toLowerCase()===email || (m.contact||'').toLowerCase()===email;
+  });
+
+  if(matched){
+    window.loggedInMemberId = matched.id;
+    showMemberApp();
+    if(typeof initCard === 'function') initCard();
+    if(typeof renderNewsMember === 'function') renderNewsMember();
+    if(typeof renderSchedule === 'function') renderSchedule();
+  } else {
+    await signOut(auth);
+    showMemberLogin('このGoogleアカウントは登録されていません。道場スタッフにお問い合わせください。');
+  }
+}
+
+// ── Googleログインボタン ──
+window.memberGoogleLogin = async () => {
+  document.getElementById('member-login-error').style.display = 'none';
+  try {
+    await signInWithPopup(auth, googleProvider);
+  } catch(e) {
+    showMemberLogin('ログインに失敗しました。もう一度お試しください。');
+  }
+};
+
+window.memberLogout = async () => {
+  await signOut(auth);
+};
+
+// ── 認証状態の監視 ──
+onAuthStateChanged(auth, (user) => {
+  if(user){
+    // すでにアプリ表示済みなら何もしない（トークン更新時の誤動作を防ぐ）
+    if(appReady) return;
+    loadAndInit(user);
+  } else {
+    // 明示的なログアウト以外は画面を切り替えない
+    if(appReady){
+      // appReadyがtrueなのにnullが来た = 本当のサインアウト
+      appReady = false;
+      showMemberLogin();
+    }
+  }
+});
+</script>
+<style>
+:root{
+  --navy:#0a1628; --navy-mid:#1a2a48; --navy-light:#2a3a60;
+  --gold:#c9a96e; --gold-light:#e8cfa0;
+  --white:#fff; --bg:#f0f2f7;
+  --text-primary:#0a1628; --text-secondary:#6a7a9a; --text-muted:#aab0c0;
+  --border:#e8eaf0;
+  --shadow:0 2px 12px rgba(10,22,40,0.08);
+  --shadow-lg:0 8px 32px rgba(10,22,40,0.14);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding-bottom:80px;}
+
+/* ── TOPBAR ── */
+.topbar{width:100%;background:var(--navy);display:flex;align-items:center;justify-content:space-between;padding:14px 18px;position:sticky;top:0;z-index:100;}
+.topbar-brand-wrap{display:flex;flex-direction:column;}
+.topbar-brand{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:4px;color:var(--gold);}
+.topbar-sub{font-size:7px;letter-spacing:2px;color:#4a5a7a;margin-top:1px;}
+.menu-btn{background:none;border:none;cursor:pointer;display:flex;flex-direction:column;gap:5px;padding:4px;}
+.menu-btn span{display:block;width:22px;height:2px;background:var(--gold);border-radius:2px;transition:all .25s;}
+.menu-btn.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+.menu-btn.open span:nth-child(2){opacity:0;}
+.menu-btn.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+
+/* ── DRAWER ── */
+.drawer-overlay{display:none;position:fixed;inset:0;background:rgba(10,22,40,0.5);z-index:200;}
+.drawer-overlay.open{display:block;}
+.drawer{position:fixed;top:0;right:-280px;width:280px;height:100vh;background:var(--navy);z-index:201;transition:right .28s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow-y:auto;}
+.drawer.open{right:0;}
+.drawer-head{padding:24px 22px 18px;border-bottom:1px solid var(--navy-light);}
+.drawer-brand{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:4px;color:var(--gold);}
+.drawer-sub{font-size:8px;letter-spacing:2px;color:#4a5a7a;margin-top:2px;}
+.drawer-member-name{font-size:13px;color:#8a9ab8;margin-top:10px;}
+.nav-section-label{font-size:8px;letter-spacing:2px;color:#3a4a6a;padding:14px 22px 6px;}
+.nav-item{display:flex;align-items:center;gap:12px;padding:12px 22px;font-size:13px;color:#8a9ab8;cursor:pointer;transition:all .15s;border-left:3px solid transparent;}
+.nav-item:hover{color:var(--white);background:var(--navy-mid);}
+.nav-item.active{color:var(--gold);border-left-color:var(--gold);background:var(--navy-mid);}
+.nav-icon{width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+.nav-icon svg{width:17px;height:17px;}
+
+/* ── CONTENT ── */
+.content{width:100%;max-width:440px;padding:20px 16px 0;}
+.page{display:none;} .page.active{display:block;}
+
+/* ── MEMBER CARD ── */
+.member-card{background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 4px 24px rgba(10,22,40,0.12);border:1px solid #e8e8e8;margin-bottom:16px;}
+.accent-line{height:3px;background:linear-gradient(90deg,#c9a96e 60%,#0a1628 100%);}
+.card-header{background:var(--navy);padding:18px 22px 16px;display:flex;justify-content:space-between;align-items:center;}
+.brand-name{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:4px;color:var(--gold);}
+.brand-sub-sm{font-size:8px;letter-spacing:1.5px;color:#4a5a7a;margin-top:3px;}
+.member-badge{font-size:9px;letter-spacing:2px;color:var(--gold);border:1px solid var(--gold);padding:3px 8px;border-radius:2px;}
+.card-body{padding:20px 22px 14px;display:flex;gap:16px;align-items:center;}
+.avatar{width:72px;height:72px;border-radius:50%;background:#f0f3f8;border:2px solid #e0e6f0;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--navy);flex-shrink:0;overflow:hidden;}
+.avatar img{width:100%;height:100%;object-fit:cover;}
+.member-info{flex:1;min-width:0;}
+.m-name{font-size:17px;font-weight:500;color:var(--text-primary);margin-bottom:2px;}
+.m-kana{font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:2px;color:var(--text-muted);margin-bottom:10px;}
+.belt-row{display:flex;align-items:center;gap:8px;}
+.belt-bar{display:inline-block;width:44px;height:9px;border-radius:2px;}
+.b-white{background:#ccc;}.b-blue{background:#3a5fc8;}.b-purple{background:#7c3aed;}.b-brown{background:#92400e;}.b-black{background:#111;}
+.belt-lbl{font-size:11px;color:var(--text-secondary);}
+.stripes-row{display:flex;gap:3px;margin-top:6px;}
+.sd{width:8px;height:8px;background:var(--gold);border-radius:1px;}
+.sd.e{background:#f0f0f0;border:1px solid #e0e0e0;}
+.card-divider{height:1px;background:#f4f4f4;margin:0 22px;}
+.card-stats{padding:14px 22px;display:grid;grid-template-columns:1fr 1fr 1fr;}
+.si{text-align:center;padding:4px 0;}
+.si:not(:last-child){border-right:1px solid #f0f0f0;}
+.sv{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--text-primary);line-height:1;}
+.sl{font-size:9px;color:var(--text-muted);margin-top:3px;}
+.card-footer{padding:14px 22px 18px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid #f4f4f4;background:#fafafa;gap:12px;}
+.fi{display:flex;flex-direction:column;gap:2px;}
+.fl{font-size:8px;color:var(--text-muted);letter-spacing:1px;}
+.fid{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:2px;color:var(--gold);}
+.fdv{font-size:11px;color:var(--text-secondary);}
+.qr-box{width:62px;height:62px;background:#fff;border:1px solid #e8e8e8;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:4px;flex-shrink:0;overflow:hidden;cursor:pointer;}
+.qr-box canvas,.qr-box img{width:100%!important;height:100%!important;}
+
+/* ── SECTION CARD ── */
+.sec-card{background:#fff;border-radius:14px;border:1px solid #e8e8e8;box-shadow:0 2px 10px rgba(10,22,40,0.06);overflow:hidden;margin-bottom:16px;}
+.sec-head{background:var(--navy);padding:13px 20px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2px;color:var(--gold);}
+
+/* ── BELT HISTORY ── */
+.bh-row{display:flex;align-items:center;gap:8px;padding:11px 20px;border-bottom:1px solid #f4f4f4;font-size:12px;flex-wrap:wrap;}
+.bh-row:last-child{border-bottom:none;}
+.bh-date{color:var(--text-muted);font-size:10px;min-width:82px;}
+.bp{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:2px 7px;border-radius:3px;}
+.bpd{width:7px;height:7px;border-radius:1px;}
+.bw{background:#f5f5f5;color:#666;}.bw .bpd{background:#ccc;border:1px solid #bbb;}
+.bb{background:#eef2ff;color:#3a5fc8;}.bb .bpd{background:#3a5fc8;}
+.bpu{background:#f3eeff;color:#7c3aed;}.bpu .bpd{background:#7c3aed;}
+.bbr{background:#fdf0e6;color:#92400e;}.bbr .bpd{background:#92400e;}
+.bbl{background:#f0f0f0;color:#111;}.bbl .bpd{background:#111;}
+.bh-arrow{color:var(--text-muted);}
+.bh-note{font-size:10px;color:var(--text-muted);}
+
+/* ── ATTENDANCE CALENDAR ── */
+.month-tabs{display:flex;gap:6px;padding:12px 16px;border-bottom:1px solid #f4f4f4;overflow-x:auto;}
+.mtab{font-size:11px;padding:4px 12px;border-radius:20px;border:1px solid var(--border);color:var(--text-muted);cursor:pointer;white-space:nowrap;background:#fff;transition:all .15s;}
+.mtab.active{background:var(--navy);color:var(--gold);border-color:var(--navy);}
+.cal-wrap{display:none;padding:12px 16px 0;}
+.cal-wrap.show{display:block;}
+.day-labels{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px;}
+.day-lbl{font-size:9px;color:var(--text-muted);text-align:center;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.cday{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text-muted);border-radius:50%;position:relative;}
+.cday.has-class{border:1.5px solid #c8d4f0;color:var(--text-secondary);}
+.cday.att{background:var(--navy);color:#fff;border:none;}
+.cday.att.has-class{background:var(--navy);color:#fff;border:none;}
+.cday.tod{border:1.5px solid var(--gold);}
+.cday.sun{color:#e74c3c;}
+.cday.sat{color:#3a5fc8;}
+.cday.att.sun,.cday.att.sat{color:#fff;}
+.cal-summary{display:flex;padding:12px 16px 14px;border-top:1px solid #f4f4f4;margin-top:10px;}
+.csitem{flex:1;text-align:center;}
+.csitem:not(:last-child){border-right:1px solid #f4f4f4;}
+.csv2{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--text-primary);}
+.csl{font-size:9px;color:var(--text-muted);margin-top:2px;}
+
+/* ── MEMBER LIST ── */
+.ml-row{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid #f4f4f4;}
+.ml-row:last-child{border-bottom:none;}
+.ml-avatar{width:40px;height:40px;border-radius:50%;background:#f0f3f8;border:1px solid #e0e6f0;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:13px;color:var(--navy);flex-shrink:0;overflow:hidden;}
+.ml-avatar img{width:100%;height:100%;object-fit:cover;}
+.ml-info{flex:1;min-width:0;}
+.ml-name{font-size:13px;font-weight:500;color:var(--text-primary);}
+.ml-sub{font-size:10px;color:var(--text-muted);margin-top:2px;}
+.ml-belt{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:2px 7px;border-radius:3px;flex-shrink:0;}
+
+/* ── TOURNAMENT ── */
+.league-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:0;}
+.ltab{flex:1;padding:11px 10px;text-align:center;font-size:12px;color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
+.ltab.active{color:var(--navy);border-bottom-color:var(--gold);font-weight:500;}
+.league-content{display:none;padding:16px;}
+.league-content.show{display:block;}
+.league-link-btn{display:flex;align-items:center;gap:10px;background:#f8f9fc;border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:12px;text-decoration:none;color:var(--text-primary);transition:all .15s;}
+.league-link-btn:hover{background:#f0f3fa;border-color:var(--navy-light);}
+.league-link-icon{font-size:18px;}
+.league-link-text{flex:1;}
+.league-link-title{font-size:13px;font-weight:500;}
+.league-link-sub{font-size:10px;color:var(--text-muted);margin-top:2px;}
+.league-link-arrow{color:var(--text-muted);font-size:14px;}
+.tournament-item{border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;background:#fff;}
+.t-date{font-family:'Bebas Neue',sans-serif;font-size:13px;color:var(--gold);letter-spacing:1px;margin-bottom:4px;}
+.t-name{font-size:13px;font-weight:500;color:var(--text-primary);margin-bottom:4px;}
+.t-meta{display:flex;gap:8px;flex-wrap:wrap;}
+.t-tag{font-size:10px;padding:2px 8px;border-radius:3px;background:#f0f3fa;color:var(--text-secondary);}
+.t-add-btn{display:flex;align-items:center;gap:6px;background:transparent;border:1px dashed var(--border);border-radius:8px;padding:10px 14px;width:100%;cursor:pointer;color:var(--text-muted);font-size:12px;font-family:'Noto Sans JP',sans-serif;margin-top:6px;transition:all .15s;}
+.t-add-btn:hover{border-color:var(--navy-light);color:var(--navy);}
+
+/* ── RULES ── */
+.rules-league-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);}
+.rltab{flex:1;padding:11px 10px;text-align:center;font-size:12px;color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
+.rltab.active{color:var(--navy);border-bottom-color:var(--gold);font-weight:500;}
+.rules-content{display:none;padding:16px;}
+.rules-content.show{display:block;}
+.rule-section{margin-bottom:16px;}
+.rule-section-title{font-size:11px;letter-spacing:1.5px;color:var(--text-muted);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #f4f4f4;}
+.rule-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #f8f8f8;}
+.rule-item:last-child{border-bottom:none;}
+.rule-num{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--gold);min-width:24px;line-height:1.2;}
+.rule-body{}
+.rule-title{font-size:13px;font-weight:500;color:var(--text-primary);margin-bottom:3px;}
+.rule-desc{font-size:11px;color:var(--text-secondary);line-height:1.7;}
+.rule-link-btn{display:flex;align-items:center;gap:10px;background:var(--navy);border-radius:8px;padding:12px 14px;text-decoration:none;color:var(--gold);margin-top:4px;transition:all .15s;}
+.future-note{background:#f8f9fc;border:1px dashed var(--border);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--text-muted);line-height:1.7;}
+.rule-link-btn:hover{background:var(--navy-mid);}
+.rule-link-btn .rlt{font-size:12px;}
+.points-table{width:100%;border-collapse:collapse;font-size:11px;margin-top:4px;}
+.points-table th{background:#f8f9fc;padding:6px 10px;text-align:left;color:var(--text-muted);font-weight:500;border-bottom:1px solid var(--border);}
+.points-table td{padding:7px 10px;border-bottom:1px solid #f8f8f8;color:var(--text-primary);}
+.points-table tr:last-child td{border-bottom:none;}
+.pts-gold{color:var(--gold);font-weight:500;}
+.belt-grade-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f8f8f8;}
+.belt-grade-row:last-child{border-bottom:none;}
+.belt-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 9px;border-radius:3px;min-width:60px;}
+
+/* ── QR MODAL ── */
+.qr-overlay{display:none;position:fixed;inset:0;background:rgba(10,22,40,0.6);z-index:300;align-items:center;justify-content:center;padding:20px;}
+.qr-overlay.open{display:flex;}
+.qr-modal{background:#fff;border-radius:16px;padding:28px 24px;width:100%;max-width:300px;text-align:center;box-shadow:0 8px 32px rgba(10,22,40,0.2);}
+.qm-name{font-size:16px;font-weight:500;margin-bottom:4px;}
+.qm-id{font-size:11px;color:var(--text-muted);margin-bottom:16px;}
+.qm-canvas{display:flex;justify-content:center;margin-bottom:12px;}
+.qm-note{font-size:10px;color:var(--text-muted);line-height:1.7;margin-bottom:16px;}
+.qm-close{background:var(--navy);color:var(--gold);border:none;border-radius:8px;padding:10px 24px;font-size:13px;font-family:'Noto Sans JP',sans-serif;cursor:pointer;width:100%;}
+
+/* ── TOURNAMENT ADD MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(10,22,40,0.5);z-index:300;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.open{display:flex;}
+.modal{background:#fff;border-radius:14px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg);}
+.modal-head{padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.modal-title{font-size:14px;font-weight:500;}
+.modal-close-btn{background:none;border:none;font-size:20px;color:var(--text-muted);cursor:pointer;}
+.modal-body{padding:18px 20px;}
+.modal-foot{padding:12px 20px 18px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;}
+.form-row{margin-bottom:14px;}
+label{display:block;font-size:11px;color:var(--text-secondary);margin-bottom:4px;}
+input[type=text],input[type=date],select{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:'Noto Sans JP',sans-serif;color:var(--text-primary);outline:none;}
+input:focus,select:focus{border-color:var(--navy-light);}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 16px;border-radius:6px;font-size:12px;font-family:'Noto Sans JP',sans-serif;font-weight:500;cursor:pointer;border:none;transition:all .15s;}
+.btn-primary{background:var(--navy);color:var(--gold);}
+.btn-ghost{background:transparent;color:var(--text-secondary);border:1px solid var(--border);}
+.btn-danger-sm{background:#fdf0ef;color:#e74c3c;border:1px solid #f5c6c3;font-size:10px;padding:3px 8px;border-radius:4px;}
+
+.loading{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px;color:var(--text-muted);gap:12px;}
+.spinner{width:32px;height:32px;border:3px solid #e8eaf0;border-top-color:var(--navy);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.not-found{text-align:center;padding:60px 20px;color:var(--text-muted);}
+.not-found .icon{font-size:48px;margin-bottom:16px;}
+.not-found p{font-size:14px;line-height:2;}
+.empty-msg{text-align:center;padding:32px 16px;color:var(--text-muted);font-size:12px;}
+
+/* ── MILESTONE ── */
+.milestone-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 16px;}
+.badge-item{
+  background:#fff;border-radius:12px;border:1.5px solid var(--border);
+  padding:14px 12px;text-align:center;transition:all .15s;
+}
+.badge-item.earned{border-color:var(--gold);background:linear-gradient(135deg,#fffdf5,#fff8e6);}
+.badge-item.locked{opacity:0.45;filter:grayscale(0.6);}
+.badge-icon{font-size:32px;margin-bottom:6px;}
+.badge-name{font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;color:var(--text-primary);margin-bottom:3px;}
+.badge-desc{font-size:9px;color:var(--text-muted);line-height:1.5;}
+.badge-earned-label{font-size:9px;color:var(--gold);margin-top:4px;font-weight:500;}
+.badge-locked-label{font-size:9px;color:var(--text-muted);margin-top:4px;}
+.milestone-progress{padding:14px 16px 0;border-top:1px solid #f4f4f4;}
+.mp-label{font-size:9px;letter-spacing:1.5px;color:var(--text-muted);margin-bottom:8px;}
+.mp-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.mp-name{font-size:11px;color:var(--text-secondary);min-width:80px;}
+.mp-bar-wrap{flex:1;height:6px;background:#f0f0f0;border-radius:3px;overflow:hidden;}
+.mp-bar{height:100%;background:var(--navy);border-radius:3px;transition:width .5s;}
+.mp-val{font-size:10px;color:var(--text-muted);min-width:36px;text-align:right;}
+
+/* ── NEWS ── */
+.news-item{padding:14px 18px;border-bottom:1px solid #f4f4f4;}
+.news-item:last-child{border-bottom:none;}
+.news-cat{display:inline-block;font-size:9px;padding:2px 8px;border-radius:3px;margin-bottom:6px;}
+.news-cat-info{background:#eef2ff;color:#3a5fc8;}
+.news-cat-result{background:#eafaf1;color:#27ae60;}
+.news-cat-event{background:#fff8e6;color:#e67e22;}
+.news-cat-schedule{background:#fdf3e6;color:#c0392b;}
+.news-cat-other{background:#f5f5f5;color:#666;}
+.news-title{font-size:14px;font-weight:500;color:var(--text-primary);margin-bottom:5px;}
+.news-body{font-size:12px;color:var(--text-secondary);line-height:1.8;margin-bottom:6px;}
+.news-footer{display:flex;align-items:center;justify-content:space-between;}
+.news-date{font-size:10px;color:var(--text-muted);}
+.news-line-btn{font-size:10px;padding:3px 10px;border-radius:4px;background:#06c755;color:#fff;text-decoration:none;border:none;}
+
+/* ── CALENDAR ── */
+.schedule-month-tabs{display:flex;gap:6px;padding:12px 16px;border-bottom:1px solid #f4f4f4;overflow-x:auto;}
+.smtab{font-size:11px;padding:4px 12px;border-radius:20px;border:1px solid var(--border);color:var(--text-muted);cursor:pointer;white-space:nowrap;background:#fff;transition:all .15s;}
+.smtab.active{background:var(--navy);color:var(--gold);border-color:var(--navy);}
+.schedule-cal-wrap{display:none;padding:12px 16px;}
+.schedule-cal-wrap.show{display:block;}
+.sch-day-labels{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px;}
+.sch-day-lbl{font-size:9px;color:var(--text-muted);text-align:center;}
+.sch-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.sch-day{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;color:var(--text-muted);border-radius:6px;position:relative;cursor:default;}
+.sch-day.has-class{background:#f0f3fa;color:var(--navy);font-weight:500;}
+.sch-day.cancelled{background:#f5f5f5;color:#a0aec0;}
+.sch-day.today{border:1.5px solid var(--gold);}
+.sch-day.has-class.today{background:#f0f3fa;border-color:var(--gold);}
+.sch-dots{display:flex;gap:2px;margin-top:2px;justify-content:center;}
+.sch-dot{width:4px;height:4px;border-radius:50%;flex-shrink:0;}
+.class-legend{display:flex;gap:12px;padding:10px 16px;border-top:1px solid #f4f4f4;flex-wrap:wrap;}
+.cl-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-secondary);}
+.cl-dot{width:8px;height:8px;border-radius:2px;}
+.cl-beginner{background:#3a5fc8;}
+.cl-all{background:#27ae60;}
+.cl-free{background:var(--gold);}
+.class-list{padding:12px 16px 14px;}
+.class-list-title{font-size:9px;letter-spacing:1.5px;color:var(--text-muted);margin-bottom:8px;}
+.class-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;background:#f8f9fc;margin-bottom:6px;}
+.class-row:last-child{margin-bottom:0;}
+.class-row-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
+.class-row-info{flex:1;}
+.class-row-name{font-size:12px;font-weight:500;color:var(--text-primary);}
+.class-row-time{font-size:10px;color:var(--text-muted);margin-top:1px;}
+
+/* ── MATCH RECORD ── */
+.record-add-btn{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  width:100%;padding:12px;margin:14px 16px 0;
+  background:var(--navy);color:var(--gold);
+  border:none;border-radius:10px;font-size:13px;font-weight:500;
+  cursor:pointer;font-family:'Noto Sans JP',sans-serif;
+}
+.record-stats{display:flex;padding:14px 16px;gap:0;}
+.rs-item{flex:1;text-align:center;}
+.rs-item:not(:last-child){border-right:1px solid #f0f0f0;}
+.rs-val{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--text-primary);}
+.rs-lbl{font-size:9px;color:var(--text-muted);margin-top:2px;}
+.record-item{padding:14px 16px;border-bottom:1px solid #f4f4f4;position:relative;}
+.record-item:last-child{border-bottom:none;}
+.record-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px;}
+.record-result{
+  display:inline-block;font-size:10px;padding:3px 9px;border-radius:20px;
+  font-weight:500;flex-shrink:0;
+}
+.result-gold{background:#fff8e6;color:#c08a1a;}
+.result-silver{background:#f0f0f0;color:#666;}
+.result-bronze{background:#fdf0e6;color:#92400e;}
+.result-join{background:#eef2ff;color:#3a5fc8;}
+.record-date{font-size:10px;color:var(--text-muted);}
+.record-name{font-size:14px;font-weight:500;color:var(--text-primary);margin-bottom:6px;}
+.record-meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;}
+.record-tag{font-size:9px;padding:2px 8px;border-radius:3px;background:#f8f9fc;color:var(--text-secondary);}
+.record-comment{font-size:11px;color:var(--text-secondary);line-height:1.7;background:#f8f9fc;padding:8px 10px;border-radius:6px;margin-top:6px;}
+.record-actions{display:flex;gap:4px;flex-shrink:0;}
+.record-edit-btn{background:none;border:none;font-size:11px;color:var(--text-muted);cursor:pointer;padding:2px 6px;}
+
+/* RECORD MODAL */
+.rm-overlay{display:none;position:fixed;inset:0;background:rgba(10,22,40,0.5);z-index:300;align-items:center;justify-content:center;padding:20px;}
+.rm-overlay.open{display:flex;}
+.rm-modal{background:#fff;border-radius:14px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;}
+.rm-head{padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.rm-title{font-size:14px;font-weight:500;}
+.rm-close{background:none;border:none;font-size:20px;color:var(--text-muted);cursor:pointer;}
+.rm-body{padding:18px 20px;}
+.rm-foot{padding:12px 20px 18px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:space-between;align-items:center;}
+.rm-row{margin-bottom:14px;}
+.rm-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.rm-row label{display:block;font-size:11px;color:var(--text-secondary);margin-bottom:4px;}
+.rm-row-2 label{display:block;font-size:11px;color:var(--text-secondary);margin-bottom:4px;}
+.rm-modal input[type=text],.rm-modal input[type=date],.rm-modal select,.rm-modal textarea{
+  width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:6px;
+  font-size:13px;font-family:'Noto Sans JP',sans-serif;color:var(--text-primary);outline:none;
+}
+.rm-modal textarea{resize:vertical;min-height:60px;}
+.rm-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;border:none;font-family:'Noto Sans JP',sans-serif;}
+.rm-btn-primary{background:var(--navy);color:var(--gold);}
+.rm-btn-ghost{background:transparent;color:var(--text-secondary);border:1px solid var(--border);}
+.rm-btn-danger{background:#fdf0ef;color:#e74c3c;border:1px solid #f5c6c3;}
+
+.member-login-screen{display:flex;position:fixed;inset:0;background:var(--navy);z-index:9999;align-items:center;justify-content:center;flex-direction:column;}
+.member-login-box{background:white;border-radius:16px;padding:36px 32px;width:100%;max-width:340px;margin:16px;box-shadow:0 20px 60px rgba(0,0,0,0.3);}
+.member-login-logo{text-align:center;margin-bottom:24px;}
+.member-login-logo-text{font-family:'Bebas Neue',sans-serif;font-size:34px;color:var(--navy);letter-spacing:3px;}
+.member-login-logo-sub{font-size:10px;color:#8a9ab8;letter-spacing:2px;margin-top:2px;}
+.member-login-title{font-size:14px;font-weight:600;color:var(--navy);margin-bottom:6px;text-align:center;}
+.member-login-subtitle{font-size:12px;color:#8a9ab8;text-align:center;margin-bottom:20px;line-height:1.6;}
+.member-login-btn-google{width:100%;padding:13px;background:white;color:#333;border:1px solid #dde1ea;border-radius:8px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;font-family:'Noto Sans JP',sans-serif;}
+.member-login-btn-google:hover{background:#f8f9fc;}
+.member-login-error{color:#e74c3c;font-size:12px;margin-top:12px;text-align:center;display:none;line-height:1.6;}
+
+</style>
+</head>
+<body>
+
+<!-- MEMBER LOGIN SCREEN -->
+<div id="member-login-screen" class="member-login-screen" style="display:flex;">
+  <div class="member-login-box">
+    <div class="member-login-logo">
+      <div class="member-login-logo-text">AMBI<span style="font-size:24px;">s</span></div>
+      <div class="member-login-logo-sub">JIU-JITSU ACADEMY · MEMBER</div>
+    </div>
+    <div class="member-login-title">会員ページにログイン</div>
+    <div class="member-login-subtitle">Googleアカウントでログインしてください。<br>入会時に登録したGmailアドレスをご使用ください。</div>
+    <button class="member-login-btn-google" onclick="memberGoogleLogin()">
+      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Googleでログイン
+    </button>
+    <div class="member-login-error" id="member-login-error"></div>
+  </div>
+</div>
+
+<!-- MEMBER APP SCREEN -->
+<div id="member-app-screen" style="display:none;">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-brand-wrap">
+    <div class="topbar-brand">AMBIs</div>
+    <div class="topbar-sub">JIU-JITSU ACADEMY · KUMAMOTO</div>
+  </div>
+  <button class="menu-btn" id="menu-btn" onclick="toggleDrawer()">
+    <span></span><span></span><span></span>
+  </button>
+</div>
+
+<!-- DRAWER -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-head">
+    <div class="drawer-brand">AMBIs</div>
+    <div class="drawer-sub">JIU-JITSU ACADEMY · KUMAMOTO</div>
+    <div class="drawer-member-name" id="drawer-member-name">MEMBER</div>
+  </div>
+  <div class="nav-section-label">MENU</div>
+  <div class="nav-item active" id="nav-card" onclick="showPage('card',this)"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="14" x2="10" y2="14"/></svg></span>会員証</div>
+  <div class="nav-item" id="nav-news" onclick="showPage('news',this)"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg></span>道場ニュース</div>
+  <div class="nav-item" id="nav-milestone" onclick="showPage('milestone',this)"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg></span>マイルストーン</div>
+  <div class="nav-item" id="nav-schedule" onclick="showPage('schedule',this)"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>練習カレンダー</div>
+  <div class="nav-item" id="nav-members" onclick="showPage('members',this)"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>メンバー一覧</div>
+  <div class="nav-section-label">TOURNAMENT</div>
+  <div class="nav-item" id="nav-tournament" onclick="showPage('tournament',this)"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M5 4H3v2a4 4 0 0 0 4 4"/><path d="M19 4h2v2a4 4 0 0 1-4 4"/></svg></span>今後の試合</div>
+  <div class="nav-item" id="nav-record" onclick="showPage('record',this)"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h12a2 2 0 0 0 2-2v-2H10v2a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v3h4"/><path d="M19 17V5a2 2 0 0 0-2-2H4"/></svg></span>戦歴</div>
+  <div class="nav-section-label">LEARN</div>
+  <div class="nav-item" id="nav-rules" onclick="showPage('rules',this)"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>柔術のルール</div>
+  <div class="nav-item" id="nav-gishop" onclick="showPage('gishop',this)"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>道着を探す</div>
+  <div style="padding:16px 24px;border-top:1px solid rgba(255,255,255,0.07);margin-top:auto;">
+    <button onclick="memberLogout()" style="width:100%;padding:9px;background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#8a9ab8;font-size:12px;cursor:pointer;letter-spacing:.5px;">ログアウト</button>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="content">
+
+  <!-- ══ PAGE: MEMBER CARD ══ -->
+  <div class="page active" id="page-card">
+    <div id="card-content">
+      <div class="loading"><div class="spinner"></div><div style="font-size:12px;">読み込み中...</div></div>
+    </div>
+  </div>
+
+  <!-- ══ PAGE: NEWS ══ -->
+  <div class="page" id="page-news">
+    <div class="sec-card">
+      <div class="sec-head">道場ニュース</div>
+      <div id="news-body-member"><div class="empty-msg">ニュースはありません</div></div>
+    </div>
+  </div>
+
+  <!-- ══ PAGE: MILESTONE ══ -->
+  <div class="page" id="page-milestone">
+    <div class="sec-card" style="margin-bottom:16px;">
+      <div class="sec-head">MILESTONES</div>
+      <div class="milestone-grid" id="milestone-grid"></div>
+      <div class="milestone-progress" id="milestone-progress"></div>
+    </div>
+  </div>
+
+  <!-- ══ PAGE: SCHEDULE ══ -->
+  <div class="page" id="page-schedule">
+    <div class="sec-card" style="margin-bottom:16px;">
+      <div class="sec-head">PRACTICE CALENDAR</div>
+      <div id="upcoming-exceptions"></div>
+      <div class="schedule-month-tabs" id="schedule-tabs"></div>
+      <div id="schedule-cals"></div>
+      <div class="class-legend">
+        <div class="cl-item"><div class="cl-dot cl-beginner"></div>初心者クラス</div>
+        <div class="cl-item"><div class="cl-dot cl-all"></div>オールレベル</div>
+        <div class="cl-item"><div class="cl-dot cl-free"></div>フリーマット</div>
+        <div class="cl-item"><div class="cl-dot" style="background:#6a7a9a;"></div>その他</div>
+        <div class="cl-item"><div class="cl-dot" style="background:#a0aec0;opacity:0.5;"></div>休講</div>
+        <div class="cl-item"><div class="cl-dot" style="background:transparent;border:1.5px solid #3a5fc8;"></div>時間変更</div>
+      </div>
+    </div>
+    <div class="sec-card">
+      <div class="sec-head">クラス時間</div>
+      <div class="class-list" id="class-schedule-list"></div>
+    </div>
+  </div>
+
+  <!-- ══ PAGE: MEMBER LIST ══ -->
+  <div class="page" id="page-members">
+    <div class="sec-card">
+      <div class="sec-head">MEMBERS</div>
+      <div id="member-list-body"></div>
+    </div>
+  </div>
+
+  <!-- ══ PAGE: MATCH RECORD ══ -->
+  <div class="page" id="page-record">
+    <div class="sec-card">
+      <div class="sec-head">MY MATCH RECORD</div>
+      <div class="record-stats" id="record-stats"></div>
+      <div id="record-list"></div>
+      <button class="record-add-btn" onclick="openRecordModal()">＋ 試合結果を記録する</button>
+      <div style="height:14px;"></div>
+    </div>
+  </div>
+
+  <!-- ══ PAGE: TOURNAMENT ══ -->
+  <div class="page" id="page-tournament">
+    <div class="sec-card" style="margin-bottom:16px;">
+      <div class="sec-head">TODAY'S TOURNAMENT INFO</div>
+      <div class="league-tabs">
+        <div class="ltab active" onclick="switchLeague('jbjjf',this)">JBJJF</div>
+        <div class="ltab" onclick="switchLeague('asjjf',this)">ASJJF</div>
+      </div>
+
+      <!-- JBJJF -->
+      <div class="league-content show" id="lc-jbjjf">
+        <a class="league-link-btn" href="https://www.jbjjf.com/" target="_blank">
+          <div class="league-link-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+          <div class="league-link-text">
+            <div class="league-link-title">JBJJF 公式サイト</div>
+            <div class="league-link-sub">JBJJFトップページ</div>
+          </div>
+          <div class="league-link-arrow">↗</div>
+        </a>
+        <a class="league-link-btn" href="https://www.jbjjf.com/upcoming-events/calendar2016/" target="_blank">
+          <div class="league-link-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+          <div class="league-link-text">
+            <div class="league-link-title">JBJJF 大会カレンダー</div>
+            <div class="league-link-sub">主なJBJJF大会一覧</div>
+          </div>
+          <div class="league-link-arrow">↗</div>
+        </a>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;padding:0 2px;">道場長ピックアップ大会</div>
+        <div id="jbjjf-events"></div>
+      </div>
+
+      <!-- ASJJF -->
+      <div class="league-content" id="lc-asjjf">
+        <a class="league-link-btn" href="https://asjjf.org" target="_blank">
+          <div class="league-link-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+          <div class="league-link-text">
+            <div class="league-link-title">ASJJF 公式サイト</div>
+            <div class="league-link-sub">ASJJFトップページ</div>
+          </div>
+          <div class="league-link-arrow">↗</div>
+        </a>
+        <a class="league-link-btn" href="https://asjjf.org/tournament" target="_blank">
+          <div class="league-link-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+          <div class="league-link-text">
+            <div class="league-link-title">ASJJF 大会スケジュール</div>
+            <div class="league-link-sub">主なASJJF大会一覧</div>
+          </div>
+          <div class="league-link-arrow">↗</div>
+        </a>
+          <div class="league-link-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+          <div class="league-link-text">
+            <div class="league-link-title">ASJJF 大会スケジュール</div>
+            <div class="league-link-sub">国内のASJJF大会カレンダー</div>
+          </div>
+          <div class="league-link-arrow">↗</div>
+        </a>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;padding:0 2px;">道場長ピックアップ大会</div>
+        <div id="asjjf-events"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PAGE: RULES ══ -->
+  <div class="page" id="page-rules">
+    <div class="sec-card">
+      <div class="sec-head">BJJ RULES</div>
+      <div class="rules-league-tabs">
+        <div class="rltab active" onclick="switchRules('common',this)">共通ルール</div>
+        <div class="rltab" onclick="switchRules('jbjjf',this)">JBJJF</div>
+        <div class="rltab" onclick="switchRules('asjjf',this)">ASJJF</div>
+      </div>
+
+      <!-- COMMON -->
+      <div class="rules-content show" id="rc-common">
+        <div class="rule-section">
+          <div class="rule-section-title">基本ルール</div>
+          <div class="rule-item"><div class="rule-num">1</div><div class="rule-body"><div class="rule-title">一本勝ち（サブミッション）</div><div class="rule-desc">相手が極め技・絞め技でタップアウト（タップ or 口頭での降参）すると即勝利。試合時間に関係なく終了。</div></div></div>
+          <div class="rule-item"><div class="rule-num">2</div><div class="rule-body"><div class="rule-title">判定勝ち（ポイント・アドバンテージ）</div><div class="rule-desc">時間終了時にポイントまたはアドバンテージが多い方が勝利。引き分けの場合は審判による判定。</div></div></div>
+          <div class="rule-item"><div class="rule-num">3</div><div class="rule-body"><div class="rule-title">試合時間（アダルト・マスター）</div><div class="rule-desc">アダルト：白帯5分、青帯6分、紫帯7分、茶帯8分、黒帯10分。マスター1：白・青帯5分、紫・茶・黒帯6分。マスター2〜7：全帯5分（IBJJFルール基準、大会によって異なる場合あり）。</div></div></div>
+          <div class="rule-item"><div class="rule-num">4</div><div class="rule-body"><div class="rule-title">反則・失格</div><div class="rule-desc">スラム（持ち上げてマットに叩きつける行為）、頭突き、噛みつき、目への攻撃などは即失格。</div></div></div>
+        </div>
+        <div class="rule-section">
+          <div class="rule-section-title">ポイント一覧</div>
+          <table class="points-table">
+            <tr><th>技術</th><th>ポイント</th></tr>
+            <tr><td>テイクダウン</td><td class="pts-gold">2</td></tr>
+            <tr><td>スウィープ</td><td class="pts-gold">2</td></tr>
+            <tr><td>ニーオンベリー</td><td class="pts-gold">2</td></tr>
+            <tr><td>パスガード</td><td class="pts-gold">3</td></tr>
+            <tr><td>マウント・バックマウント</td><td class="pts-gold">4</td></tr>
+          </table>
+        </div>
+        <div class="rule-section">
+          <div class="rule-section-title">帯別出場カテゴリ</div>
+          <div class="belt-grade-row"><span class="belt-chip bw"><span class="bpd"></span>白帯</span><span style="font-size:11px;color:var(--text-secondary);">初心者・経験1〜2年未満が目安</span></div>
+          <div class="belt-grade-row"><span class="belt-chip bb"><span class="bpd"></span>青帯</span><span style="font-size:11px;color:var(--text-secondary);">基礎が固まり試合経験を積む段階</span></div>
+          <div class="belt-grade-row"><span class="belt-chip bpu"><span class="bpd"></span>紫帯</span><span style="font-size:11px;color:var(--text-secondary);">中級者。独自スタイルを確立</span></div>
+          <div class="belt-grade-row"><span class="belt-chip bbr"><span class="bpd"></span>茶帯</span><span style="font-size:11px;color:var(--text-secondary);">上級者。黒帯への最終ステップ</span></div>
+          <div class="belt-grade-row"><span class="belt-chip bbl"><span class="bpd"></span>黒帯</span><span style="font-size:11px;color:var(--text-secondary);">熟練者・指導者レベル</span></div>
+        </div>
+      </div>
+
+      <!-- JBJJF RULES -->
+      <div class="rules-content" id="rc-jbjjf">
+        <div class="rule-section">
+          <div class="rule-section-title">JBJJFとは</div>
+          <div style="font-size:12px;color:var(--text-secondary);line-height:1.8;margin-bottom:12px;">Japan Brazilian Jiu-Jitsu Federation（日本ブラジリアン柔術連盟）。日本国内の柔術普及・競技運営を行う連盟。国内大会の開催および国際大会への選手派遣を担う。</div>
+          <a class="rule-link-btn" href="https://www.jbjjf.com/rules/ibjjfrule/" target="_blank">
+            <span style="font-size:16px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+            <div class="rlt">JBJJF 公式サイトでルールを確認</div>
+            <span style="margin-left:auto;">↗</span>
+          </a>
+        </div>
+        <div class="rule-section">
+          <div class="rule-section-title">JBJJF特有のルール（IBJJFルール準拠）</div>
+          <div class="rule-item"><div class="rule-num">①</div><div class="rule-body"><div class="rule-title">ヒールフック：道着部門は全帯で禁止</div><div class="rule-desc">道着（Gi）部門は白〜黒帯まで全帯でヒールフック・膝を捻る関節技は禁止。ノーギ部門の茶帯・黒帯カテゴリーのみ解禁されている（2021年ルール改正）。</div></div></div>
+          <div class="rule-item"><div class="rule-num">②</div><div class="rule-body"><div class="rule-title">道着規定</div><div class="rule-desc">道着の色（白・黒・青のみ）、サイズ、ラベル位置など細かい規定あり。事前確認が必要。</div></div></div>
+          <div class="rule-item"><div class="rule-num">③</div><div class="rule-body"><div class="rule-title">アドバンテージ制度</div><div class="rule-desc">ポイントに至らない近い動作（サブミッションに近い攻撃、スウィープ未完など）にアドバンテージが与えられる。同点の場合はレフリー判定で勝敗が決まる。</div></div></div>
+          <div class="rule-item"><div class="rule-num">④</div><div class="rule-body"><div class="rule-title">Wガード（ダブルガードプル）の判定基準</div><div class="rule-desc">両者が同時に引き込んだ場合、先に立った方にアドバンテージが入る。ASJJFよりこの判定の許容時間差が狭く、明確に先に立った場合のみアドバンテージとなる。</div></div></div>
+        </div>
+      </div>
+
+      <!-- ASJJF RULES -->
+      <div class="rules-content" id="rc-asjjf">
+        <div class="rule-section">
+          <div class="rule-section-title">ASJJFとは</div>
+          <div style="font-size:12px;color:var(--text-secondary);line-height:1.8;margin-bottom:12px;">Asia Sport Jiu Jitsu Federation（アジアスポーツ柔術連盟）。日本国内を中心に活動する連盟で、国内大会を多数開催。初心者や社会人が参加しやすい大会を提供している。</div>
+          <a class="rule-link-btn" href="https://sjjjf.org/wp-content/uploads/2019/01/SJJIF_Rulebook_jp.pdf" target="_blank">
+            <span style="font-size:16px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+            <div class="rlt">ASJJF 公式ルールブックを読む</div>
+            <span style="margin-left:auto;">↗</span>
+          </a>
+          <a class="rule-link-btn" href="https://sjjjf.org/3784/" target="_blank">
+            <span style="font-size:16px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg></span>
+            <div class="rlt">道着の規定・注意点を確認</div>
+            <span style="margin-left:auto;">↗</span>
+          </a>
+        </div>
+        <div class="rule-section">
+          <div class="rule-section-title">ASJJF特有のルール（SJJIFルール準拠）</div>
+          <div class="rule-item"><div class="rule-num">①</div><div class="rule-body"><div class="rule-title">アドバンテージなし・同点は延長戦</div><div class="rule-desc">JBJJFと違いアドバンテージ制度がなく、ポイントが同点の場合は延長戦（サドンデス）で勝敗を決める。レフリー判定はない。</div></div></div>
+          <div class="rule-item"><div class="rule-num">②</div><div class="rule-body"><div class="rule-title">Wガード（ダブルガードプル）の判定基準</div><div class="rule-desc">両者が同時に引き込んだ場合、先に立った方に2点が入る。JBJJFよりこの判定の許容時間差が広く、わずかな差でも2点を取られやすいので注意。</div></div></div>
+          <div class="rule-item"><div class="rule-num">③</div><div class="rule-body"><div class="rule-title">手首固め・胴絞めは白帯でも可</div><div class="rule-desc">JBJJF（IBJJFルール）では帯によって禁止される技でも、ASJJFでは白帯から使用できる場合がある。事前にルールブックの確認を。</div></div></div>
+          <div class="rule-item"><div class="rule-num">④</div><div class="rule-body"><div class="rule-title">道着規定</div><div class="rule-desc">道着の色・サイズ・パッチの位置などSJJIFルールブックに準拠した規定あり。試合前に道着チェックが行われるため事前確認が必要。</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PAGE: GI SHOP ══ -->
+  <div class="page" id="page-gishop">
+    <div class="sec-card">
+      <div class="sec-head">GI SHOP GUIDE</div>
+      <div class="rules-league-tabs">
+        <div class="rltab active" onclick="switchGiShop('domestic',this)">国内ブランド</div>
+        <div class="rltab" onclick="switchGiShop('overseas',this)">海外ブランド</div>
+      </div>
+
+      <!-- DOMESTIC -->
+      <div class="rules-content show" id="gs-domestic">
+      <div style="font-size:12px;color:var(--text-secondary);line-height:1.8;padding:14px 16px 4px;">初めての道着選びに迷ったら、まずは国内ブランドから検討するのがおすすめです。サイズ感や生地の硬さはブランドによって違うので、各公式サイトのサイズ表を確認してから選びましょう。</div>
+
+      <div class="rule-section" style="padding:14px 16px;">
+        <div class="rule-item"><div class="rule-num">①</div><div class="rule-body"><div class="rule-title">ISAMI（イサミ）</div><div class="rule-desc">1952年創業の国内大手格闘技メーカー。日本人の体型に合わせた作りで、初心者から試合用まで幅広く展開。</div></div></div>
+        <div class="rule-item"><div class="rule-num">②</div><div class="rule-body"><div class="rule-title">ALMA（アルマ）</div><div class="rule-desc">マーシャルワールドが手がける国内ブランド。軽量で縮みにくく、価格も手頃なため初めての一着に選ばれることが多い。</div></div></div>
+        <div class="rule-item"><div class="rule-num">③</div><div class="rule-body"><div class="rule-title">BULL TERRIER（ブルテリア）</div><div class="rule-desc">2003年創業、世界トップ選手も着用する国内発ブランド。デザイン性と耐久性のバランスが良い。</div></div></div>
+        <div class="rule-item"><div class="rule-num">④</div><div class="rule-body"><div class="rule-title">PMD（Posture_Method, Dimensions_）</div><div class="rule-desc">1948年創業の柔道衣メーカーTMDが手がける新ブランド。柔術家・竹浦正起氏が構造設計を監修した日本製の柔術衣。</div></div></div>
+
+        <a class="rule-link-btn" href="https://isamishop.com/view/category/ct77" target="_blank">
+          <span style="font-size:16px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>
+          <div class="rlt">ISAMI 公式オンラインショップ</div>
+          <span style="margin-left:auto;">↗</span>
+        </a>
+        <a class="rule-link-btn" href="https://www.almaweb.jp/" target="_blank">
+          <span style="font-size:16px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>
+          <div class="rlt">ALMA 公式オンラインショップ</div>
+          <span style="margin-left:auto;">↗</span>
+        </a>
+        <a class="rule-link-btn" href="https://www.btbjj.com/" target="_blank">
+          <span style="font-size:16px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>
+          <div class="rlt">BULL TERRIER 公式オンラインショップ</div>
+          <span style="margin-left:auto;">↗</span>
+        </a>
+        <a class="rule-link-btn" href="https://pmdclassics.com/" target="_blank">
+          <span style="font-size:16px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>
+          <div class="rlt">PMD 公式オンラインショップ</div>
+          <span style="margin-left:auto;">↗</span>
+        </a>
+      </div>
+      </div>
+      <!-- /DOMESTIC -->
+
+      <!-- OVERSEAS -->
+      <div class="rules-content" id="gs-overseas">
+      <div class="rule-section" style="padding:14px 16px;">
+        <div class="rule-section-title">海外ブランド</div>
+        <div style="font-size:12px;color:var(--text-secondary);line-height:1.8;margin-bottom:10px;">デザイン性を重視する方におすすめのブランド群です。</div>
+        <div class="rule-item"><div class="rule-num">①</div><div class="rule-body"><div class="rule-title">KINGZ（キングズ）</div><div class="rule-desc">2011年設立、世界的に人気のブランド。王冠ロゴが目印で、機能性とデザイン性のバランスに定評がある。</div></div></div>
+        <div class="rule-item"><div class="rule-num">②</div><div class="rule-body"><div class="rule-title">HYPERFLY（ハイパーフライ）</div><div class="rule-desc">2011年サンディエゴ発。軽さと機能性を追求したブランドで、コラボモデルも豊富。</div></div></div>
+        <div class="rule-item"><div class="rule-num">③</div><div class="rule-body"><div class="rule-title">A&P（Albino and Preto）</div><div class="rule-desc">高級ラインのハイブランド。作りの良さで定評があり、人気モデルはすぐ完売することも。</div></div></div>
+        <div class="rule-item"><div class="rule-num">④</div><div class="rule-body"><div class="rule-title">Shoyoroll（ショウヨロール）</div><div class="rule-desc">全16パターンの細かなサイズ展開が特徴のカリフォルニア発ブランド。限定販売制で、Instagramでの告知をフォローしておくのがおすすめ。</div></div></div>
+        <div class="rule-item"><div class="rule-num">⑤</div><div class="rule-body"><div class="rule-title">JHOOD（ジェイフッド）</div><div class="rule-desc">韓国ソウル発、東洋の美しさを取り入れたデザインが特徴。"Jiu-Jitsu"と"brotherhood"を組み合わせた造語が由来。</div></div></div>
+
+        <a class="rule-link-btn" href="https://kingz.jp/" target="_blank">
+          <span style="font-size:16px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>
+          <div class="rlt">KINGZ 日本公式サイト</div>
+          <span style="margin-left:auto;">↗</span>
+        </a>
+        <a class="rule-link-btn" href="https://hyperfly.jp/" target="_blank">
+          <span style="font-size:16px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>
+          <div class="rlt">HYPERFLY 日本公式サイト</div>
+          <span style="margin-left:auto;">↗</span>
+        </a>
+        <a class="rule-link-btn" href="https://www.albinoandpreto.jp/" target="_blank">
+          <span style="font-size:16px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>
+          <div class="rlt">A&P 日本公式サイト</div>
+          <span style="margin-left:auto;">↗</span>
+        </a>
+        <a class="rule-link-btn" href="https://shoyoroll.jp/" target="_blank">
+          <span style="font-size:16px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>
+          <div class="rlt">Shoyoroll 日本公式サイト</div>
+          <span style="margin-left:auto;">↗</span>
+        </a>
+        <a class="rule-link-btn" href="https://shop.jhoodjapan.com/" target="_blank">
+          <span style="font-size:16px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>
+          <div class="rlt">JHOOD 日本公式サイト</div>
+          <span style="margin-left:auto;">↗</span>
+        </a>
+      </div>
+      </div>
+      <!-- /OVERSEAS -->
+
+      <div class="future-note" style="margin:14px 16px 16px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg>サイズに迷ったら、入会時に道場長に相談するのが一番確実です。貸し出し用の道着もありますので、まずはクラスで聞いてみてください。</div>
+    </div>
+  </div>
+
+</div><!-- /content -->
+
+<!-- QR MODAL -->
+<div class="qr-overlay" id="qr-overlay">
+  <div class="qr-modal">
+    <div class="qm-name" id="qm-name"></div>
+    <div class="qm-id" id="qm-id"></div>
+    <div class="qm-canvas" id="qm-canvas"></div>
+    <div class="qm-note">道場入口でこのQRをスキャンして出席登録</div>
+    <button class="qm-close" onclick="document.getElementById('qr-overlay').classList.remove('open')">閉じる</button>
+  </div>
+</div>
+
+<!-- TOURNAMENT ADD MODAL -->
+<div class="modal-overlay" id="modal-tournament">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">大会を追加</div>
+      <button class="modal-close-btn" onclick="document.getElementById('modal-tournament').classList.remove('open')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row"><label>大会名 *</label><input type="text" id="t-name" placeholder="例：第○回 熊本オープン"></div>
+      <div class="form-row"><label>開催日 *</label><input type="date" id="t-date"></div>
+      <div class="form-row"><label>会場</label><input type="text" id="t-venue" placeholder="例：熊本市民会館"></div>
+      <div class="form-row"><label>カテゴリ</label><input type="text" id="t-category" placeholder="例：道着・ノーギ・アブソルート"></div>
+      <div class="form-row"><label>備考・URL</label><input type="text" id="t-note" placeholder="例：https://..."></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="document.getElementById('modal-tournament').classList.remove('open')">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveTournament()">追加する</button>
+    </div>
+  </div>
+</div>
+
+<!-- MATCH RECORD MODAL -->
+<div class="rm-overlay" id="rm-overlay">
+  <div class="rm-modal">
+    <div class="rm-head">
+      <div class="rm-title" id="rm-title">試合結果を記録</div>
+      <button class="rm-close" onclick="closeRecordModal()">×</button>
+    </div>
+    <div class="rm-body">
+      <div class="rm-row"><label>大会名 *</label><input type="text" id="r-name" placeholder="例：第5回 九州オープン"></div>
+      <div class="rm-row-2">
+        <div><label>開催日 *</label><input type="date" id="r-date"></div>
+        <div><label>連盟</label>
+          <select id="r-league">
+            <option value="">選択しない</option>
+            <option value="jbjjf">JBJJF</option>
+            <option value="asjjf">ASJJF</option>
+            <option value="other">その他</option>
+          </select>
+        </div>
+      </div>
+      <div class="rm-row-2">
+        <div><label>階級</label><input type="text" id="r-weight" placeholder="例：ライト級・70kg級"></div>
+        <div><label>形式</label>
+          <select id="r-format">
+            <option value="gi">道着（Gi）</option>
+            <option value="nogi">ノーギ（No-Gi）</option>
+          </select>
+        </div>
+      </div>
+      <div class="rm-row"><label>結果 *</label>
+        <select id="r-result">
+          <option value="gold">🥇 優勝</option>
+          <option value="silver">🥈 準優勝</option>
+          <option value="bronze">🥉 3位</option>
+          <option value="join">出場</option>
+        </select>
+      </div>
+      <div class="rm-row"><label>コメント・感想</label><textarea id="r-comment" placeholder="試合の振り返り、学んだことなど"></textarea></div>
+    </div>
+    <div class="rm-foot">
+      <button class="rm-btn rm-btn-danger" id="r-delete-btn" onclick="deleteRecord()" style="display:none;">削除</button>
+      <div style="display:flex;gap:8px;margin-left:auto;">
+        <button class="rm-btn rm-btn-ghost" onclick="closeRecordModal()">キャンセル</button>
+        <button class="rm-btn rm-btn-primary" onclick="saveRecord()">保存する</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ──
+const beltMap={
+  white:{label:'白帯',bar:'b-white',pill:'bw'},
+  blue:{label:'青帯',bar:'b-blue',pill:'bb'},
+  purple:{label:'紫帯',bar:'b-purple',pill:'bpu'},
+  brown:{label:'茶帯',bar:'b-brown',pill:'bbr'},
+  black:{label:'黒帯',bar:'b-black',pill:'bbl'},
+};
+
+const params=new URLSearchParams(location.search);
+const memberId=params.get('id');
+
+let members=JSON.parse(localStorage.getItem('ambis_members')||'[]');
+let attendance=JSON.parse(localStorage.getItem('ambis_attendance')||'[]');
+let tournaments=JSON.parse(localStorage.getItem('ambis_tournaments')||'[]');
+
+let currentTournamentLeague='jbjjf';
+
+// ── DRAWER ──
+function toggleDrawer(){
+  const btn=document.getElementById('menu-btn');
+  const drawer=document.getElementById('drawer');
+  const overlay=document.getElementById('drawer-overlay');
+  btn.classList.toggle('open');
+  drawer.classList.toggle('open');
+  overlay.classList.toggle('open');
+}
+function closeDrawer(){
+  document.getElementById('menu-btn').classList.remove('open');
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('open');
+}
+
+// ── PAGE NAV ──
+function showPage(page,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  if(el) el.classList.add('active');
+  closeDrawer();
+  if(page==='members') renderMemberList();
+  if(page==='tournament') renderTournaments();
+  if(page==='news') renderNewsMember();
+  if(page==='milestone') renderMilestone();
+  if(page==='schedule') renderSchedule();
+  if(page==='record') renderRecord();
+}
+
+// ── MEMBER CARD ──
+function stripesDots(n,size=8){
+  return [0,1,2,3].map(i=>`<div class="sd${i<n?'':' e'}" style="width:${size}px;height:${size}px;"></div>`).join('');
+}
+function beltPill(key){
+  const b=beltMap[key]||beltMap.white;
+  return `<span class="bp ${b.pill}"><span class="bpd"></span>${b.label}</span>`;
+}
+function tenure(joindate){
+  if(!joindate) return '―';
+  const ms=new Date()-new Date(joindate);
+  const months=Math.floor(ms/(1000*60*60*24*30.44));
+  return months<12?`${months}M`:`${(months/12).toFixed(1)}Y`;
+}
+
+function buildCalendar(memberId,myAtt){
+  const now=new Date();
+  const todayStr=now.toISOString().slice(0,10);
+  const months=[];
+  for(let i=2;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    months.push({key:`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`,label:`${d.getMonth()+1}月`,y:d.getFullYear(),m:d.getMonth()});
+  }
+  const curKey=months[2].key;
+  const tabs=months.map(mo=>`<div class="mtab${mo.key===curKey?' active':''}" onclick="switchMonth('${mo.key}',this)">${mo.label}</div>`).join('');
+  const cals=months.map(mo=>{
+    const attDates=new Set(myAtt.filter(a=>a.date&&a.date.startsWith(mo.key)).map(a=>a.date));
+    const mCount=attDates.size;
+    const total=myAtt.length;
+    const firstDay=new Date(mo.y,mo.m,1).getDay();
+    const days=new Date(mo.y,mo.m+1,0).getDate();
+    let cells='';
+    for(let i=0;i<firstDay;i++) cells+=`<div></div>`;
+    for(let d=1;d<=days;d++){
+      const ds=`${mo.y}-${String(mo.m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const schedule=JSON.parse(localStorage.getItem('ambis_schedule')||'null')||[];
+      const dow=new Date(ds).getDay();
+      const hasClass=schedule.some(s=>s.dow===dow);
+      const weekCls=dow===0?' sun':dow===6?' sat':'';
+      cells+=`<div class="cday${attDates.has(ds)?' att':''}${hasClass?' has-class':''}${ds===todayStr?' tod':''}${weekCls}">${d}</div>`;
+    }
+    return `<div class="cal-wrap${mo.key===curKey?' show':''}" id="cal-${mo.key}">
+      <div class="day-labels"><div class="day-lbl" style="color:#e74c3c;">日</div><div class="day-lbl">月</div><div class="day-lbl">火</div><div class="day-lbl">水</div><div class="day-lbl">木</div><div class="day-lbl">金</div><div class="day-lbl" style="color:#3a5fc8;">土</div></div>
+      <div class="cal-grid">${cells}</div>
+      <div class="cal-summary">
+        <div class="csitem"><div class="csv2">${mCount}</div><div class="csl">今月出席</div></div>
+        <div class="csitem"><div class="csv2">${total}</div><div class="csl">累計出席</div></div>
+      </div>
+      <div style="display:flex;gap:14px;padding:0 16px 12px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:5px;font-size:9px;color:var(--text-muted);">
+          <div style="width:14px;height:14px;border-radius:50%;background:var(--navy);"></div>出席した日
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:9px;color:var(--text-muted);">
+          <div style="width:14px;height:14px;border-radius:50%;border:1.5px solid #c8d4f0;"></div>クラスがある日
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  return `<div class="sec-card"><div class="sec-head">ATTENDANCE</div><div class="month-tabs">${tabs}</div>${cals}</div>`;
+}
+
+function switchMonth(key,el){
+  document.querySelectorAll('.mtab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.cal-wrap').forEach(c=>c.classList.remove('show'));
+  el.classList.add('active');
+  const cal=document.getElementById('cal-'+key);
+  if(cal) cal.classList.add('show');
+}
+
+function showQRModal(id,name){
+  document.getElementById('qm-name').textContent=name;
+  document.getElementById('qm-id').textContent=id;
+  const canvas=document.getElementById('qm-canvas');
+  canvas.innerHTML='';
+  const url=`${location.origin}${location.pathname}?id=${id}`;
+  new QRCode(canvas,{text:url,width:200,height:200,colorDark:'#0a1628',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.H});
+  document.getElementById('qr-overlay').classList.add('open');
+}
+
+function initCard(){
+  const content=document.getElementById('card-content');
+  // ログイン済みの場合はloggedInMemberIdを優先
+  const resolvedId = window.loggedInMemberId || memberId;
+  let member=resolvedId?members.find(m=>m.id===resolvedId):members.find(m=>m.status==='active');
+  if(!member){
+    content.innerHTML=`<div class="not-found"><div class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg></div><p>会員情報が見つかりません。<br>管理者にお問い合わせください。</p></div>`;
+    return;
+  }
+  document.getElementById('drawer-member-name').textContent=member.name;
+  const now=new Date();
+  const ym=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const thisYear=String(now.getFullYear());
+  const myAtt=attendance.filter(a=>a.memberId===member.id);
+  const monthCount=myAtt.filter(a=>a.date&&a.date.startsWith(ym)).length;
+  const yearCount=myAtt.filter(a=>a.date&&a.date.startsWith(thisYear)).length;
+  const belt=beltMap[member.belt]||beltMap.white;
+  const avatarHTML=member.photo?`<img src="${member.photo}" alt="">`:(member.name||'').slice(0,2);
+
+  const cardHTML=`
+  <div class="member-card">
+    <div class="accent-line"></div>
+    <div class="card-header">
+      <div><div class="brand-name">AMBIs</div><div class="brand-sub-sm">JIU-JITSU ACADEMY · KUMAMOTO</div></div>
+      <div class="member-badge">MEMBER</div>
+    </div>
+    <div class="card-body">
+      <div class="avatar">${avatarHTML}</div>
+      <div class="member-info">
+        <div class="m-name">${member.name}</div>
+        <div class="m-kana">${member.kana||member.id}</div>
+        <div class="belt-row"><span class="belt-bar ${belt.bar}"></span><span class="belt-lbl">${belt.label}</span></div>
+        <div class="stripes-row">${stripesDots(member.stripe||0)}</div>
+      </div>
+    </div>
+    <div class="card-divider"></div>
+    <div class="card-stats">
+      <div class="si"><div class="sv">${yearCount}</div><div class="sl">${thisYear}年</div></div>
+      <div class="si"><div class="sv">${monthCount}</div><div class="sl">今月</div></div>
+      <div class="si"><div class="sv">${tenure(member.joindate)}</div><div class="sl">在籍期間</div></div>
+    </div>
+    <div class="card-footer">
+      <div class="fi">
+        <span class="fl">MEMBER ID</span>
+        <span class="fid">${member.id}</span>
+        <div style="margin-top:5px;"><span class="fl">入会日　</span><span class="fdv">${member.joindate?member.joindate.replace(/-/g,'.'):'―'}</span></div>
+      </div>
+      <div class="qr-box" onclick="showQRModal('${member.id}','${member.name}')" id="mini-qr"></div>
+    </div>
+  </div>`;
+
+  const myBH=[...JSON.parse(localStorage.getItem('ambis_belt_history')||'[]')].filter(h=>h.memberId===member.id).sort((a,b)=>b.date.localeCompare(a.date));
+  let beltHTML='';
+  if(myBH.length){
+    const rows=myBH.map(h=>`
+      <div class="bh-row">
+        <div class="bh-date">${h.date}</div>
+        ${beltPill(h.from)}<div class="bh-arrow">→</div>${beltPill(h.to)}
+        <div style="display:flex;gap:2px;">${stripesDots(h.stripe||0,7)}</div>
+        ${h.note?`<div class="bh-note">/ ${h.note}</div>`:''}
+      </div>`).join('');
+    beltHTML=`<div class="sec-card"><div class="sec-head">BELT HISTORY</div>${rows}</div>`;
+  }
+
+  content.innerHTML=cardHTML+beltHTML+buildCalendar(member.id,myAtt);
+  setTimeout(()=>{
+    const mini=document.getElementById('mini-qr');
+    if(mini){
+      const url=`${location.origin}${location.pathname}?id=${member.id}`;
+      new QRCode(mini,{text:url,width:54,height:54,colorDark:'#0a1628',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});
+    }
+  },150);
+}
+
+// ── MEMBER LIST ──
+function renderMemberList(){
+  const active=members.filter(m=>m.status==='active').sort((a,b)=>a.name.localeCompare(b.name,'ja'));
+  const body=document.getElementById('member-list-body');
+  if(!active.length){body.innerHTML=`<div class="empty-msg">会員が登録されていません</div>`;return;}
+  body.innerHTML=active.map(m=>{
+    const belt=beltMap[m.belt]||beltMap.white;
+    const av=m.photo?`<img src="${m.photo}" alt="">`:(m.name||'').slice(0,2);
+    const stripes=[0,1,2,3].map(i=>`<div class="sd${i<(m.stripe||0)?'':' e'}" style="width:6px;height:6px;"></div>`).join('');
+    return `<div class="ml-row">
+      <div class="ml-avatar">${av}</div>
+      <div class="ml-info">
+        <div class="ml-name">${m.name}</div>
+        <div class="ml-sub">${m.id} · 入会 ${m.joindate||'―'}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+        <span class="ml-belt bp ${belt.pill}"><span class="bpd"></span>${belt.label}</span>
+        <div style="display:flex;gap:2px;">${stripes}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── TOURNAMENT ──
+function switchLeague(league,el){
+  currentTournamentLeague=league;
+  document.querySelectorAll('.ltab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.league-content').forEach(c=>c.classList.remove('show'));
+  el.classList.add('active');
+  document.getElementById('lc-'+league).classList.add('show');
+  renderTournaments();
+}
+
+function renderTournaments(){
+  ['jbjjf','asjjf'].forEach(league=>{
+    const el=document.getElementById(league+'-events');
+    if(!el) return;
+    const now=new Date().toISOString().slice(0,10);
+    const list=tournaments.filter(t=>t.league===league&&t.date>=now).sort((a,b)=>a.date.localeCompare(b.date));
+    if(!list.length){el.innerHTML=`<div class="empty-msg" style="padding:12px 0 8px;">登録された大会はありません</div>`;return;}
+    el.innerHTML=list.map(t=>`
+      <div class="tournament-item">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div class="t-date">${t.date}</div>
+          <button class="btn-danger-sm" onclick="deleteTournament('${t.id}')">削除</button>
+        </div>
+        <div class="t-name">${t.name}</div>
+        <div class="t-meta">
+          ${t.venue?`<span class="t-tag"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${t.venue}</span>`:''}
+          ${t.category?`<span class="t-tag">${t.category}</span>`:''}
+          ${t.note&&t.note.startsWith('http')?`<a href="${t.note}" target="_blank" style="font-size:10px;color:#3a5fc8;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>詳細</a>`:''}
+          ${t.note&&!t.note.startsWith('http')?`<span class="t-tag">${t.note}</span>`:''}
+        </div>
+      </div>`).join('');
+  });
+}
+
+function openAddTournament(league){
+  currentTournamentLeague=league;
+  document.getElementById('t-name').value='';
+  document.getElementById('t-date').value='';
+  document.getElementById('t-venue').value='';
+  document.getElementById('t-category').value='';
+  document.getElementById('t-note').value='';
+  document.getElementById('modal-tournament').classList.add('open');
+}
+
+function saveTournament(){
+  const name=document.getElementById('t-name').value.trim();
+  const date=document.getElementById('t-date').value;
+  if(!name||!date){alert('大会名と日付を入力してください');return;}
+  tournaments.push({
+    id:'t-'+Date.now(),
+    league:currentTournamentLeague,
+    name,date,
+    venue:document.getElementById('t-venue').value.trim(),
+    category:document.getElementById('t-category').value.trim(),
+    note:document.getElementById('t-note').value.trim(),
+  });
+  localStorage.setItem('ambis_tournaments',JSON.stringify(tournaments));
+  document.getElementById('modal-tournament').classList.remove('open');
+  renderTournaments();
+}
+
+function deleteTournament(id){
+  tournaments=tournaments.filter(t=>t.id!==id);
+  localStorage.setItem('ambis_tournaments',JSON.stringify(tournaments));
+  renderTournaments();
+}
+
+// ── RULES ──
+function switchRules(tab,el){
+  document.querySelectorAll('#page-rules .rltab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('#page-rules .rules-content').forEach(c=>c.classList.remove('show'));
+  el.classList.add('active');
+  document.getElementById('rc-'+tab).classList.add('show');
+}
+function switchGiShop(tab,el){
+  document.querySelectorAll('#page-gishop .rltab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('#page-gishop .rules-content').forEach(c=>c.classList.remove('show'));
+  el.classList.add('active');
+  document.getElementById('gs-'+tab).classList.add('show');
+}
+
+// ── NEWS ──
+function renderNewsMember(){
+  const news=JSON.parse(localStorage.getItem('ambis_news')||'[]');
+  const body=document.getElementById('news-body-member');
+  if(!body) return;
+  const sorted=[...news].sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
+  if(!sorted.length){body.innerHTML='<div class="empty-msg">まだニュースはありません</div>';return;}
+  const catCls={info:'news-cat-info',result:'news-cat-result',event:'news-cat-event',schedule:'news-cat-schedule',other:'news-cat-other'};
+  const catLabel={info:'お知らせ',result:'試合結果',event:'イベント',schedule:'スケジュール変更',other:'その他'};
+  body.innerHTML=sorted.map(n=>`
+    <div class="news-item">
+      <div class="news-cat ${catCls[n.category]||'news-cat-other'}">${catLabel[n.category]||n.category}</div>
+      <div class="news-title">${n.title}</div>
+      <div class="news-body">${n.body}</div>
+      <div class="news-footer">
+        <div class="news-date">${n.createdAt}</div>
+        ${n.lineUrl?`<a href="${n.lineUrl}" target="_blank" class="news-line-btn">LINEで確認</a>`:''}
+      </div>
+    </div>`).join('');
+}
+
+// ── MILESTONE ──
+function renderMilestone(){
+  const grid=document.getElementById('milestone-grid');
+  const progress=document.getElementById('milestone-progress');
+  if(!grid||!progress) return;
+
+  const member=memberId?members.find(m=>m.id===memberId):members.find(m=>m.status==='active');
+  if(!member){grid.innerHTML='<div class="empty-msg">会員情報がありません</div>';return;}
+
+  const myAtt=attendance.filter(a=>a.memberId===member.id);
+  const total=myAtt.length;
+  const now=new Date();
+  const joinDate=member.joindate?new Date(member.joindate):null;
+  const months=joinDate?Math.floor((now-joinDate)/(1000*60*60*24*30.44)):0;
+  const years=months/12;
+
+  const badges=[
+    {id:'att10',icon:'🌱',name:'FIRST STEPS',desc:'累計10回出席',earned:total>=10,progress:Math.min(total,10),max:10,unit:'回'},
+    {id:'att50',icon:'🔥',name:'DEDICATED',desc:'累計50回出席',earned:total>=50,progress:Math.min(total,50),max:50,unit:'回'},
+    {id:'att100',icon:'💯',name:'CENTURY',desc:'累計100回出席',earned:total>=100,progress:Math.min(total,100),max:100,unit:'回'},
+    {id:'att200',icon:'⚡',name:'WARRIOR',desc:'累計200回出席',earned:total>=200,progress:Math.min(total,200),max:200,unit:'回'},
+    {id:'year1',icon:'🥋',name:'ONE YEAR',desc:'在籍1年',earned:years>=1,progress:Math.min(months,12),max:12,unit:'ヶ月'},
+    {id:'year2',icon:'🏆',name:'TWO YEARS',desc:'在籍2年',earned:years>=2,progress:Math.min(months,24),max:24,unit:'ヶ月'},
+    {id:'stripe1',icon:'⭐',name:'FIRST STRIPE',desc:'初めてのストライプ',earned:(member.stripe||0)>=1,progress:Math.min(member.stripe||0,1),max:1,unit:'本'},
+    {id:'belt',icon:'🎯',name:'BELT UP',desc:'初めての帯昇格',earned:member.belt!=='white',progress:member.belt!=='white'?1:0,max:1,unit:''},
+  ];
+
+  grid.innerHTML=badges.map(b=>`
+    <div class="badge-item ${b.earned?'earned':'locked'}">
+      <div class="badge-icon">${b.icon}</div>
+      <div class="badge-name">${b.name}</div>
+      <div class="badge-desc">${b.desc}</div>
+      ${b.earned
+        ?`<div class="badge-earned-label">✓ 達成！</div>`
+        :`<div class="badge-locked-label">${b.progress}/${b.max}${b.unit}</div>`}
+    </div>`).join('');
+
+  // プログレスバー（未達成のもの）
+  const inProgress=badges.filter(b=>!b.earned&&b.progress>0);
+  if(inProgress.length){
+    progress.innerHTML=`<div class="mp-label">PROGRESS</div>`+inProgress.map(b=>{
+      const pct=Math.round((b.progress/b.max)*100);
+      return `<div class="mp-row">
+        <div class="mp-name">${b.icon} ${b.name}</div>
+        <div class="mp-bar-wrap"><div class="mp-bar" style="width:${pct}%"></div></div>
+        <div class="mp-val">${b.progress}/${b.max}</div>
+      </div>`;
+    }).join('');
+  } else {
+    progress.innerHTML='';
+  }
+}
+
+// ── SCHEDULE ──
+// 道場のクラススケジュール（管理アプリで編集・反映）
+function getClassSchedule(){
+  const stored=JSON.parse(localStorage.getItem('ambis_schedule')||'null');
+  if(stored&&stored.length) return stored;
+  return [
+    {id:'d1',dow:1,name:'初心者クラス',start:'19:00',end:'20:00',type:'beginner'},
+    {id:'d2',dow:1,name:'オールレベルクラス',start:'20:00',end:'21:00',type:'all'},
+    {id:'d3',dow:3,name:'初心者クラス',start:'19:00',end:'20:00',type:'beginner'},
+    {id:'d4',dow:3,name:'オールレベルクラス',start:'20:00',end:'21:00',type:'all'},
+    {id:'d5',dow:5,name:'フリーマット',start:'19:00',end:'21:00',type:'free'},
+    {id:'d6',dow:6,name:'オールレベルクラス',start:'10:00',end:'11:30',type:'all'},
+    {id:'d7',dow:6,name:'フリーマット',start:'11:30',end:'12:30',type:'free'},
+  ];
+}
+function getExceptions(){
+  return JSON.parse(localStorage.getItem('ambis_schedule_exceptions')||'[]');
+}
+// 特定日のクラス情報（臨時変更を反映済み）を返す
+// 戻り値: [{name, start, end, type, status}]
+//   status: 'normal' | 'cancel' | 'change' | 'extra'
+function getClassesForDate(ds){
+  const dow=new Date(ds).getDay();
+  const schedule=getClassSchedule();
+  const exceptions=getExceptions().filter(e=>e.date===ds);
+
+  // 該当日の通常クラス
+  let classes=schedule.filter(s=>s.dow===dow).map(s=>({...s,status:'normal'}));
+
+  // 臨時変更を適用
+  exceptions.forEach(exc=>{
+    if(exc.type==='cancel'){
+      // 休講: 対象クラスを除去（対象なし=全部）
+      if(!exc.targetClass){
+        classes=[];
+      } else {
+        classes=classes.filter(c=>c.name!==exc.targetClass);
+      }
+    } else if(exc.type==='change'){
+      // 時間変更
+      if(!exc.targetClass){
+        classes=classes.map(c=>({...c,start:exc.newStart,end:exc.newEnd,status:'change'}));
+      } else {
+        classes=classes.map(c=>c.name===exc.targetClass
+          ?{...c,start:exc.newStart,end:exc.newEnd,status:'change'}:c);
+      }
+    } else if(exc.type==='extra'){
+      // 臨時開催
+      classes.push({id:'extra-'+exc.id,name:exc.targetClass||'臨時開催',start:exc.newStart||'',end:exc.newEnd||'',type:'other',status:'extra'});
+    }
+  });
+  return classes;
+}
+const typeColors={beginner:'#3a5fc8',all:'#27ae60',free:'#c9a96e',other:'#6a7a9a'};
+const typeColorsCancelled={beginner:'#a0aec0',all:'#a0aec0',free:'#a0aec0',other:'#a0aec0'};
+function getSchTypeFromName(name){
+  if(name==='初心者クラス') return 'beginner';
+  if(name==='オールレベルクラス') return 'all';
+  if(name==='フリーマット') return 'free';
+  return 'other';
+}
+
+function renderSchedule(){
+  // 直近の臨時変更を上部に表示
+  const excEl=document.getElementById('upcoming-exceptions');
+  if(excEl){
+    const today=new Date().toISOString().slice(0,10);
+    const soon=new Date(); soon.setDate(soon.getDate()+14);
+    const soonStr=soon.toISOString().slice(0,10);
+    const upcoming=getExceptions()
+      .filter(e=>e.date>=today&&e.date<=soonStr)
+      .sort((a,b)=>a.date.localeCompare(b.date));
+    if(upcoming.length){
+      const excTypeLabel={cancel:'休講',change:'時間変更',extra:'臨時開催'};
+      excEl.innerHTML=`<div style="margin:8px 16px 0;">${upcoming.map(e=>`
+        <div style="background:#fff8e6;border-left:3px solid #c9a96e;border-radius:4px;padding:8px 12px;margin-bottom:6px;font-size:12px;">
+          <span style="font-weight:500;">${e.date}</span>
+          <span style="margin-left:8px;">${excTypeLabel[e.type]||e.type}</span>
+          ${e.targetClass?`<span style="color:var(--text-muted);margin-left:6px;">（${e.targetClass}）</span>`:''}
+          ${e.note?`<div style="color:var(--text-secondary);margin-top:2px;">${e.note}</div>`:''}
+        </div>`).join('')}
+      </div>`;
+    } else {
+      excEl.innerHTML='';
+    }
+  }
+  const tabsEl=document.getElementById('schedule-tabs');
+  const calsEl=document.getElementById('schedule-cals');
+  const listEl=document.getElementById('class-schedule-list');
+  if(!tabsEl||!calsEl||!listEl) return;
+
+  const schedule=getClassSchedule();
+  // 曜日ごとにグループ化
+  const byDow={};
+  schedule.forEach(s=>{
+    if(!byDow[s.dow]) byDow[s.dow]=[];
+    byDow[s.dow].push(s);
+  });
+
+  const now=new Date();
+  const months=[];
+  for(let i=0;i<3;i++){
+    const d=new Date(now.getFullYear(),now.getMonth()+i,1);
+    months.push({key:`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`,label:`${d.getMonth()+1}月`,y:d.getFullYear(),m:d.getMonth()});
+  }
+
+  tabsEl.innerHTML=months.map((mo,i)=>`<div class="smtab${i===0?' active':''}" onclick="switchSchMonth('${mo.key}',this)">${mo.label}</div>`).join('');
+
+  calsEl.innerHTML=months.map((mo,i)=>{
+    const firstDay=new Date(mo.y,mo.m,1).getDay();
+    const days=new Date(mo.y,mo.m+1,0).getDate();
+    const todayStr=now.toISOString().slice(0,10);
+    let cells='';
+    for(let p=0;p<firstDay;p++) cells+=`<div></div>`;
+    for(let d=1;d<=days;d++){
+      const date=new Date(mo.y,mo.m,d);
+      const dow=date.getDay();
+      const ds=`${mo.y}-${String(mo.m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}` ;
+      const dayClasses=getClassesForDate(ds);
+      const isToday=ds===todayStr;
+      const baseHasClass=byDow[dow]&&byDow[dow].length>0;
+      const hasClass=dayClasses.length>0;
+      const allCancelled=baseHasClass&&!hasClass;
+      const dayDots=dayClasses.map(c=>{
+        const type=c.type||getSchTypeFromName(c.name);
+        const clr=c.status==='cancel'?'#a0aec0':typeColors[type]||'#c9a96e';
+        const bdr=c.status==='change'?`border:1.5px solid ${clr};background:transparent;`:`background:${clr};`;
+        return `<div class="sch-dot" style="${bdr}"></div>`;
+      }).join('');
+      const cancelDot=allCancelled?`<div class="sch-dots"><div class="sch-dot" style="background:#a0aec0;opacity:0.5;"></div></div>`:'';
+      cells+=`<div class="sch-day${(hasClass||allCancelled)?' has-class':''}">${d}${hasClass?`<div class="sch-dots">${dayDots}</div>`:cancelDot}</div>`;
+    }
+    return `<div class="schedule-cal-wrap${i===0?' show':''}" id="sch-${mo.key}">
+      <div class="sch-day-labels">${['日','月','火','水','木','金','土'].map(l=>`<div class="sch-day-lbl">${l}</div>`).join('')}</div>
+      <div class="sch-grid">${cells}</div>
+    </div>`;
+  }).join('');
+
+  // クラス一覧
+  const dayNames=['日','月','火','水','木','金','土'];
+  const sortedDows=Object.keys(byDow).map(Number).sort((a,b)=>a-b);
+  if(!sortedDows.length){
+    listEl.innerHTML=`<div class="empty-msg">クラス情報がまだ登録されていません</div>`;
+    return;
+  }
+  listEl.innerHTML=sortedDows.map(dow=>{
+    const classes=[...byDow[dow]].sort((a,b)=>a.start.localeCompare(b.start));
+    return `<div style="margin-bottom:10px;">
+      <div style="font-size:10px;letter-spacing:1px;color:var(--text-muted);margin-bottom:5px;">毎週${dayNames[dow]}曜日</div>
+      ${classes.map(c=>`
+        <div class="class-row">
+          <div class="class-row-dot" style="background:${typeColors[c.type||getSchTypeFromName(c.name)]||'#ccc'};"></div>
+          <div class="class-row-info">
+            <div class="class-row-name">${c.name}</div>
+            <div class="class-row-time">${c.start} - ${c.end}</div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+  }).join('');
+}
+
+function switchSchMonth(key,el){
+  document.querySelectorAll('.smtab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.schedule-cal-wrap').forEach(c=>c.classList.remove('show'));
+  el.classList.add('active');
+  const cal=document.getElementById('sch-'+key);
+  if(cal) cal.classList.add('show');
+}
+
+// ── MATCH RECORD ──
+let editingRecordId=null;
+const recordResultLabel={gold:'🥇 優勝',silver:'🥈 準優勝',bronze:'🥉 3位',join:'出場'};
+const recordResultCls={gold:'result-gold',silver:'result-silver',bronze:'result-bronze',join:'result-join'};
+const recordLeagueLabel={jbjjf:'JBJJF',asjjf:'ASJJF',other:'その他'};
+
+function getMyRecords(){
+  const member=memberId?members.find(m=>m.id===memberId):members.find(m=>m.status==='active');
+  if(!member) return [];
+  const all=JSON.parse(localStorage.getItem('ambis_match_records')||'[]');
+  return all.filter(r=>r.memberId===member.id);
+}
+function saveMyRecords(updated,memberId){
+  const all=JSON.parse(localStorage.getItem('ambis_match_records')||'[]');
+  const others=all.filter(r=>r.memberId!==memberId);
+  localStorage.setItem('ambis_match_records',JSON.stringify([...others,...updated]));
+}
+
+function renderRecord(){
+  const member=memberId?members.find(m=>m.id===memberId):members.find(m=>m.status==='active');
+  const statsEl=document.getElementById('record-stats');
+  const listEl=document.getElementById('record-list');
+  if(!statsEl||!listEl||!member) return;
+
+  const records=getMyRecords().sort((a,b)=>b.date.localeCompare(a.date));
+  const gold=records.filter(r=>r.result==='gold').length;
+  const silver=records.filter(r=>r.result==='silver').length;
+  const bronze=records.filter(r=>r.result==='bronze').length;
+
+  statsEl.innerHTML=`
+    <div class="rs-item"><div class="rs-val">${records.length}</div><div class="rs-lbl">出場回数</div></div>
+    <div class="rs-item"><div class="rs-val">🥇${gold}</div><div class="rs-lbl">優勝</div></div>
+    <div class="rs-item"><div class="rs-val">🥈${silver}</div><div class="rs-lbl">準優勝</div></div>
+    <div class="rs-item"><div class="rs-val">🥉${bronze}</div><div class="rs-lbl">3位</div></div>`;
+
+  if(!records.length){
+    listEl.innerHTML=`<div class="empty-msg">まだ戦歴がありません。<br>初めての試合を記録してみましょう。</div>`;
+    return;
+  }
+  listEl.innerHTML=records.map(r=>`
+    <div class="record-item">
+      <div class="record-top">
+        <span class="record-result ${recordResultCls[r.result]||'result-join'}">${recordResultLabel[r.result]||r.result}</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="record-date">${r.date}</span>
+          <div class="record-actions"><button class="record-edit-btn" onclick="openRecordModal('${r.id}')">編集</button></div>
+        </div>
+      </div>
+      <div class="record-name">${r.name}</div>
+      <div class="record-meta">
+        ${r.league?`<span class="record-tag">${recordLeagueLabel[r.league]||r.league}</span>`:''}
+        ${r.weight?`<span class="record-tag">${r.weight}</span>`:''}
+        ${r.format?`<span class="record-tag">${r.format==='gi'?'道着':'ノーギ'}</span>`:''}
+      </div>
+      ${r.comment?`<div class="record-comment">${r.comment}</div>`:''}
+    </div>`).join('');
+}
+
+function openRecordModal(id){
+  editingRecordId=id||null;
+  if(id){
+    const records=getMyRecords();
+    const r=records.find(x=>x.id===id);
+    if(!r) return;
+    document.getElementById('rm-title').textContent='試合結果を編集';
+    document.getElementById('r-name').value=r.name;
+    document.getElementById('r-date').value=r.date;
+    document.getElementById('r-league').value=r.league||'';
+    document.getElementById('r-weight').value=r.weight||'';
+    document.getElementById('r-format').value=r.format||'gi';
+    document.getElementById('r-result').value=r.result;
+    document.getElementById('r-comment').value=r.comment||'';
+    document.getElementById('r-delete-btn').style.display='inline-flex';
+  } else {
+    document.getElementById('rm-title').textContent='試合結果を記録';
+    document.getElementById('r-name').value='';
+    document.getElementById('r-date').value=new Date().toISOString().slice(0,10);
+    document.getElementById('r-league').value='';
+    document.getElementById('r-weight').value='';
+    document.getElementById('r-format').value='gi';
+    document.getElementById('r-result').value='join';
+    document.getElementById('r-comment').value='';
+    document.getElementById('r-delete-btn').style.display='none';
+  }
+  document.getElementById('rm-overlay').classList.add('open');
+}
+function closeRecordModal(){
+  document.getElementById('rm-overlay').classList.remove('open');
+}
+
+function saveRecord(){
+  const member=memberId?members.find(m=>m.id===memberId):members.find(m=>m.status==='active');
+  if(!member) return;
+  const name=document.getElementById('r-name').value.trim();
+  const date=document.getElementById('r-date').value;
+  if(!name||!date){alert('大会名と開催日を入力してください');return;}
+
+  let records=getMyRecords();
+  const data={
+    memberId:member.id,
+    name,date,
+    league:document.getElementById('r-league').value,
+    weight:document.getElementById('r-weight').value.trim(),
+    format:document.getElementById('r-format').value,
+    result:document.getElementById('r-result').value,
+    comment:document.getElementById('r-comment').value.trim(),
+  };
+  if(editingRecordId){
+    records=records.map(r=>r.id===editingRecordId?{...r,...data}:r);
+  } else {
+    records.push({id:'rec-'+Date.now(),...data});
+  }
+  saveMyRecords(records,member.id);
+  closeRecordModal();
+  renderRecord();
+}
+
+function deleteRecord(){
+  const member=memberId?members.find(m=>m.id===memberId):members.find(m=>m.status==='active');
+  if(!member||!editingRecordId) return;
+  let records=getMyRecords().filter(r=>r.id!==editingRecordId);
+  saveMyRecords(records,member.id);
+  closeRecordModal();
+  renderRecord();
+}
+
+// ── INIT ──
+window.addEventListener('load',initCard);
+</script>
+</div><!-- /member-app-screen -->
+</body>
+</html>
