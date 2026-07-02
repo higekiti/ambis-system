@@ -87,7 +87,7 @@ async function checkAndLogin(user) {
 }
 
 // 認証状態の監視
-onAuthStateChanged(auth, (user) => {
+getRedirectResult(auth).catch(e => console.error('Google redirect login error:', e)); onAuthStateChanged(auth, (user) => {
   checkAndLogin(user);
 });
 </script>
