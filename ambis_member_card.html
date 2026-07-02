@@ -95,11 +95,11 @@ async function loadAndInit(user){
 
 // ── Googleログインボタン ──
 window.memberGoogleLogin = async () => {
-  document.getElementById('member-login-error').style.display = 'none';
+  if(/FBAN|FBAV|Instagram|Line\/|MicroMessenger|Twitter/i.test(navigator.userAgent)){ showMemberLogin('アプリ内ブラウザではGoogleログインできません。右上のメニューから「ブラウザで開く」を選択してSafariまたはChromeで開き直してください。'); return; } document.getElementById('member-login-error').style.display = 'none';
   try {
     await signInWithPopup(auth, googleProvider);
   } catch(e) {
-    showMemberLogin('ログインに失敗しました。もう一度お試しください。');
+    console.error('Google login error:', e); if(e && e.code==='auth/popup-blocked'){ signInWithRedirect(auth, googleProvider).catch(e2=>console.error('redirect error:',e2)); return; } if(e && (e.code==='auth/popup-closed-by-user'||e.code==='auth/cancelled-popup-request')){ return; } showMemberLogin((e && e.code==='auth/unauthorized-domain') ? 'このドメインではGoogleログインが許可されていません。管理者にご連絡ください。' : 'ログインに失敗しました。もう一度お試しください。');
   }
 };
 
@@ -108,7 +108,7 @@ window.memberLogout = async () => {
 };
 
 // ── 認証状態の監視 ──
-onAuthStateChanged(auth, (user) => {
+getRedirectResult(auth).catch(e => console.error('Google redirect login error:', e)); onAuthStateChanged(auth, (user) => {
   if(user){
     // すでにアプリ表示済みなら何もしない（トークン更新時の誤動作を防ぐ）
     if(appReady) return;
