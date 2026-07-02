@@ -2980,6 +2980,7 @@ window.initApp = async function(){
   }
 
   // 画面を初期化
+  document.getElementById('att-date-input').value = new Date().toISOString().slice(0,10);
   rebuildSelects();
   renderMembers(members);
   showPage('members', document.getElementById('nav-members'));
@@ -3033,10 +3034,6 @@ if(!members.length){
   ];
   saveAll();
 }
-
-document.getElementById('att-date-input').value=new Date().toISOString().slice(0,10);
-rebuildSelects();
-renderMembers(members);
 </script>
 </div><!-- /app-screen -->
 </body>
