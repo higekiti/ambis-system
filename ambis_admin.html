@@ -35,7 +35,7 @@ window.fbSignIn = async (email, password) => {
 window.fbSignInGoogle = async () => {
   return signInWithPopup(auth, googleProvider);
 };
-awindow.fbSignInGoogleRedirect = async () => { return signInWithRedirect(auth, googleProvider); }; window.fbSignOut = async () => {
+window.fbSignInGoogleRedirect = async () => { return signInWithRedirect(auth, googleProvider); }; window.fbSignOut = async () => {
   return signOut(auth);
 };
 window.fbGetDocs = getDocs;
