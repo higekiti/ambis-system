@@ -3007,6 +3007,27 @@ function showToast(msg){
   setTimeout(()=>t.classList.remove('show'),2800);
 }
 
+// ══ グローバル公開（type="module"はトップレベル関数をwindowに自動公開しないため、onclick属性から呼べるように明示的に公開する） ══
+window.showPage=showPage;window.openMemberModal=openMemberModal;window.closeMemberModal=closeMemberModal;
+window.addAttendance=addAttendance;window.changeRentalCalMonth=changeRentalCalMonth;window.closeExceptionModal=closeExceptionModal;
+window.closeRentalModal=closeRentalModal;window.closeScheduleModal=closeScheduleModal;window.closeSidebar=closeSidebar;
+window.closeTournamentModal=closeTournamentModal;window.closeTrialModal=closeTrialModal;window.deleteAttendance=deleteAttendance;
+window.deleteCoachingNote=deleteCoachingNote;window.deleteExceptionFromModal=deleteExceptionFromModal;window.deleteMember=deleteMember;
+window.deleteNews=deleteNews;window.deleteRentalBooking=deleteRentalBooking;window.deleteScheduleFromModal=deleteScheduleFromModal;
+window.deleteTournament=deleteTournament;window.deleteTrial=deleteTrial;window.downloadQR=downloadQR;
+window.exportAttCSV=exportAttCSV;window.exportCSV=exportCSV;window.filterTournament=filterTournament;
+window.filterTrial=filterTrial;window.goToRentalToday=goToRentalToday;window.handleEmailLogin=handleEmailLogin;
+window.handleGoogleLogin=handleGoogleLogin;window.handleLogout=handleLogout;window.markPaid=markPaid;
+window.markRentalPaid=markRentalPaid;window.openBeltModal=openBeltModal;window.openCoachingModal=openCoachingModal;
+window.openDeleteModal=openDeleteModal;window.openExceptionModal=openExceptionModal;window.openNewsModal=openNewsModal;
+window.openRentalDeleteModal=openRentalDeleteModal;window.openRentalModal=openRentalModal;window.openScheduleModal=openScheduleModal;
+window.openSidebar=openSidebar;window.openTournamentModal=openTournamentModal;window.openTrialDeleteModal=openTrialDeleteModal;
+window.openTrialModal=openTrialModal;window.saveBeltHistory=saveBeltHistory;window.saveCoachingNote=saveCoachingNote;
+window.saveException=saveException;window.saveMember=saveMember;window.saveNews=saveNews;
+window.saveRentalBooking=saveRentalBooking;window.saveSchedule=saveSchedule;window.saveTournament=saveTournament;
+window.saveTrial=saveTrial;window.showQR=showQR;window.showRentalView=showRentalView;
+window.showScheduleTab=showScheduleTab;
+
 // ══ INIT ══
 if(!members.length){
   const today=new Date().toISOString().slice(0,10);
