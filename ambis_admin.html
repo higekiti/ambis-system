@@ -35,7 +35,7 @@ window.fbSignIn = async (email, password) => {
 window.fbSignInGoogle = async () => {
   return signInWithPopup(auth, googleProvider);
 };
-window.fbSignOut = async () => {
+awindow.fbSignInGoogleRedirect = async () => { return signInWithRedirect(auth, googleProvider); }; window.fbSignOut = async () => {
   return signOut(auth);
 };
 window.fbGetDocs = getDocs;
@@ -2872,7 +2872,7 @@ async function handleGoogleLogin(){
   try {
     await window.fbSignInGoogle();
   } catch(e) {
-    errEl.textContent = 'Googleログインに失敗しました';
+    console.error('Google login error:', e); if(e && e.code==='auth/popup-blocked'){ window.fbSignInGoogleRedirect().catch(e2=>console.error('redirect error:',e2)); return; } if(e && (e.code==='auth/popup-closed-by-user'||e.code==='auth/cancelled-popup-request')){ return; } errEl.textContent = (e && e.code==='auth/unauthorized-domain') ? 'このドメインではGoogleログインが許可されていません。管理者にご連絡ください。' : 'Googleログインに失敗しました';
     errEl.style.display = 'block';
   }
 }
