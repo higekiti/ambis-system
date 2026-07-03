@@ -8,7 +8,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, doc, getDocs, addDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, doc, getDocs, addDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"; import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBA3sfUh7i2gldOXaHILJYlS4cu3YmnIyg",
@@ -20,7 +20,7 @@ const firebaseConfig = {
 };
 
 const fbApp = initializeApp(firebaseConfig);
-const db = getFirestore(fbApp);
+const db = getFirestore(fbApp); const auth = getAuth(fbApp);
 
 window.fbDb = db;
 window.fbCollection = collection;
@@ -30,7 +30,7 @@ window.fbAddDoc = addDoc;
 window.fbUpdateDoc = updateDoc;
 
 // 起動時にFirestoreから会員・出席データを取得
-window.addEventListener('load', async () => {
+window.addEventListener('load', async () => { try{await signInAnonymously(auth);}catch(e){console.warn('signInAnonymously failed:',e);}
   try {
     const [mSnap, aSnap] = await Promise.all([
       getDocs(collection(db, 'members')),
