@@ -133,8 +133,8 @@ getRedirectResult(auth).catch(e => console.error('Google redirect login error:',
   --shadow:0 2px 12px rgba(10,22,40,0.08);
   --shadow-lg:0 8px 32px rgba(10,22,40,0.14);
 }
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding-bottom:80px;}
+html{overflow-x:hidden;-webkit-text-size-adjust:100%;} *{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding-bottom:80px;overflow-x:hidden;}
 
 /* ── TOPBAR ── */
 .topbar{width:100%;background:var(--navy);display:flex;align-items:center;justify-content:space-between;padding:14px 18px;position:sticky;top:0;z-index:100;}
