@@ -2891,7 +2891,7 @@ async function saveToFirestore(collectionName, dataArray){
     });
     await batch.commit();
   } catch(e) {
-    console.warn('Firestore save error:', collectionName, e.message);
+    console.warn('Firestore save error:', collectionName, e.message); const __now=Date.now(); if(__now-(window.__fsErrorToastAt||0)>5000){window.__fsErrorToastAt=__now; showToast('⚠ クラウド同期に失敗しました（この端末には保存済み）');}
   }
 }
 
