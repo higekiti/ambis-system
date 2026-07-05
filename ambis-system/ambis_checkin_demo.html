@@ -416,7 +416,7 @@ function renderDemoCards(){
 function playTone(freq,duration,delay,type){try{if(!window.__ambisAudioCtx)window.__ambisAudioCtx=new (window.AudioContext||window.webkitAudioContext)();const ctx=window.__ambisAudioCtx;const osc=ctx.createOscillator();const gain=ctx.createGain();osc.type=type||'sine';osc.frequency.value=freq;const startTime=ctx.currentTime+(delay||0);osc.connect(gain);gain.connect(ctx.destination);gain.gain.setValueAtTime(0.0001,startTime);gain.gain.exponentialRampToValueAtTime(0.2,startTime+0.01);gain.gain.exponentialRampToValueAtTime(0.0001,startTime+duration);osc.start(startTime);osc.stop(startTime+duration+0.05);}catch(e){console.error('sound error:',e);}}function playScanSound(){playTone(880,0.1,0,'sine');}function playCheckinSound(){playTone(659,0.12,0,'sine');playTone(880,0.16,0.11,'sine');}function simulateScan(memberId){
   loadData();
   const member=members.find(m=>m.id===memberId&&m.status==='active');
-  if(!member)return;
+  if(!member)return;if(currentMember&&currentMember.id===member.id)return;
   playScanSound();currentMember=member;selectedClass=null;
   showMemberPanel(member);
 }
