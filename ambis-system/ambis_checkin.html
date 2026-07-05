@@ -437,7 +437,7 @@ function handleQR(data){
   catch(e){if(data.startsWith('AMBIs-'))memberId=data;}
   if(!memberId)return;
   const member=members.find(m=>m.id===memberId&&m.status==='active');
-  if(!member)return;
+  if(!member)return;if(currentMember&&currentMember.id===member.id)return;
   playScanSound();currentMember=member;selectedClass=null;
   showMemberPanel(member);
 }
