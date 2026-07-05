@@ -392,6 +392,7 @@ textarea{resize:vertical;min-height:60px;}
 .login-error{color:#e74c3c;font-size:12px;margin-bottom:10px;text-align:center;display:none;}
 
 </style>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -443,6 +444,7 @@ textarea{resize:vertical;min-height:60px;}
     <div class="nav-item" onclick="showPage('belt',this);closeSidebar()"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg></span>昇格履歴</div>
     <div class="nav-label">CARE</div>
     <div class="nav-item" onclick="showPage('dormant',this);closeSidebar()"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span>休眠アラート</div>
+    <div class="nav-item" onclick="showPage('analytics',this);closeSidebar()"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg></span>出席分析</div>
     <div class="nav-item" onclick="showPage('coaching',this);closeSidebar()"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>コーチングノート</div>
     <div class="nav-item" onclick="showPage('birthday',this);closeSidebar()"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8"/><path d="M4 16s.5-1 2-1 2.5 2 4 2 2.5-2 4-2 2.5 2 4 2 2-1 2-1"/><path d="M2 21h20"/><path d="M7 8v3"/><path d="M12 8v3"/><path d="M17 8v3"/><path d="M7 4h.01"/><path d="M12 4h.01"/><path d="M17 4h.01"/></svg></span>誕生日管理</div>
     <div class="nav-item" onclick="showPage('news',this);closeSidebar()"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg></span>道場ニュース</div>
@@ -617,6 +619,48 @@ textarea{resize:vertical;min-height:60px;}
       <div class="table-wrap">
         <div style="padding:16px 18px;" id="withdrawal-reasons-body"></div>
         <div class="empty-state" id="empty-withdrawal" style="display:none;"><p>退会理由のデータはまだありません</p></div>
+      </div>
+    </div>
+
+    <!-- ══ PAGE: ANALYTICS ══ -->
+    <div class="page" id="page-analytics">
+      <div class="stats-row">
+        <div class="stat-card"><div class="label">今月の総出席数</div><div class="value" id="an-month-total">0</div></div>
+        <div class="stat-card"><div class="label">今月の出席会員数</div><div class="value" id="an-month-members">0</div><div class="sub" id="an-month-members-sub"></div></div>
+        <div class="stat-card gold"><div class="label">平均来館回数（今月）</div><div class="value" id="an-month-avg">0</div><div class="sub">回/人</div></div>
+      </div>
+
+      <div class="section-header"><div class="section-title">月別出席推移（直近12ヶ月）</div></div>
+      <div class="table-wrap" style="padding:16px;">
+        <div id="an-monthly-chart" class="bar-chart"></div>
+      </div>
+
+      <div class="section-header"><div class="section-title">曜日・時間帯別 来場ヒートマップ（直近90日）</div></div>
+      <div class="table-wrap" style="padding:16px;overflow-x:auto;">
+        <div id="an-heatmap"></div>
+      </div>
+
+      <div class="section-header"><div class="section-title">会員別出席サマリー</div></div>
+      <div style="display:flex;gap:8px;padding:0 16px 12px;flex-wrap:wrap;align-items:center;">
+        <input type="text" id="an-search" placeholder="会員名で検索" oninput="renderAnalyticsTable()" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;">
+        <select id="an-sort" onchange="renderAnalyticsTable()" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;">
+          <option value="recency">最終来館が古い順</option>
+          <option value="month-desc">今月の出席数が多い順</option>
+          <option value="total-desc">累計出席数が多い順</option>
+          <option value="name">名前順</option>
+        </select>
+        <label style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:4px;"><input type="checkbox" id="an-followup-only" onchange="renderAnalyticsTable()">要フォローのみ表示</label>
+        <button class="btn btn-ghost btn-sm" onclick="exportAnalyticsExcel()" style="margin-left:auto;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Excel出力</button>
+      </div>
+      <div class="table-wrap">
+        <table><thead><tr><th>会員</th><th>帯</th><th>今月</th><th>先月</th><th>直近3ヶ月</th><th>累計</th><th>最終来館日</th><th>状態</th></tr></thead>
+        <tbody id="an-tbody"></tbody></table>
+        <div class="empty-state" id="an-empty" style="display:none;"><div>該当する会員がいません</div></div>
+      </div>
+
+      <div class="section-header"><div class="section-title">新規会員 定着率（コホート分析）</div></div>
+      <div class="table-wrap" style="padding:16px;overflow-x:auto;">
+        <table id="an-cohort-table"><thead><tr id="an-cohort-head"></tr></thead><tbody id="an-cohort-tbody"></tbody></table>
       </div>
     </div>
 
@@ -1343,7 +1387,7 @@ function showPage(page, el) {
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
   if(el) el.classList.add('active');
-  const titles={members:'会員管理',attendance:'出席記録',belt:'昇格履歴',dormant:'休眠アラート',coaching:'コーチングノート',birthday:'誕生日管理',news:'道場ニュース',schedule:'練習カレンダー管理',rental:'レンタル管理',trial:'体験・ビジター管理',tournament:'注目大会管理',payment:'支払い管理'};
+  const titles={members:'会員管理',attendance:'出席記録',belt:'昇格履歴',dormant:'休眠アラート',coaching:'コーチングノート',birthday:'誕生日管理',news:'道場ニュース',schedule:'練習カレンダー管理',rental:'レンタル管理',trial:'体験・ビジター管理',tournament:'注目大会管理',payment:'支払い管理',analytics:'出席分析'};
   document.getElementById('page-title').textContent = titles[page]||'';
 
   const actionsEl = document.getElementById('topbar-actions');
@@ -1384,6 +1428,9 @@ function showPage(page, el) {
   } else if(page==='payment'){
     actionsEl.innerHTML='';
     renderPayment();
+  } else if(page === 'analytics'){
+    actionsEl.innerHTML = '';
+    renderAnalytics();
   }
 }
 
@@ -2614,6 +2661,234 @@ function deleteTournament(id){
 }
 
 // ══ DORMANT ALERT ══
+// ══ ATTENDANCE ANALYTICS ══
+function computeMemberAttendanceStats(){
+  const now = new Date();
+  const todayStr = now.toISOString().slice(0,10);
+  const ymThis = todayStr.slice(0,7);
+  const prevMonthDate = new Date(now.getFullYear(), now.getMonth()-1, 1);
+  const ymPrev = `${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth()+1).padStart(2,'0')}`;
+  const d3mAgoStr = new Date(now.getFullYear(), now.getMonth()-3, now.getDate()).toISOString().slice(0,10);
+  const d56AgoStr = new Date(now.getTime()-56*24*60*60*1000).toISOString().slice(0,10);
+  return members.filter(m=>m.status==='active').map(m=>{
+    const myAtt = attendance.filter(a=>a.memberId===m.id);
+    const thisMonth = myAtt.filter(a=>a.date && a.date.startsWith(ymThis)).length;
+    const lastMonthCount = myAtt.filter(a=>a.date && a.date.startsWith(ymPrev)).length;
+    const last3m = myAtt.filter(a=>a.date && a.date>=d3mAgoStr).length;
+    const last8w = myAtt.filter(a=>a.date && a.date>=d56AgoStr).length;
+    const total = myAtt.length;
+    const sorted = myAtt.slice().sort((a,b)=>b.date.localeCompare(a.date));
+    const lastDate = sorted.length ? sorted[0].date : (m.joindate||'');
+    const diffDays = lastDate ? Math.floor((now-new Date(lastDate))/(1000*60*60*24)) : 999;
+    let statusLabel;
+    if(diffDays>90) statusLabel='高リスク';
+    else if(diffDays>30) statusLabel='要フォロー';
+    else if(diffDays>14) statusLabel='注意';
+    else if(last8w>=24) statusLabel='常連';
+    else if(last8w>=8) statusLabel='レギュラー';
+    else statusLabel='たまに';
+    return {member:m, thisMonth, lastMonthCount, last3m, last8w, total, lastDate, diffDays, statusLabel};
+  });
+}
+
+function statusBadgeHtml(label){
+  if(label==='高リスク') return '<span class="status-pill status-left">高リスク</span>';
+  if(label==='要フォロー') return '<span class="status-pill status-inactive">要フォロー</span>';
+  const inline = {
+    '注意':'background:#fff8e6;color:#e67e22;',
+    '常連':'background:#fdf3e0;color:#b8860b;',
+    'レギュラー':'background:#eafaf1;color:#1e8449;',
+    'たまに':'background:#f2f2f2;color:#777;'
+  };
+  return `<span class="status-pill" style="${inline[label]}">${label}</span>`;
+}
+
+function renderAnalyticsSummaryCards(){
+  const now = new Date();
+  const ymThis = now.toISOString().slice(0,7);
+  const monthAtt = attendance.filter(a=>a.date && a.date.startsWith(ymThis));
+  const monthTotal = monthAtt.length;
+  const uniqueMemberIds = new Set(monthAtt.map(a=>a.memberId));
+  const activeMembers = members.filter(m=>m.status==='active');
+  const elTotal = document.getElementById('an-month-total');
+  const elMembers = document.getElementById('an-month-members');
+  const elMembersSub = document.getElementById('an-month-members-sub');
+  const elAvg = document.getElementById('an-month-avg');
+  if(elTotal) elTotal.textContent = monthTotal;
+  if(elMembers) elMembers.textContent = uniqueMemberIds.size;
+  if(elMembersSub) elMembersSub.textContent = `/ ${activeMembers.length}名中`;
+  if(elAvg) elAvg.textContent = uniqueMemberIds.size ? (monthTotal/uniqueMemberIds.size).toFixed(1) : '0';
+}
+
+function renderAnalyticsMonthlyChart(){
+  const chart = document.getElementById('an-monthly-chart');
+  if(!chart) return;
+  const now = new Date();
+  const months = [];
+  for(let i=11;i>=0;i--){
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const label = `${d.getMonth()+1}月`;
+    const count = attendance.filter(a=>a.date && a.date.startsWith(key)).length;
+    months.push({label,count});
+  }
+  const max = Math.max(...months.map(m=>m.count),1);
+  chart.innerHTML = months.map(m=>{
+    const h = Math.round((m.count/max)*100);
+    return `<div class="bar-col"><div class="bar-val">${m.count}</div><div class="bar" style="height:${h}px;"></div><div class="bar-label">${m.label}</div></div>`;
+  }).join('');
+}
+
+function renderAnalyticsHeatmap(){
+  const el = document.getElementById('an-heatmap');
+  if(!el) return;
+  const now = new Date();
+  const d90AgoStr = new Date(now.getTime()-90*24*60*60*1000).toISOString().slice(0,10);
+  const recent = attendance.filter(a=>a.date && a.date>=d90AgoStr && a.time);
+  const dowLabels = ['日','月','火','水','木','金','土'];
+  const hours = [];
+  for(let h=6; h<=21; h++) hours.push(h);
+  const grid = {};
+  dowLabels.forEach((_,di)=>{ grid[di]={}; hours.forEach(h=>grid[di][h]=0); });
+  recent.forEach(a=>{
+    const d = new Date(a.date+'T00:00:00');
+    const dow = d.getDay();
+    let hr = parseInt((a.time||'0:0').split(':')[0],10);
+    if(isNaN(hr)) return;
+    hr = Math.min(Math.max(hr,6),21);
+    if(grid[dow]) grid[dow][hr] = (grid[dow][hr]||0)+1;
+  });
+  let max=1;
+  dowLabels.forEach((_,di)=>hours.forEach(h=>{ if(grid[di][h]>max) max=grid[di][h]; }));
+  let html = '<table style="border-collapse:collapse;font-size:11px;"><thead><tr><th style="padding:4px 8px;"></th>';
+  hours.forEach(h=>{ html += `<th style="padding:4px 6px;color:var(--text-muted);font-weight:400;">${h}時</th>`; });
+  html += '</tr></thead><tbody>';
+  dowLabels.forEach((label,di)=>{
+    html += `<tr><td style="padding:4px 8px;color:var(--text-muted);">${label}</td>`;
+    hours.forEach(h=>{
+      const v = grid[di][h]||0;
+      const alpha = v ? (0.15+0.85*(v/max)) : 0.04;
+      const textColor = (v && alpha>0.5) ? '#fff' : 'var(--text-muted)';
+      html += `<td style="padding:0;"><div title="${label}曜 ${h}時: ${v}件" style="width:26px;height:22px;background:rgba(10,22,40,${alpha.toFixed(2)});border-radius:3px;margin:2px;display:flex;align-items:center;justify-content:center;font-size:9px;color:${textColor};">${v||''}</div></td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
+
+function renderAnalyticsTable(){
+  const tbody = document.getElementById('an-tbody');
+  if(!tbody) return;
+  const empty = document.getElementById('an-empty');
+  const q = (document.getElementById('an-search').value||'').toLowerCase();
+  const sortMode = document.getElementById('an-sort').value;
+  const followupOnly = document.getElementById('an-followup-only').checked;
+  let stats = computeMemberAttendanceStats();
+  if(q) stats = stats.filter(s=>s.member.name.toLowerCase().includes(q));
+  if(followupOnly) stats = stats.filter(s=>s.diffDays>14);
+  if(sortMode==='recency') stats.sort((a,b)=>b.diffDays-a.diffDays);
+  else if(sortMode==='month-desc') stats.sort((a,b)=>b.thisMonth-a.thisMonth);
+  else if(sortMode==='total-desc') stats.sort((a,b)=>b.total-a.total);
+  else stats.sort((a,b)=>a.member.name.localeCompare(b.member.name,'ja'));
+  if(!stats.length){ tbody.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+  tbody.innerHTML = stats.map(s=>{
+    const m = s.member;
+    const belt = (beltMap[m.belt]||beltMap.white);
+    const av = m.photo ? `<img src="${m.photo}" alt="">` : (m.name||'').slice(0,2);
+    return `<tr>
+      <td><div class="member-cell"><div class="avatar">${av}</div><div class="member-name-cell"><div class="name">${m.name}</div><div class="id">${m.id}</div></div></div></td>
+      <td><span class="belt-pill ${belt.cls}"><span class="belt-dot"></span>${belt.label}</span></td>
+      <td>${s.thisMonth}</td>
+      <td>${s.lastMonthCount}</td>
+      <td>${s.last3m}</td>
+      <td>${s.total}</td>
+      <td>${s.lastDate||'-'}${s.lastDate?`<div style="color:var(--text-muted);font-size:11px;">${s.diffDays}日前</div>`:''}</td>
+      <td>${statusBadgeHtml(s.statusLabel)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderAnalyticsCohortTable(){
+  const head = document.getElementById('an-cohort-head');
+  const tbody = document.getElementById('an-cohort-tbody');
+  if(!head || !tbody) return;
+  const monthsOut = 6;
+  const cohorts = {};
+  members.forEach(m=>{
+    if(!m.joindate) return;
+    const key = m.joindate.slice(0,7);
+    if(!cohorts[key]) cohorts[key] = [];
+    cohorts[key].push(m);
+  });
+  const cohortKeys = Object.keys(cohorts).sort();
+  head.innerHTML = '<th>入会月</th><th>人数</th>' + Array.from({length:monthsOut+1},(_,i)=>`<th>${i}ヶ月後</th>`).join('');
+  const now = new Date();
+  const rows = cohortKeys.map(key=>{
+    const parts = key.split('-').map(Number);
+    const y = parts[0], mo = parts[1];
+    const cohortMembers = cohorts[key];
+    const cells = [];
+    for(let i=0;i<=monthsOut;i++){
+      const targetDate = new Date(y, mo-1+i, 1);
+      if(targetDate > now){ cells.push('-'); continue; }
+      const targetKey = `${targetDate.getFullYear()}-${String(targetDate.getMonth()+1).padStart(2,'0')}`;
+      const activeCount = cohortMembers.filter(m=>attendance.some(a=>a.memberId===m.id && a.date && a.date.startsWith(targetKey))).length;
+      const pct = cohortMembers.length ? Math.round((activeCount/cohortMembers.length)*100) : 0;
+      cells.push(`${pct}%`);
+    }
+    return `<tr><td>${y}年${mo}月</td><td>${cohortMembers.length}名</td>${cells.map(c=>`<td>${c}</td>`).join('')}</tr>`;
+  });
+  tbody.innerHTML = rows.length ? rows.join('') : `<tr><td colspan="${monthsOut+2}" style="text-align:center;color:var(--text-muted);padding:16px;">データがまだありません</td></tr>`;
+}
+
+function renderAnalytics(){
+  renderAnalyticsSummaryCards();
+  renderAnalyticsMonthlyChart();
+  renderAnalyticsHeatmap();
+  renderAnalyticsTable();
+  renderAnalyticsCohortTable();
+}
+
+function exportAnalyticsExcel(){
+  if(typeof XLSX === 'undefined'){ showToast('Excel出力ライブラリの読み込みに失敗しました'); return; }
+  const stats = computeMemberAttendanceStats();
+  const now = new Date();
+  const wsSummaryData = [['会員ID','会員名','帯','今月','先月','直近3ヶ月','累計','最終来館日','経過日数','状態']];
+  stats.forEach(s=>{
+    const belt = (beltMap[s.member.belt]||beltMap.white).label;
+    wsSummaryData.push([s.member.id, s.member.name, belt, s.thisMonth, s.lastMonthCount, s.last3m, s.total, s.lastDate||'', s.lastDate?s.diffDays:'', s.statusLabel]);
+  });
+  const wsSummary = XLSX.utils.aoa_to_sheet(wsSummaryData);
+  wsSummary['!cols'] = [{wch:10},{wch:14},{wch:10},{wch:8},{wch:8},{wch:12},{wch:8},{wch:12},{wch:10},{wch:10}];
+
+  const wsLogData = [['日付','時刻','会員名','クラス']];
+  attendance.slice().sort((a,b)=>b.date.localeCompare(a.date)).forEach(a=>{
+    wsLogData.push([a.date, a.time||'', a.memberName, (classMap[a.class]||{}).label||a.class]);
+  });
+  const wsLog = XLSX.utils.aoa_to_sheet(wsLogData);
+  wsLog['!cols'] = [{wch:12},{wch:8},{wch:14},{wch:16}];
+
+  const monthlyData = [['年月','出席数']];
+  for(let i=11;i>=0;i--){
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const count = attendance.filter(a=>a.date && a.date.startsWith(key)).length;
+    monthlyData.push([key, count]);
+  }
+  const wsMonthly = XLSX.utils.aoa_to_sheet(monthlyData);
+  wsMonthly['!cols'] = [{wch:10},{wch:8}];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, wsSummary, '会員別サマリー');
+  XLSX.utils.book_append_sheet(wb, wsMonthly, '月別推移');
+  XLSX.utils.book_append_sheet(wb, wsLog, '出席ログ');
+  const dateStr = now.toISOString().slice(0,10);
+  XLSX.writeFile(wb, `AMBIs_出席分析_${dateStr}.xlsx`);
+  showToast('Excelファイルを出力しました');
+}
+
 function renderDormant(){
   if(!document.getElementById('dormant-tbody')) return;
   const today=new Date();
