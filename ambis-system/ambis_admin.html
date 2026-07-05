@@ -2857,13 +2857,13 @@ function deleteNews(id){
 // ══ LOGIN ══
 async function handleEmailLogin(){
   const email = document.getElementById('login-email').value.trim();
-  const password = document.getElementById('login-password').value;
+  const password = document.getElementById('login-password').value.trim();
   const errEl = document.getElementById('login-error');
   errEl.style.display = 'none';
   try {
     await window.fbSignIn(email, password);
   } catch(e) {
-    errEl.style.display = 'block';
+    console.error('Email login error:', e); let msg = 'メールアドレスまたはパスワードが正しくありません'; if (e && e.code === 'auth/too-many-requests') msg = '試行回数が多すぎます。しばらく待ってから再試行してください。'; else if (e && e.code === 'auth/network-request-failed') msg = 'ネットワークエラーです。通信環境をご確認ください。'; else if (e && e.code === 'auth/user-disabled') msg = 'このアカウントは無効化されています。'; errEl.textContent = msg; errEl.style.display = 'block';
   }
 }
 async function handleGoogleLogin(){
