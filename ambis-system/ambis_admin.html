@@ -2885,13 +2885,21 @@ async function saveToFirestore(collectionName, dataArray){
   if(!window.db) return;
   try {
     const batch = window.fbWriteBatch(window.db);
+    const currentIds = new Set(dataArray.map(item => item.id));
+    // Firestore上の既存ドキュメントのうち、現在の配列に存在しないもの（＝削除されたもの）を削除する
+    const snap = await window.fbGetDocs(window.fbCollection(window.db, collectionName));
+    snap.docs.forEach(d => {
+      if(!currentIds.has(d.id)){
+        batch.delete(d.ref);
+      }
+    });
     dataArray.forEach(item => {
       const ref = window.fbDoc(window.db, collectionName, item.id || ('auto_'+Date.now()+'_'+Math.random().toString(36).slice(2)));
       batch.set(ref, item);
     });
     await batch.commit();
   } catch(e) {
-    console.warn('Firestore save error:', collectionName, e.message); const __now=Date.now(); if(__now-(window.__fsErrorToastAt||0)>5000){window.__fsErrorToastAt=__now; showToast('⚠ クラウド同期に失敗しました（この端末には保存済み）');}
+    console.warn('Firestore save error:', collectionName, e.message); const __now = Date.now(); if(__now-(window.__fsErrorToastAt||0)>5000){window.__fsErrorToastAt = __now; showToast('⚠ クラウド同期に失敗しました（この端末には保存済み）');}
   }
 }
 
