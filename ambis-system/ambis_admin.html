@@ -270,6 +270,7 @@ tr:hover td{background:#fafbfd;}
 .status-active{background:#eafaf1;color:#27ae60;}
 .status-inactive{background:#fdf3e6;color:#e67e22;}
 .status-left{background:#fdf0ef;color:#e74c3c;}
+.status-neutral{background:#f0f0f0;color:#666;}
 .action-btns{display:flex;gap:6px;}
 
 /* MODAL */
@@ -589,6 +590,8 @@ textarea{resize:vertical;min-height:60px;}
         <div class="stat-card"><div class="label">未払い</div><div class="value" id="pay-unpaid">0</div><div class="sub">件</div></div>
         <div class="stat-card"><div class="label">在籍会員</div><div class="value" id="pay-members">0</div><div class="sub">名</div></div>
         <div class="stat-card"><div class="label">月額想定収入</div><div class="value" id="pay-expected">0</div><div class="sub">円</div></div>
+        <div class="stat-card gold"><div class="label">サブスクMRR</div><div class="value" id="pay-mrr">0</div><div class="sub">円/月</div></div>
+        <div class="stat-card"><div class="label">支払い遅延・要対応</div><div class="value" id="pay-attention">0</div><div class="sub">件</div></div>
       </div>
 
       <div class="section-header">
@@ -947,6 +950,24 @@ textarea{resize:vertical;min-height:60px;}
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-paylink">
+  <div class="modal" style="max-width:360px;">
+    <div class="modal-header"><div class="modal-title" id="paylink-title">支払いリンク</div><button class="modal-close" onclick="closePayLinkModal()">×</button></div>
+    <div id="paylink-loading" style="padding:24px;text-align:center;">発行中...</div>
+    <div id="paylink-ready" style="display:none;padding:16px;text-align:center;">
+      <div class="qr-wrap"><div id="paylink-canvas" style="display:inline-block;"></div></div>
+      <div class="qr-url" id="paylink-url-text" style="word-break:break-all;font-size:12px;margin-top:8px;"></div>
+      <div style="margin-top:12px;"><button class="btn btn-primary btn-sm" onclick="copyPayLink()">リンクをコピー</button></div>
+    </div>
+    <div id="paylink-error" style="display:none;padding:24px;text-align:center;color:#c0392b;">
+      <div id="paylink-error-text"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closePayLinkModal()">閉じる</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ MODAL: BELT HISTORY ADD ══ -->
 <div class="modal-overlay" id="modal-belt">
   <div class="modal" style="max-width:440px;">
@@ -1197,10 +1218,13 @@ textarea{resize:vertical;min-height:60px;}
         </div>
       </div>
       <div class="form-row"><label>決済方法</label>
-        <select id="rb-payment-method">
+        <select id="rb-payment-method" onchange="toggleRentalPayLinkBtn()">
           <option value="onsite">現地払い</option>
           <option value="online">オンライン決済</option>
         </select>
+      </div>
+      <div class="form-row" id="rb-paylink-row" style="display:none;">
+        <button class="btn btn-ghost btn-sm" type="button" onclick="sendRentalPaymentLink()">支払いリンクを送信</button>
       </div>
 
       <div class="section-divider">ACCESS CODE（スマートロック）</div>
@@ -1292,6 +1316,13 @@ textarea{resize:vertical;min-height:60px;}
         </select>
       </div>
       <div class="form-row"><label>備考</label><textarea id="tr-note" placeholder="印象・フォロー事項など"></textarea></div>
+      <div class="form-row" id="tr-fee-row" style="display:none;">
+        <label>体験費（円）</label>
+        <input type="number" id="tr-fee" placeholder="3000">
+        <div style="margin-top:8px;">
+          <button class="btn btn-ghost btn-sm" type="button" onclick="sendTrialPaymentLink()">支払いリンクを送る（当日現地QR）</button>
+        </div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeTrialModal()">キャンセル</button>
@@ -1317,6 +1348,10 @@ textarea{resize:vertical;min-height:60px;}
 <script>
 // ══ DATA ══
 const MONTHLY_FEE = 10000;
+const STRIPE_PRICE_MAP = {
+  10000: 'price_REPLACE_ME', // 例：一般会員 月額10,000円 → 作成したprice_idに置換
+};
+const DEFAULT_TRIAL_FEE = 3000;
 const ENTRY_FEE   = 10000;
 
 let members     = JSON.parse(localStorage.getItem('ambis_members')     || '[]');
@@ -1804,25 +1839,125 @@ function renderPayment(){
   document.getElementById('pay-income').textContent=income.toLocaleString();
   document.getElementById('pay-unpaid').textContent=unpaid.length;
 
+  const mrr=activeMembers.filter(m=>['active','trialing'].includes(m.billingStatus)).reduce((s,m)=>s+(m.monthlyFee||MONTHLY_FEE),0);
+  const attentionCount=activeMembers.filter(m=>['past_due','unpaid','incomplete','incomplete_expired'].includes(m.billingStatus)).length;
+  document.getElementById('pay-mrr').textContent=mrr.toLocaleString();
+  document.getElementById('pay-attention').textContent=attentionCount;
+
   document.getElementById('pay-tbody').innerHTML=activeMembers.map(m=>{
     const pay=payments.find(p=>p.memberId===m.id&&p.month===ym);
     const st=pay?pay.status:'pending';
     const stLabel=st==='paid'?'支払い済':st==='pending'?'未確認':'未払い';
     const stCls=st==='paid'?'pay-status-paid':st==='unpaid'?'pay-status-unpaid':'pay-status-pending';
     const fee=(m.monthlyFee||MONTHLY_FEE).toLocaleString();
+    const bs=m.billingStatus;
+    let stripeLabel, stripeCls;
+    if(!m.stripeUid){ stripeLabel='未登録'; stripeCls='status-neutral'; }
+    else if(['active','trialing'].includes(bs)){ stripeLabel='有効'; stripeCls='status-active'; }
+    else if(['past_due','unpaid'].includes(bs)){ stripeLabel='支払い遅延'; stripeCls='status-inactive'; }
+    else if(['incomplete','incomplete_expired'].includes(bs)){ stripeLabel='要対応'; stripeCls='status-inactive'; }
+    else if(bs==='canceled'){ stripeLabel='解約済み'; stripeCls='status-neutral'; }
+    else { stripeLabel='未確認'; stripeCls='status-neutral'; }
     return `<tr>
       <td><div class="member-cell"><div class="avatar">${m.photo?`<img src="${m.photo}">`:(m.name||'').slice(0,2)}</div><div class="member-name-cell"><div class="name">${m.name}</div><div class="id">${m.id}</div></div></div></td>
       <td style="font-family:'Bebas Neue',sans-serif;font-size:18px;">¥${fee}</td>
       <td style="font-size:12px;color:var(--text-muted);">${m.entryFee?'¥'+m.entryFee.toLocaleString():'―'}</td>
-      <td><span class="status-pill ${stCls}">${stLabel}</span></td>
+      <td><span class="status-pill ${stCls}">${stLabel}</span><br><span class="status-pill ${stripeCls}" style="margin-top:4px;">Stripe: ${stripeLabel}</span></td>
       <td><div class="action-btns">
         ${st!=='paid'?`<button class="btn btn-success btn-sm" onclick="markPaid('${m.id}','${ym}')">支払い確認</button>`:''}
         ${st==='paid'?`<button class="btn btn-ghost btn-sm" onclick="markPaid('${m.id}','${ym}','pending')">取消</button>`:''}
+        ${!m.stripeUid?`<button class="btn btn-ghost btn-sm" onclick="sendMemberBillingLink('${m.id}')">決済リンクを発行</button>`:''}
       </div></td>
     </tr>`;
   }).join('');
 }
 
+let _paylinkUnsub=null;
+function showPayLinkModal(title){
+  document.getElementById('modal-paylink').classList.add('open');
+  document.getElementById('paylink-title').textContent=title||'支払いリンク';
+  document.getElementById('paylink-loading').style.display='block';
+  document.getElementById('paylink-ready').style.display='none';
+  document.getElementById('paylink-error').style.display='none';
+}
+function showPayLinkReady(url){
+  document.getElementById('paylink-loading').style.display='none';
+  document.getElementById('paylink-error').style.display='none';
+  document.getElementById('paylink-ready').style.display='block';
+  const canvas=document.getElementById('paylink-canvas');
+  canvas.innerHTML='';
+  new QRCode(canvas,{text:url,width:180,height:180});
+  document.getElementById('paylink-url-text').textContent=url;
+  document.getElementById('paylink-ready').dataset.url=url;
+}
+function showPayLinkError(msg){
+  document.getElementById('paylink-loading').style.display='none';
+  document.getElementById('paylink-ready').style.display='none';
+  document.getElementById('paylink-error').style.display='block';
+  document.getElementById('paylink-error-text').textContent=msg||'エラーが発生しました。';
+}
+function closePayLinkModal(){
+  document.getElementById('modal-paylink').classList.remove('open');
+  if(_paylinkUnsub){ _paylinkUnsub(); _paylinkUnsub=null; }
+}
+function copyPayLink(){
+  const url=document.getElementById('paylink-ready').dataset.url;
+  if(!url) return;
+  navigator.clipboard.writeText(url);
+  showToast('リンクをコピーしました');
+}
+async function sendMemberBillingLink(memberId){
+  const m=activeMembers.find(x=>x.id===memberId);
+  if(!m){ showToast('会員が見つかりません'); return; }
+  const priceId=STRIPE_PRICE_MAP[m.monthlyFee||MONTHLY_FEE];
+  if(!priceId||priceId==='price_REPLACE_ME'){
+    showToast('先にSTRIPE_PRICE_MAPに価格IDを設定してください');
+    return;
+  }
+  showPayLinkModal(m.name+' さんの決済リンク');
+  try{
+    const res=await window.fbCallCreateMemberBillingLink({memberId, priceId});
+    const path=res.data.checkoutSessionPath;
+    const parts=path.split('/');
+    const ref=fbDoc(db, parts[0], parts[1], parts[2], parts[3]);
+    if(_paylinkUnsub) _paylinkUnsub();
+    _paylinkUnsub=window.fbOnSnapshot(ref,(snap)=>{
+      const d=snap.data();
+      if(!d) return;
+      if(d.url){ showPayLinkReady(d.url); }
+      else if(d.error){ showPayLinkError(d.error.message||'決済リンクの作成に失敗しました'); }
+    });
+  }catch(e){
+    showPayLinkError(e.message||'決済リンクの作成に失敗しました');
+  }
+}
+async function sendGuestPaymentLink(type, docId, amount, description){
+  showPayLinkModal(description||(type==='trial'?'体験費のお支払い':'レンタル料のお支払い'));
+  try{
+    const res=await window.fbCallCreateGuestCheckout({type, docId, amount, description});
+    showPayLinkReady(res.data.url);
+  }catch(e){
+    showPayLinkError(e.message||'決済リンクの作成に失敗しました');
+  }
+}
+function sendTrialPaymentLink(){
+  if(!editingTrialId){ showToast('保存後にお試しください'); return; }
+  const fee=parseInt(document.getElementById('tr-fee').value)||DEFAULT_TRIAL_FEE;
+  const t=trialVisitors.find(x=>x.id===editingTrialId);
+  sendGuestPaymentLink('trial', editingTrialId, fee, (t?t.name+' さんの体験費':'体験費'));
+}
+function toggleRentalPayLinkBtn(){
+  const method=document.getElementById('rb-payment-method').value;
+  const row=document.getElementById('rb-paylink-row');
+  row.style.display=(method==='online' && editingRentalId)?'block':'none';
+}
+function sendRentalPaymentLink(){
+  if(!editingRentalId){ showToast('保存後にお試しください'); return; }
+  const b=rentalBookings.find(x=>x.id===editingRentalId);
+  const price=parseInt(document.getElementById('rb-price')?.value)||(b?b.price:0);
+  if(!price){ showToast('金額を設定してください'); return; }
+  sendGuestPaymentLink('rental', editingRentalId, price, (b?b.customerName+' 様のレンタル料':'レンタル料'));
+}
 function markPaid(memberId,month,toStatus){
   const idx=payments.findIndex(p=>p.memberId===memberId&&p.month===month);
   if(idx!==-1) payments[idx].status=toStatus||'paid';
@@ -2209,6 +2344,7 @@ function openRentalModal(mode,id){
   } else {
     document.getElementById('modal-rental-title').textContent='新規予約登録';
   }
+  toggleRentalPayLinkBtn();
   document.getElementById('modal-rental').classList.add('open');
 }
 function closeRentalModal(){document.getElementById('modal-rental').classList.remove('open');}
@@ -2484,9 +2620,12 @@ function openTrialModal(mode,id){
     document.getElementById('tr-belt').value=t.belt||'';
     document.getElementById('tr-converted').value=t.converted||'pending';
     document.getElementById('tr-note').value=t.note||'';
+    document.getElementById('tr-fee').value=t.fee||DEFAULT_TRIAL_FEE;
+    document.getElementById('tr-fee-row').style.display='block';
     toggleDojoLabel();
     toggleReferrerRow();
   } else {
+    document.getElementById('tr-fee-row').style.display='none';
     document.getElementById('modal-trial-title').textContent='体験・ビジター登録';
   }
   document.getElementById('modal-trial').classList.add('open');
@@ -2513,6 +2652,7 @@ function saveTrial(){
     belt:document.getElementById('tr-belt').value,
     converted:document.getElementById('tr-converted').value,
     note:document.getElementById('tr-note').value.trim(),
+    fee:parseInt(document.getElementById('tr-fee').value)||DEFAULT_TRIAL_FEE,
   };
   if(editingTrialId){
     const idx=trialVisitors.findIndex(t=>t.id===editingTrialId);
@@ -3310,6 +3450,9 @@ window.saveException=saveException;window.saveMember=saveMember;window.saveNews=
 window.saveRentalBooking=saveRentalBooking;window.saveSchedule=saveSchedule;window.saveTournament=saveTournament;
 window.saveTrial=saveTrial;window.showQR=showQR;window.showRentalView=showRentalView;
 window.showScheduleTab=showScheduleTab;
+window.sendMemberBillingLink=sendMemberBillingLink;window.sendGuestPaymentLink=sendGuestPaymentLink;
+window.sendTrialPaymentLink=sendTrialPaymentLink;window.sendRentalPaymentLink=sendRentalPaymentLink;
+window.toggleRentalPayLinkBtn=toggleRentalPayLinkBtn;window.copyPayLink=copyPayLink;window.closePayLinkModal=closePayLinkModal;
 
 // ══ INIT ══
 if(!members.length){
