@@ -597,6 +597,7 @@ textarea{resize:vertical;min-height:60px;}
       <div class="section-header">
         <div class="section-title">支払い状況（今月）</div>
         <div style="font-size:11px;color:var(--text-muted);" id="pay-month-label"></div>
+        <button class="btn btn-primary btn-sm" style="margin-left:auto;" onclick="openPrivateLessonModal()">＋ プライベートレッスン決済</button>
       </div>
       <div class="table-wrap">
         <table><thead><tr><th>会員</th><th>月会費</th><th>入会費</th><th>ステータス</th><th></th></tr></thead>
@@ -895,6 +896,7 @@ textarea{resize:vertical;min-height:60px;}
         <div><label>入会費（円）</label><input type="number" id="f-entry" value="10000"></div>
       </div>
       <div class="form-row"><label>備考</label><input type="text" id="f-note" placeholder="怪我・特記事項など"></div>
+      <div class="form-row"><label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="f-weekday-mat" style="width:auto;"> 平日フリーマット通い放題オプション（月額¥2,200）</label></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeMemberModal()">キャンセル</button>
@@ -964,6 +966,21 @@ textarea{resize:vertical;min-height:60px;}
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closePayLinkModal()">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-private-lesson">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header"><div class="modal-title">プライベートレッスン決済リンク</div><button class="modal-close" onclick="closePrivateLessonModal()">×</button></div>
+    <div class="modal-body">
+      <div class="form-row"><label>会員</label><select id="pl-member"></select></div>
+      <div class="form-row"><label>実施日</label><input type="date" id="pl-date"></div>
+      <div class="form-row"><label>金額（円）</label><input type="number" id="pl-price" value="11000"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closePrivateLessonModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="sendPrivateLessonPaymentLink()">決済リンクを送信</button>
     </div>
   </div>
 </div>
@@ -1350,8 +1367,12 @@ textarea{resize:vertical;min-height:60px;}
 const MONTHLY_FEE = 10000;
 const STRIPE_PRICE_MAP = {
   10000: 'price_REPLACE_ME', // 例：一般会員 月額10,000円 → 作成したprice_idに置換
+  8800: 'price_REPLACE_ME_BASIC', // 【基本会員】土日クラス通い放題 月額8,800円 → 作成したprice_idに置換
 };
+const STRIPE_WEEKDAY_MAT_ADDON_PRICE_ID = 'price_REPLACE_ME_ADDON'; // 平日フリーマット通い放題オプション 月額2,200円（継続課金Price）
+const STRIPE_SIGNUP_FEE_PRICE_ID = 'price_REPLACE_ME_SIGNUP'; // 入会金 11,000円（単発Price。Stripeで作成時「One time」を選ぶこと）
 const DEFAULT_TRIAL_FEE = 3000;
+const PRIVATE_LESSON_FEE = 11000;
 const ENTRY_FEE   = 10000;
 
 let members     = JSON.parse(localStorage.getItem('ambis_members')     || '[]');
@@ -1539,6 +1560,7 @@ function openMemberModal(mode,id){
   document.getElementById('f-beltdate').value='';
   document.getElementById('f-birthday').value='';
   document.getElementById('f-monthly').value=MONTHLY_FEE;
+  document.getElementById('f-weekday-mat').checked=false;
   document.getElementById('f-entry').value=ENTRY_FEE;
 
   if(mode==='edit'&&id){
@@ -1558,6 +1580,7 @@ function openMemberModal(mode,id){
     document.getElementById('f-note').value=m.note||'';
     document.getElementById('f-monthly').value=m.monthlyFee||MONTHLY_FEE;
     document.getElementById('f-entry').value=m.entryFee||ENTRY_FEE;
+  document.getElementById('f-weekday-mat').checked=!!m.hasWeekdayMatOption;
     document.getElementById('f-birthday').value=m.birthday||'';
     if(m.photo){photoData=m.photo;document.getElementById('photo-preview-img').src=m.photo;document.getElementById('photo-preview-img').style.display='block';document.getElementById('photo-placeholder').style.display='none';}
   } else {
@@ -1597,6 +1620,7 @@ function saveMember(){
     entryFee:parseInt(document.getElementById('f-entry').value)||ENTRY_FEE,
     photo:photoData,
     birthday:document.getElementById('f-birthday').value,
+    hasWeekdayMatOption:document.getElementById('f-weekday-mat').checked,
   };
   if(editingMemberId){
     const idx=members.findIndex(m=>m.id===editingMemberId);
@@ -1914,9 +1938,11 @@ async function sendMemberBillingLink(memberId){
     showToast('先にSTRIPE_PRICE_MAPに価格IDを設定してください');
     return;
   }
+  const addonPriceId=(m.hasWeekdayMatOption && STRIPE_WEEKDAY_MAT_ADDON_PRICE_ID!=='price_REPLACE_ME_ADDON') ? STRIPE_WEEKDAY_MAT_ADDON_PRICE_ID : null;
+  const signupFeePriceId=(!m.signupFeePaid && STRIPE_SIGNUP_FEE_PRICE_ID!=='price_REPLACE_ME_SIGNUP') ? STRIPE_SIGNUP_FEE_PRICE_ID : null;
   showPayLinkModal(m.name+' さんの決済リンク');
   try{
-    const res=await window.fbCallCreateMemberBillingLink({memberId, priceId});
+    const res=await window.fbCallCreateMemberBillingLink({memberId, priceId, addonPriceId, signupFeePriceId});
     const path=res.data.checkoutSessionPath;
     const parts=path.split('/');
     const ref=fbDoc(db, parts[0], parts[1], parts[2], parts[3]);
@@ -1957,6 +1983,32 @@ function sendRentalPaymentLink(){
   const price=parseInt(document.getElementById('rb-price')?.value)||(b?b.price:0);
   if(!price){ showToast('金額を設定してください'); return; }
   sendGuestPaymentLink('rental', editingRentalId, price, (b?b.customerName+' 様のレンタル料':'レンタル料'));
+}
+function openPrivateLessonModal(){
+  const sel=document.getElementById('pl-member');
+  sel.innerHTML=activeMembers.map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
+  document.getElementById('pl-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('pl-price').value=PRIVATE_LESSON_FEE;
+  document.getElementById('modal-private-lesson').classList.add('open');
+}
+function closePrivateLessonModal(){
+  document.getElementById('modal-private-lesson').classList.remove('open');
+}
+async function sendPrivateLessonPaymentLink(){
+  const memberId=document.getElementById('pl-member').value;
+  const m=activeMembers.find(x=>x.id===memberId);
+  if(!m){ showToast('会員を選択してください'); return; }
+  const date=document.getElementById('pl-date').value;
+  const price=parseInt(document.getElementById('pl-price').value)||PRIVATE_LESSON_FEE;
+  const docId='pl-'+Date.now();
+  try{
+    await fbSetDoc(fbDoc(db,'private_lessons',docId),{
+      id:docId, memberId, memberName:m.name, date, price,
+      paymentStatus:'pending', createdAt:new Date().toISOString()
+    });
+  }catch(e){ showToast('保存に失敗しました: '+e.message); return; }
+  closePrivateLessonModal();
+  sendGuestPaymentLink('private_lesson', docId, price, m.name+' 様 プライベートレッスン('+date+')');
 }
 function markPaid(memberId,month,toStatus){
   const idx=payments.findIndex(p=>p.memberId===memberId&&p.month===month);
@@ -3453,6 +3505,7 @@ window.showScheduleTab=showScheduleTab;
 window.sendMemberBillingLink=sendMemberBillingLink;window.sendGuestPaymentLink=sendGuestPaymentLink;
 window.sendTrialPaymentLink=sendTrialPaymentLink;window.sendRentalPaymentLink=sendRentalPaymentLink;
 window.toggleRentalPayLinkBtn=toggleRentalPayLinkBtn;window.copyPayLink=copyPayLink;window.closePayLinkModal=closePayLinkModal;
+window.openPrivateLessonModal=openPrivateLessonModal;window.closePrivateLessonModal=closePrivateLessonModal;window.sendPrivateLessonPaymentLink=sendPrivateLessonPaymentLink;
 
 // ══ INIT ══
 if(!members.length){
