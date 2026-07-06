@@ -1366,12 +1366,12 @@ textarea{resize:vertical;min-height:60px;}
 // ══ DATA ══
 const MONTHLY_FEE = 10000;
 const STRIPE_PRICE_MAP = {
-  10000: 'price_REPLACE_ME', // 例：一般会員 月額10,000円 → 作成したprice_idに置換
-  8800: 'price_REPLACE_ME_BASIC', // 【基本会員】土日クラス通い放題 月額8,800円 → 作成したprice_idに置換
+  10000: 'price_REPLACE_ME', // 例：一般会員 月額10,000円（未使用の場合はそのまま）
+  8800: 'price_1TqLFCQYdVp44tCZAKzyuepL', // 【基本会員】土日クラス通い放題 月額8,800円
 };
-const STRIPE_WEEKDAY_MAT_ADDON_PRICE_ID = 'price_REPLACE_ME_ADDON'; // 平日フリーマット通い放題オプション 月額2,200円（継続課金Price）
-const STRIPE_SIGNUP_FEE_PRICE_ID = 'price_REPLACE_ME_SIGNUP'; // 入会金 11,000円（単発Price。Stripeで作成時「One time」を選ぶこと）
-const DEFAULT_TRIAL_FEE = 3000;
+const STRIPE_WEEKDAY_MAT_ADDON_PRICE_ID = 'price_1TqLG5QYdVp44tCZ1tBtnG6J'; // 平日フリーマット通い放題オプション 月額2,200円
+const STRIPE_SIGNUP_FEE_PRICE_ID = 'price_1TqLD8QYdVp44tCZHlhq232c'; // 入会金 11,000円（単発）
+const DEFAULT_TRIAL_FEE = 3300;
 const PRIVATE_LESSON_FEE = 11000;
 const ENTRY_FEE   = 10000;
 
