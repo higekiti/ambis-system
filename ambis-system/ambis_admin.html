@@ -1931,6 +1931,7 @@ function copyPayLink(){
   showToast('リンクをコピーしました');
 }
 async function sendMemberBillingLink(memberId){
+  const activeMembers=members.filter(x=>x.status==='active');
   const m=activeMembers.find(x=>x.id===memberId);
   if(!m){ showToast('会員が見つかりません'); return; }
   const priceId=STRIPE_PRICE_MAP[m.monthlyFee||MONTHLY_FEE];
@@ -1985,6 +1986,7 @@ function sendRentalPaymentLink(){
   sendGuestPaymentLink('rental', editingRentalId, price, (b?b.customerName+' 様のレンタル料':'レンタル料'));
 }
 function openPrivateLessonModal(){
+  const activeMembers=members.filter(m=>m.status==='active');
   const sel=document.getElementById('pl-member');
   sel.innerHTML=activeMembers.map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
   document.getElementById('pl-date').value=new Date().toISOString().slice(0,10);
@@ -1995,6 +1997,7 @@ function closePrivateLessonModal(){
   document.getElementById('modal-private-lesson').classList.remove('open');
 }
 async function sendPrivateLessonPaymentLink(){
+  const activeMembers=members.filter(x=>x.status==='active');
   const memberId=document.getElementById('pl-member').value;
   const m=activeMembers.find(x=>x.id===memberId);
   if(!m){ showToast('会員を選択してください'); return; }
