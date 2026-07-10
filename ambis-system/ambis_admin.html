@@ -10,7 +10,7 @@
 // ══ FIREBASE SETUP ══
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
-import { getFirestore, collection, doc, getDocs, setDoc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, doc, getDocs, setDoc, deleteDoc, writeBatch, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -40,6 +40,7 @@ window.fbSignInGoogleRedirect = async () => { return signInWithRedirect(auth, go
   return signOut(auth);
 };
 window.fbGetDocs = getDocs;
+window.fbOnSnapshot = onSnapshot;
 window.fbCollection = collection;
 window.fbDoc = doc;
 window.fbSetDoc = setDoc;
