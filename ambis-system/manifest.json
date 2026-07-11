@@ -4,8 +4,8 @@
   "description": "AMBIs Jiu-Jitsu Academy 会員アプリ",
   "start_url": "./ambis_member_card_demo.html",
   "display": "standalone",
-  "background_color": "#0a1628",
-  "theme_color": "#0a1628",
+  "background_color": "#3a3a3a",
+  "theme_color": "#3a3a3a",
   "orientation": "portrait",
   "icons": [
     {
