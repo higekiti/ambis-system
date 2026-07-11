@@ -879,7 +879,9 @@ textarea{resize:vertical;min-height:60px;}
         <div><label>入会経路</label>
           <select id="f-source"><option value="">選択</option><option>TATORU紹介</option><option>SNS</option><option>ホームページ</option><option>その他</option></select>
         </div>
-      </div>      <div class="form-row"><label>入会日 *</label><input type="date" id="f-joindate"></div>
+      </div>
+      <div class="form-row"><label>連絡方法（決済リンクの送付方法）</label><select id="f-contactMethod"><option value="line">LINE（手動送付）</option><option value="email">メール（自動送信）</option><option value="cash">現金</option></select></div>
+      <div class="form-row"><label>入会日 *</label><input type="date" id="f-joindate"></div>
       <div class="form-row"><label>誕生日</label><input type="date" id="f-birthday"></div>
       <div class="section-divider">BELT INFO</div>
       <div class="form-row-2">
@@ -1562,6 +1564,7 @@ function openMemberModal(mode,id){
   document.getElementById('f-belt').value='white';
   document.getElementById('f-stripe').value='0';
   document.getElementById('f-status').value='active';
+  document.getElementById('f-contactMethod').value='line';
   document.getElementById('f-joindate').value=new Date().toISOString().slice(0,10);
   document.getElementById('f-beltdate').value='';
   document.getElementById('f-birthday').value='';
@@ -1578,6 +1581,7 @@ function openMemberModal(mode,id){
     document.getElementById('f-contact').value=m.contact||'';
     document.getElementById('f-email').value=m.email||'';
     document.getElementById('f-source').value=m.source||'';
+    document.getElementById('f-contactMethod').value=m.contactMethod||'line';
     document.getElementById('f-joindate').value=m.joindate||'';
     document.getElementById('f-belt').value=m.belt||'white';
     document.getElementById('f-stripe').value=m.stripe||'0';
@@ -1616,6 +1620,7 @@ function saveMember(){
     contact:document.getElementById('f-contact').value.trim(),
     email:document.getElementById('f-email').value.trim().toLowerCase(),
     source:document.getElementById('f-source').value,
+    contactMethod:document.getElementById('f-contactMethod').value,
     joindate:document.getElementById('f-joindate').value,
     belt:document.getElementById('f-belt').value,
     stripe:parseInt(document.getElementById('f-stripe').value),
