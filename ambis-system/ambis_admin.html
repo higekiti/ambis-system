@@ -1534,6 +1534,39 @@ function renderMembers(data) {
     }).join('');
   }
   updateMemberStats();
+  renderDormantWidget();
+}
+
+function renderDormantWidget(){
+  const widget=document.getElementById('dormant-widget');
+  const body=document.getElementById('dormant-widget-body');
+  if(!widget||!body) return;
+  const today=new Date();
+  const activeMembers=members.filter(m=>m.status==='active');
+  const withLastAtt=activeMembers.map(m=>{
+    const myAtt=attendance.filter(a=>a.memberId===m.id).sort((a,b)=>b.date.localeCompare(a.date));
+    const lastDate=myAtt.length?myAtt[0].date:m.joindate||'';
+    const diffDays=lastDate?Math.floor((today-new Date(lastDate))/(1000*60*60*24)):999;
+    return {...m,lastDate,diffDays};
+  }).filter(m=>m.diffDays>=14).sort((a,b)=>b.diffDays-a.diffDays);
+
+  if(!withLastAtt.length){ widget.style.display='none'; body.innerHTML=''; return; }
+  widget.style.display='block';
+  const top=withLastAtt.slice(0,5);
+  body.innerHTML=`<div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">æªåºå¸­14æ¥ä»¥ä¸ã®å¨ç±ä¼å¡ã${withLastAtt.length}åãã¾ã</div>`+
+    `<div style="display:flex;flex-direction:column;gap:6px;">`+
+    top.map(m=>{
+      const risk=m.diffDays>=90?'<span class="status-pill status-left">é«ãªã¹ã¯</span>':m.diffDays>=30?'<span class="status-pill status-inactive">è¦ãã©ã­ã¼</span>':'<span class="status-pill" style="background:#fff8e6;color:#e67e22;">æ³¨æ</span>';
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--bg);border-radius:8px;">
+        <div style="font-size:12px;color:var(--text-primary);font-weight:500;">${m.name}</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="font-size:11px;color:var(--text-muted);">${m.diffDays}æ¥æªåºå¸­</div>
+          ${risk}
+        </div>
+      </div>`;
+    }).join('')+
+    (withLastAtt.length>5?`<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">ä»${withLastAtt.length-5}å</div>`:'')+
+    `</div>`;
 }
 
 function updateMemberStats(){
@@ -1580,7 +1613,17 @@ function openMemberModal(mode,id){
     document.getElementById('f-kana').value=m.kana||'';
     document.getElementById('f-contact').value=m.contact||'';
     document.getElementById('f-email').value=m.email||'';
-    document.getElementById('f-source').value=m.source||'';
+    if(m.sourceType){
+      document.getElementById('f-source-type').value=m.sourceType;
+      document.getElementById('f-referrer').value=m.referrer||'';
+      document.getElementById('f-source-other').value=m.sourceOther||'';
+    } else {
+      // æ§ãã¼ã¿ï¼èªç±å¥åã®å¥ä¼çµè·¯ï¼ã¯ããã®ä»ãã¨ãã¦å¼ãç¶ã
+      document.getElementById('f-source-type').value=m.source?'other':'SNS';
+      document.getElementById('f-referrer').value='';
+      document.getElementById('f-source-other').value=m.source||'';
+    }
+    toggleMemberReferrerRow();
     document.getElementById('f-contactMethod').value=m.contactMethod||'line';
     document.getElementById('f-joindate').value=m.joindate||'';
     document.getElementById('f-belt').value=m.belt||'white';
@@ -1631,7 +1674,10 @@ function saveMember(){
     name,kana:document.getElementById('f-kana').value.trim(),
     contact:document.getElementById('f-contact').value.trim(),
     email:document.getElementById('f-email').value.trim().toLowerCase(),
-    source:document.getElementById('f-source').value,
+    sourceType:document.getElementById('f-source-type').value,
+    source:sourceLabelMap[document.getElementById('f-source-type').value]||document.getElementById('f-source-type').value,
+    referrer:(document.getElementById('f-source-type').value==='friend'||document.getElementById('f-source-type').value==='member')?document.getElementById('f-referrer').value.trim():'',
+    sourceOther:document.getElementById('f-source-type').value==='other'?document.getElementById('f-source-other').value.trim():'',
     contactMethod:document.getElementById('f-contactMethod').value,
     joindate:document.getElementById('f-joindate').value,
     belt:document.getElementById('f-belt').value,
