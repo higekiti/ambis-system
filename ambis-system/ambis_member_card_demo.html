@@ -15,7 +15,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBA3sfUh7i2gldOXaHILJYlS4cu3YmnIyg",
@@ -35,6 +35,16 @@ async function loadFromFirestore(collName){
     return snap.docs.map(d => d.data());
   } catch(e) { return null; }
 }
+
+// 個別ドキュメント単位の書き込み・削除（コレクション全体を上書きしないため安全）
+window.fbSetDoc = async (collName, id, data) => {
+  try { await setDoc(doc(db, collName, String(id)), data); return true; }
+  catch(e) { console.error('Firestore write error:', collName, e); return false; }
+};
+window.fbDeleteDoc = async (collName, id) => {
+  try { await deleteDoc(doc(db, collName, String(id))); return true; }
+  catch(e) { console.error('Firestore delete error:', collName, e); return false; }
+};
 
 window.addEventListener('load', async () => {
   // デモ版はニュース・スケジュール・大会情報のみFirestoreから取得
@@ -1195,15 +1205,17 @@ function saveTournament(){
   const name=document.getElementById('t-name').value.trim();
   const date=document.getElementById('t-date').value;
   if(!name||!date){alert('大会名と日付を入力してください');return;}
-  tournaments.push({
+  const entry={
     id:'t-'+Date.now(),
     league:currentTournamentLeague,
     name,date,
     venue:document.getElementById('t-venue').value.trim(),
     category:document.getElementById('t-category').value.trim(),
     note:document.getElementById('t-note').value.trim(),
-  });
+  };
+  tournaments.push(entry);
   localStorage.setItem('ambis_tournaments',JSON.stringify(tournaments));
+  if(window.fbSetDoc) window.fbSetDoc('tournaments', entry.id, entry);
   document.getElementById('modal-tournament').classList.remove('open');
   renderTournaments();
 }
@@ -1211,6 +1223,7 @@ function saveTournament(){
 function deleteTournament(id){
   tournaments=tournaments.filter(t=>t.id!==id);
   localStorage.setItem('ambis_tournaments',JSON.stringify(tournaments));
+  if(window.fbDeleteDoc) window.fbDeleteDoc('tournaments', id);
   renderTournaments();
 }
 
@@ -1266,14 +1279,16 @@ function renderMilestone(){
   const years=months/12;
 
   const badges=[
-    {id:'att10',icon:'🌱',name:'FIRST STEPS',desc:'累計10回出席',earned:total>=10,progress:Math.min(total,10),max:10,unit:'回'},
-    {id:'att50',icon:'🔥',name:'DEDICATED',desc:'累計50回出席',earned:total>=50,progress:Math.min(total,50),max:50,unit:'回'},
-    {id:'att100',icon:'💯',name:'CENTURY',desc:'累計100回出席',earned:total>=100,progress:Math.min(total,100),max:100,unit:'回'},
-    {id:'att200',icon:'⚡',name:'WARRIOR',desc:'累計200回出席',earned:total>=200,progress:Math.min(total,200),max:200,unit:'回'},
-    {id:'year1',icon:'🥋',name:'ONE YEAR',desc:'在籍1年',earned:years>=1,progress:Math.min(months,12),max:12,unit:'ヶ月'},
-    {id:'year2',icon:'🏆',name:'TWO YEARS',desc:'在籍2年',earned:years>=2,progress:Math.min(months,24),max:24,unit:'ヶ月'},
-    {id:'stripe1',icon:'⭐',name:'FIRST STRIPE',desc:'初めてのストライプ',earned:(member.stripe||0)>=1,progress:Math.min(member.stripe||0,1),max:1,unit:'本'},
-    {id:'belt',icon:'🎯',name:'BELT UP',desc:'初めての帯昇格',earned:member.belt!=='white',progress:member.belt!=='white'?1:0,max:1,unit:''},
+    {id:'week1',icon:'🤝',name:'最初の一週間',desc:'入会から1週間',earned:!!joinDate&&(now-joinDate)>=1000*60*60*24*7,progress:joinDate?Math.min(Math.floor((now-joinDate)/(1000*60*60*24)),7):0,max:7,unit:'日'},
+    {id:'att3',icon:'🌱',name:'はじめの一歩',desc:'累計3回出席',earned:total>=3,progress:Math.min(total,3),max:3,unit:'回'},
+    {id:'att10',icon:'🌿',name:'続ける習慣',desc:'累計10回出席',earned:total>=10,progress:Math.min(total,10),max:10,unit:'回'},
+    {id:'att50',icon:'🍃',name:'積み重ねの証',desc:'累計50回出席',earned:total>=50,progress:Math.min(total,50),max:50,unit:'回'},
+    {id:'att100',icon:'🪷',name:'百回の道のり',desc:'累計100回出席',earned:total>=100,progress:Math.min(total,100),max:100,unit:'回'},
+    {id:'att200',icon:'🌊',name:'揺るがぬ歩み',desc:'累計200回出席',earned:total>=200,progress:Math.min(total,200),max:200,unit:'回'},
+    {id:'year1',icon:'🥋',name:'一年の軌跡',desc:'在籍1年',earned:years>=1,progress:Math.min(months,12),max:12,unit:'ヶ月'},
+    {id:'year2',icon:'🌳',name:'二年の歩み',desc:'在籍2年',earned:years>=2,progress:Math.min(months,24),max:24,unit:'ヶ月'},
+    {id:'stripe1',icon:'✦',name:'最初のストライプ',desc:'初めてのストライプ',earned:(member.stripe||0)>=1,progress:Math.min(member.stripe||0,1),max:1,unit:'本'},
+    {id:'belt',icon:'◆',name:'帯が変わる日',desc:'初めての帯昇格',earned:member.belt!=='white',progress:member.belt!=='white'?1:0,max:1,unit:''},
   ];
 
   grid.innerHTML=badges.map(b=>`
@@ -1282,14 +1297,14 @@ function renderMilestone(){
       <div class="badge-name">${b.name}</div>
       <div class="badge-desc">${b.desc}</div>
       ${b.earned
-        ?`<div class="badge-earned-label">✓ 達成！</div>`
+        ?`<div class="badge-earned-label">✓ 達成</div>`
         :`<div class="badge-locked-label">${b.progress}/${b.max}${b.unit}</div>`}
     </div>`).join('');
 
   // プログレスバー（未達成のもの）
   const inProgress=badges.filter(b=>!b.earned&&b.progress>0);
   if(inProgress.length){
-    progress.innerHTML=`<div class="mp-label">PROGRESS</div>`+inProgress.map(b=>{
+    progress.innerHTML=`<div class="mp-label">進行中</div>`+inProgress.map(b=>{
       const pct=Math.round((b.progress/b.max)*100);
       return `<div class="mp-row">
         <div class="mp-name">${b.icon} ${b.name}</div>
@@ -1576,12 +1591,16 @@ function saveRecord(){
     result:document.getElementById('r-result').value,
     comment:document.getElementById('r-comment').value.trim(),
   };
+  let recordId;
   if(editingRecordId){
+    recordId=editingRecordId;
     records=records.map(r=>r.id===editingRecordId?{...r,...data}:r);
   } else {
-    records.push({id:'rec-'+Date.now(),...data});
+    recordId='rec-'+Date.now();
+    records.push({id:recordId,...data});
   }
   saveMyRecords(records,member.id);
+  if(window.fbSetDoc) window.fbSetDoc('match_records', recordId, {id:recordId,...data});
   closeRecordModal();
   renderRecord();
 }
@@ -1591,6 +1610,7 @@ function deleteRecord(){
   if(!member||!editingRecordId) return;
   let records=getMyRecords().filter(r=>r.id!==editingRecordId);
   saveMyRecords(records,member.id);
+  if(window.fbDeleteDoc) window.fbDeleteDoc('match_records', editingRecordId);
   closeRecordModal();
   renderRecord();
 }
