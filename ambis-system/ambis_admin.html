@@ -3441,6 +3441,41 @@ function saveAll(){
 }
 
 // ══ INIT APP (Firestoreからデータ読み込み) ══
+function seedSampleData(){
+  members=[
+    {id:'AMBIs-0001',name:'田中 太郎',kana:'たなか たろう',belt:'blue',stripe:2,joindate:'2023-04-15',beltdate:'2024-01-10',status:'active',contact:'090-1234-5678',source:'TATORU紹介',note:'',photo:null,monthlyFee:10000,entryFee:10000},
+    {id:'AMBIs-0002',name:'佐藤 花子',kana:'さとう はなこ',belt:'white',stripe:3,joindate:'2024-06-01',beltdate:'2024-06-01',status:'active',contact:'080-9876-5432',source:'SNS',note:'',photo:null,monthlyFee:10000,entryFee:10000},
+    {id:'AMBIs-0003',name:'山田 健一',kana:'やまだ けんいち',belt:'purple',stripe:1,joindate:'2022-10-20',beltdate:'2024-08-15',status:'active',contact:'070-1111-2222',source:'TATORU紹介',note:'',photo:null,monthlyFee:10000,entryFee:10000},
+    {id:'AMBIs-0004',name:'鈴木 美咲',kana:'すずき みさき',belt:'white',stripe:1,joindate:'2025-01-08',beltdate:'2025-01-08',status:'inactive',contact:'090-3333-4444',source:'ホームページ',note:'産休中',photo:null,monthlyFee:10000,entryFee:10000},
+  ];
+  attendance=[];
+  const now=new Date();
+  const classes=['beginner','all','free'];
+  members.filter(m=>m.status==='active').forEach(m=>{
+    for(let i=0;i<Math.floor(Math.random()*10+3);i++){
+      const d=new Date(now.getFullYear(),now.getMonth(),Math.floor(Math.random()*20)+1);
+      const dateStr=d.toISOString().slice(0,10);
+      attendance.push({id:'att-'+Math.random().toString(36).slice(2),memberId:m.id,memberName:m.name,class:classes[Math.floor(Math.random()*3)],date:dateStr,time:'19:00'});
+    }
+  });
+  beltHistory=[
+    {id:'bh-1',memberId:'AMBIs-0001',memberName:'田中 太郎',from:'white',to:'blue',stripe:0,date:'2024-01-10',note:''},
+    {id:'bh-2',memberId:'AMBIs-0003',memberName:'山田 健一',from:'blue',to:'purple',stripe:1,date:'2024-08-15',note:'大会後昇格'},
+  ];
+  const d1=new Date(now);d1.setDate(d1.getDate()+2);
+  const d2=new Date(now);d2.setDate(d2.getDate()+5);
+  rentalBookings=[
+    {id:'rb-1',customerName:'鈴木 由美',customerPhone:'090-1111-2222',customerEmail:'',date:d1.toISOString().slice(0,10),startTime:'10:00',endTime:'11:30',purpose:'yoga',price:3000,bookingStatus:'confirmed',paymentStatus:'paid',paymentMethod:'onsite',accessCode:'',accessCodeStatus:'not_issued',notes:'',createdAt:new Date().toISOString()},
+    {id:'rb-2',customerName:'高橋 さくら',customerPhone:'080-3333-4444',customerEmail:'',date:d2.toISOString().slice(0,10),startTime:'14:00',endTime:'15:00',purpose:'pilates',price:3500,bookingStatus:'pending',paymentStatus:'unpaid',paymentMethod:'onsite',accessCode:'',accessCodeStatus:'not_issued',notes:'初回利用',createdAt:new Date().toISOString()},
+  ];
+  const d3=new Date(now);d3.setDate(d3.getDate()-7);
+  const d4=new Date(now);d4.setDate(d4.getDate()-3);
+  trialVisitors=[
+    {id:'tr-1',type:'trial',name:'伊藤 直樹',phone:'090-5555-6666',email:'',date:d3.toISOString().slice(0,10),dojo:'',source:'Instagram',belt:'',converted:'yes',note:'初回から積極的だった',createdAt:new Date().toISOString()},
+    {id:'tr-2',type:'visitor',name:'中村 隆',phone:'080-7777-8888',email:'',date:d4.toISOString().slice(0,10),dojo:'福岡柔術クラブ',source:'',belt:'purple',converted:'pending',note:'出張のため一時利用',createdAt:new Date().toISOString()},
+  ];
+}
+
 window.initApp = async function(){
   // 2回目以降の呼び出しを防ぐ
   if(window._initAppDone) { console.log('initApp already done, skip'); return; }
@@ -3485,6 +3520,23 @@ window.initApp = async function(){
   if(fbWithdrawal && fbWithdrawal.length) withdrawalReasons = fbWithdrawal;
   if(fbRental && fbRental.length)       rentalBookings   = fbRental;
   if(fbTrial && fbTrial.length)         trialVisitors    = fbTrial;
+
+  // サンプルデータ投入判定（安全版）：
+  // 以前はページ読み込み時に無条件でmembersが空ならサンプルデータを投入しsaveAll()を呼んでいたが、
+  // 新しい端末・プライベートブラウズ・キャッシュ削除等でlocalStorageが空の状態で開いた場合、
+  // Firestore上の本物の会員データをサンプルデータで上書き・削除してしまう重大なリスクがあった。
+  // 現在は「Firestoreへの取得に実際に成功し、かつ本当に会員が0件だった（=正真正銘の初回セットアップ）」
+  // 場合にのみサンプルデータを投入してクラウドにも保存する。取得に失敗した場合(fbMembersがnull＝
+  // 未ログイン・通信エラー・権限エラー等)は、実データを誤って上書きしないよう、画面表示用に
+  // サンプルデータを一時的に使うだけにとどめ、クラウド保存(saveAll)は絶対に呼ばない。
+  if(fbMembers !== null){
+    if(fbMembers.length === 0 && !members.length){
+      seedSampleData();
+      saveAll();
+    }
+  } else if(!members.length){
+    seedSampleData();
+  }
 
   // ナビゲーターのユーザー名を更新
   if(window.currentUser){
@@ -3533,47 +3585,7 @@ window.sendTrialPaymentLink=sendTrialPaymentLink;window.sendRentalPaymentLink=se
 window.toggleRentalPayLinkBtn=toggleRentalPayLinkBtn;window.copyPayLink=copyPayLink;window.closePayLinkModal=closePayLinkModal;
 window.openPrivateLessonModal=openPrivateLessonModal;window.closePrivateLessonModal=closePrivateLessonModal;window.sendPrivateLessonPaymentLink=sendPrivateLessonPaymentLink;
 
-// ══ INIT ══
-if(!members.length){
-  const today=new Date().toISOString().slice(0,10);
-  members=[
-    {id:'AMBIs-0001',name:'田中 太郎',kana:'たなか たろう',belt:'blue',stripe:2,joindate:'2023-04-15',beltdate:'2024-01-10',status:'active',contact:'090-1234-5678',source:'TATORU紹介',note:'',photo:null,monthlyFee:10000,entryFee:10000},
-    {id:'AMBIs-0002',name:'佐藤 花子',kana:'さとう はなこ',belt:'white',stripe:3,joindate:'2024-06-01',beltdate:'2024-06-01',status:'active',contact:'080-9876-5432',source:'SNS',note:'',photo:null,monthlyFee:10000,entryFee:10000},
-    {id:'AMBIs-0003',name:'山田 健一',kana:'やまだ けんいち',belt:'purple',stripe:1,joindate:'2022-10-20',beltdate:'2024-08-15',status:'active',contact:'070-1111-2222',source:'TATORU紹介',note:'',photo:null,monthlyFee:10000,entryFee:10000},
-    {id:'AMBIs-0004',name:'鈴木 美咲',kana:'すずき みさき',belt:'white',stripe:1,joindate:'2025-01-08',beltdate:'2025-01-08',status:'inactive',contact:'090-3333-4444',source:'ホームページ',note:'産休中',photo:null,monthlyFee:10000,entryFee:10000},
-  ];
-  // サンプル出席データ
-  const now=new Date();
-  const ym=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  const classes=['beginner','all','free'];
-  members.filter(m=>m.status==='active').forEach(m=>{
-    for(let i=0;i<Math.floor(Math.random()*10+3);i++){
-      const d=new Date(now.getFullYear(),now.getMonth(),Math.floor(Math.random()*20)+1);
-      const dateStr=d.toISOString().slice(0,10);
-      attendance.push({id:'att-'+Math.random().toString(36).slice(2),memberId:m.id,memberName:m.name,class:classes[Math.floor(Math.random()*3)],date:dateStr,time:'19:00'});
-    }
-  });
-  // サンプル昇格データ
-  beltHistory=[
-    {id:'bh-1',memberId:'AMBIs-0001',memberName:'田中 太郎',from:'white',to:'blue',stripe:0,date:'2024-01-10',note:''},
-    {id:'bh-2',memberId:'AMBIs-0003',memberName:'山田 健一',from:'blue',to:'purple',stripe:1,date:'2024-08-15',note:'大会後昇格'},
-  ];
-  // サンプルレンタル予約データ
-  const d1=new Date(now);d1.setDate(d1.getDate()+2);
-  const d2=new Date(now);d2.setDate(d2.getDate()+5);
-  rentalBookings=[
-    {id:'rb-1',customerName:'鈴木 由美',customerPhone:'090-1111-2222',customerEmail:'',date:d1.toISOString().slice(0,10),startTime:'10:00',endTime:'11:30',purpose:'yoga',price:3000,bookingStatus:'confirmed',paymentStatus:'paid',paymentMethod:'onsite',accessCode:'',accessCodeStatus:'not_issued',notes:'',createdAt:new Date().toISOString()},
-    {id:'rb-2',customerName:'高橋 さくら',customerPhone:'080-3333-4444',customerEmail:'',date:d2.toISOString().slice(0,10),startTime:'14:00',endTime:'15:00',purpose:'pilates',price:3500,bookingStatus:'pending',paymentStatus:'unpaid',paymentMethod:'onsite',accessCode:'',accessCodeStatus:'not_issued',notes:'初回利用',createdAt:new Date().toISOString()},
-  ];
-  // サンプル体験・ビジターデータ
-  const d3=new Date(now);d3.setDate(d3.getDate()-7);
-  const d4=new Date(now);d4.setDate(d4.getDate()-3);
-  trialVisitors=[
-    {id:'tr-1',type:'trial',name:'伊藤 直樹',phone:'090-5555-6666',email:'',date:d3.toISOString().slice(0,10),dojo:'',source:'Instagram',belt:'',converted:'yes',note:'初回から積極的だった',createdAt:new Date().toISOString()},
-    {id:'tr-2',type:'visitor',name:'中村 隆',phone:'080-7777-8888',email:'',date:d4.toISOString().slice(0,10),dojo:'福岡柔術クラブ',source:'',belt:'purple',converted:'pending',note:'出張のため一時利用',createdAt:new Date().toISOString()},
-  ];
-  saveAll();
-}
+
 </script>
 </div><!-- /app-screen -->
 </body>
