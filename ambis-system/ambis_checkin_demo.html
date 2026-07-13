@@ -55,7 +55,7 @@ window.addEventListener('load', async () => { try{await signInAnonymously(auth);
   --card:#ffffff;
   --text-primary:#0a1628; --text-secondary:#6a7a9a; --text-muted:#aab0c0;
   --border:#e8eaf0;
-  --success:#27ae60;
+  --success:var(--gold);
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{width:100%;height:100%;font-family:'Noto Sans JP',sans-serif;background:var(--bg);overflow:hidden;}
@@ -118,14 +118,14 @@ html,body{width:100%;height:100%;font-family:'Noto Sans JP',sans-serif;backgroun
 /* SUCCESS FLASH */
 .success-flash{
   display:none;position:absolute;inset:0;
-  background:rgba(39,174,96,0.12);z-index:20;
+  background:rgba(201,169,110,0.14);z-index:20;
   align-items:center;justify-content:center;flex-direction:column;gap:8px;
   animation:flash .7s ease-out forwards;
 }
 .success-flash.show{display:flex;}
 @keyframes flash{0%{opacity:1;}100%{opacity:0;}}
-.flash-icon{font-size:72px;}
-.flash-text{font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--success);letter-spacing:3px;}
+.flash-icon{font-size:72px;color:var(--success);}
+.flash-text{font-family:'Noto Sans JP',sans-serif;font-size:20px;font-weight:500;color:var(--navy);letter-spacing:1px;margin-top:4px;}
 
 .no-camera{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--text-muted);text-align:center;padding:20px;}
 .no-camera .icon{font-size:40px;}
@@ -279,7 +279,7 @@ html,body{width:100%;height:100%;font-family:'Noto Sans JP',sans-serif;backgroun
 
       <div class="success-flash" id="success-flash">
         <div class="flash-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
-        <div class="flash-text">CHECK IN!</div>
+        <div class="flash-text">ãã§ãã¯ã¤ã³å®äº</div>
       </div>
     </div>
 
@@ -405,7 +405,7 @@ function renderDemoCards(){
         </div>
       </div>
       <div style="text-align:right;flex-shrink:0;">
-        ${todayCount>0?`<div style="font-size:10px;color:#27ae60;background:#eafaf1;padding:2px 8px;border-radius:10px;margin-bottom:4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><polyline points="20 6 9 17 4 12"/></svg> 本日${todayCount}回</div>`:''}
+        ${todayCount>0?`<div style="font-size:10px;color:#8a7038;background:#f8f1e2;padding:2px 8px;border-radius:10px;margin-bottom:4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><polyline points="20 6 9 17 4 12"/></svg> 本日${todayCount}回</div>`:''}
         <div style="font-size:10px;color:#aab0c0;">${m.id}</div>
         <div style="font-size:11px;color:#0a1628;margin-top:3px;font-weight:500;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;"><path d="M9 11.24V7.5a2.5 2.5 0 0 1 5 0v3.74"/><path d="M14 10.24V5.5a2.5 2.5 0 0 1 5 0V14a8 8 0 0 1-8 8H9.46a4 4 0 0 1-3.05-1.41l-3.18-3.71a1.66 1.66 0 0 1 2.34-2.34L8 17"/><path d="M9 11.24V14"/></svg>タップでスキャン</div>
       </div>
@@ -501,7 +501,7 @@ function showToast(msg,type='success'){
   const ex=document.getElementById('ci-toast');if(ex)ex.remove();
   const el=document.createElement('div');el.id='ci-toast';
   el.style.cssText=`position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
-    background:${type==='success'?'#27ae60':'#e67e22'};color:#fff;
+    background:${type==='success'?'#0a1628':'#e67e22'};color:${type==='success'?'#c9a96e':'#fff'};
     padding:10px 22px;border-radius:8px;font-size:13px;
     font-family:'Noto Sans JP',sans-serif;z-index:999;
     box-shadow:0 4px 16px rgba(10,22,40,0.15);white-space:nowrap;`;
