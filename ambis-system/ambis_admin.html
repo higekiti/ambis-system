@@ -1604,10 +1604,22 @@ function previewPhoto(e){
   const file=e.target.files[0]; if(!file)return;
   const reader=new FileReader();
   reader.onload=ev=>{
-    photoData=ev.target.result;
-    document.getElementById('photo-preview-img').src=photoData;
-    document.getElementById('photo-preview-img').style.display='block';
-    document.getElementById('photo-placeholder').style.display='none';
+    const img=new Image();
+    img.onload=()=>{
+      const MAX=480;
+      let w=img.width,h=img.height;
+      if(w>h){ if(w>MAX){h=Math.round(h*MAX/w); w=MAX;} }
+      else { if(h>MAX){ w=Math.round(w*MAX/h); h=MAX;} }
+      const canvas=document.createElement('canvas');
+      canvas.width=w; canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      photoData=canvas.toDataURL('image/jpeg',0.8);
+      document.getElementById('photo-preview-img').src=photoData;
+      document.getElementById('photo-preview-img').style.display='block';
+      document.getElementById('photo-placeholder').style.display='none';
+    };
+    img.onerror=()=>{ alert('画像の読み込みに失敗しました。別の画像でお試しください。'); };
+    img.src=ev.target.result;
   };
   reader.readAsDataURL(file);
 }
