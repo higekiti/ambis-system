@@ -1692,6 +1692,7 @@ function previewPhoto(e){
   reader.readAsDataURL(file);
 }
 
+const sourceLabelMap={SNS:'SNS（Instagram等）',friend:'友人・知人の紹介',member:'既存会員の紹介',walkin:'通りすがり・看板',search:'検索・ホームページ',other:'その他'};
 function saveMember(){
   const name=document.getElementById('f-name').value.trim();
   if(!name){alert('氏名を入力してください');return;}
