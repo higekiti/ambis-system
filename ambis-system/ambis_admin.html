@@ -3635,6 +3635,13 @@ function showToast(msg){
 }
 
 // ══ グローバル公開（type="module"はトップレベル関数をwindowに自動公開しないため、onclick属性から呼べるように明示的に公開する） ══
+function toggleMemberReferrerRow(){
+  const v = document.getElementById('f-source-type').value;
+  const referrerRow = document.getElementById('f-referrer-row');
+  const otherRow = document.getElementById('f-source-other-row');
+  if(referrerRow) referrerRow.style.display = (v==='friend'||v==='member') ? '' : 'none';
+  if(otherRow) otherRow.style.display = (v==='other') ? '' : 'none';
+}
 window.showPage=showPage;window.openMemberModal=openMemberModal;window.closeMemberModal=closeMemberModal;window.toggleMemberReferrerRow=toggleMemberReferrerRow;
 window.addAttendance=addAttendance;window.changeRentalCalMonth=changeRentalCalMonth;window.closeExceptionModal=closeExceptionModal;
 window.closeRentalModal=closeRentalModal;window.closeScheduleModal=closeScheduleModal;window.closeSidebar=closeSidebar;
