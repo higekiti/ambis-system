@@ -15,7 +15,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -43,6 +43,10 @@ async function loadFromFirestore(collName){
 window.fbSetDoc = async (collName, id, data) => {
   try { await setDoc(doc(db, collName, String(id)), data); return true; }
   catch(e) { console.error('Firestore write error:', collName, e); return false; }
+};
+window.fbUpdateDoc = async (collName, id, data) => {
+  try { await updateDoc(doc(db, collName, String(id)), data); return true; }
+  catch(e) { console.error('Firestore update error:', collName, e); return false; }
 };
 window.fbDeleteDoc = async (collName, id) => {
   try { await deleteDoc(doc(db, collName, String(id))); return true; }
@@ -197,6 +201,8 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);min-height:100vh
 .card-body{padding:20px 22px 14px;display:flex;gap:16px;align-items:center;}
 .avatar{width:72px;height:72px;border-radius:50%;background:#f0f3f8;border:2px solid #e0e6f0;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--navy);flex-shrink:0;overflow:hidden;}
 .avatar img{width:100%;height:100%;object-fit:cover;}
+.avatar-wrap{position:relative;flex-shrink:0;cursor:pointer;}
+.avatar-edit-badge{position:absolute;right:-2px;bottom:-2px;width:22px;height:22px;border-radius:50%;background:var(--navy);border:2px solid #fff;display:flex;align-items:center;justify-content:center;}
 .member-info{flex:1;min-width:0;}
 .m-name{font-size:17px;font-weight:500;color:var(--text-primary);margin-bottom:2px;}
 .m-kana{font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:2px;color:var(--text-muted);margin-bottom:10px;}
@@ -549,6 +555,8 @@ input:focus,select:focus{border-color:var(--navy-light);}
     <button onclick="memberLogout()" style="width:100%;padding:9px;background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#8a9ab8;font-size:12px;cursor:pointer;letter-spacing:.5px;">ログアウト</button>
   </div>
 </div>
+
+<input type="file" id="member-photo-input" accept="image/*" style="display:none" onchange="handleMemberPhotoChange(event)">
 
 <!-- MAIN CONTENT -->
 <div class="content">
@@ -1134,7 +1142,7 @@ function getNextClassInfo(){const now=new Date();for(let i=0;i<21;i++){const d=n
       <div class="member-badge">MEMBER</div>
     </div>
     <div class="card-body">
-      <div class="avatar">${avatarHTML}</div>
+      <div class="avatar-wrap" onclick="triggerMemberPhotoUpload()" title="タップで写真を変更"><div class="avatar">${avatarHTML}</div><div class="avatar-edit-badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div></div>
       <div class="member-info">
         <div class="m-name">${member.name}</div>
         <div class="m-kana">${member.kana||member.id}</div>
@@ -1663,6 +1671,49 @@ function deleteRecord(){
   closeRecordModal();
   renderRecord();
 }
+
+function triggerMemberPhotoUpload(){
+  const el = document.getElementById('member-photo-input');
+  if(el) el.click();
+}
+
+function handleMemberPhotoChange(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const resolvedId = window.loggedInMemberId || memberId;
+  const member = resolvedId ? members.find(m=>m.id===resolvedId) : members.find(m=>m.status==='active');
+  if(!member){ alert('会員情報が見つかりませんでした'); e.target.value=''; return; }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = async () => {
+      const MAX = 480;
+      let w=img.width, h=img.height;
+      if(w>h){ if(w>MAX){h=Math.round(h*MAX/w); w=MAX;} }
+      else { if(h>MAX){ w=Math.round(w*MAX/h); h=MAX;} }
+      const canvas = document.createElement('canvas');
+      canvas.width=w; canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      const photoData = canvas.toDataURL('image/jpeg',0.8);
+      const ok = window.fbUpdateDoc ? await window.fbUpdateDoc('members', member.id, {photo: photoData}) : false;
+      if(ok){
+        member.photo = photoData;
+        localStorage.setItem('ambis_members', JSON.stringify(members));
+        initCard();
+        alert('写真を更新しました');
+      } else {
+        alert('写真の更新に失敗しました。時間をおいて再度お試しください。');
+      }
+      e.target.value='';
+    };
+    img.onerror = () => { alert('画像の読み込みに失敗しました'); e.target.value=''; };
+    img.src = ev.target.result;
+  };
+  reader.onerror = () => { alert('ファイルの読み込みに失敗しました'); e.target.value=''; };
+  reader.readAsDataURL(file);
+}
+window.triggerMemberPhotoUpload = triggerMemberPhotoUpload;
+window.handleMemberPhotoChange = handleMemberPhotoChange;
 
 // ── INIT ──
 window.addEventListener('load',initCard);
