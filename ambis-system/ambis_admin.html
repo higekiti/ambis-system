@@ -1616,8 +1616,9 @@ function openMemberModal(mode,id){
   document.getElementById('photo-preview-img').style.display='none';
   document.getElementById('photo-placeholder').style.display='block';
   document.getElementById('photo-input').value='';
-  ['f-name','f-kana','f-contact','f-email','f-note'].forEach(x=>document.getElementById(x).value='');
-  document.getElementById('f-source').value='';
+  ['f-name','f-kana','f-contact','f-email','f-note','f-referrer','f-source-other'].forEach(x=>document.getElementById(x).value='');
+  document.getElementById('f-source-type').value='SNS';
+  toggleMemberReferrerRow();
   document.getElementById('f-belt').value='white';
   document.getElementById('f-stripe').value='0';
   document.getElementById('f-status').value='active';
