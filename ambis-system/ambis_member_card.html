@@ -51,6 +51,7 @@ window.fbDeleteDoc = async (collName, id) => {
 
 // ── 状態管理 ──
 let appReady = false; // アプリ表示済みフラグ
+let manualLogout = false; // 明示的にログアウトボタンが押された場合のみtrueにする
 
 // ── 画面切替 ──
 function showMemberApp(){
@@ -121,6 +122,7 @@ window.memberGoogleLogin = async () => {
 };
 
 window.memberLogout = async () => {
+  manualLogout = true;
   await signOut(auth);
 };
 
@@ -131,10 +133,11 @@ getRedirectResult(auth).catch(e => console.error('Google redirect login error:',
     if(appReady) return;
     loadAndInit(user);
   } else {
-    // 明示的なログアウト以外は画面を切り替えない
-    if(appReady){
-      // appReadyがtrueなのにnullが来た = 本当のサインアウト
+    // トークン更新の一時的な失敗などでもnullで発火することがあるため、
+    // 明示的にログアウトボタンが押された場合のみログイン画面に戻す。
+    if(manualLogout){
       appReady = false;
+      manualLogout = false;
       showMemberLogin();
     }
   }
