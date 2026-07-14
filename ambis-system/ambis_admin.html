@@ -37,6 +37,7 @@ window.fbSignInGoogle = async () => {
   return signInWithPopup(auth, googleProvider);
 };
 window.fbSignInGoogleRedirect = async () => { return signInWithRedirect(auth, googleProvider); }; window.fbSignOut = async () => {
+  manualLogout = true;
   return signOut(auth);
 };
 window.fbGetDocs = getDocs;
@@ -52,6 +53,7 @@ window.fbGetRedirectResult = getRedirectResult;
 // 管理者として許可するメールアドレス
 const ADMIN_EMAILS = ['ambis.bjj@gmail.com'];
 let adminAppReady = false;
+let manualLogout = false;
 
 function showApp(user) {
   adminAppReady = true;
@@ -76,7 +78,7 @@ function showLogin(errorMsg) {
 
 async function checkAndLogin(user) {
   if (!user) {
-    if (adminAppReady) { adminAppReady = false; showLogin(); }
+    if (adminAppReady && manualLogout) { adminAppReady = false; manualLogout = false; showLogin(); }
     return;
   }
   if (adminAppReady) return;
@@ -883,9 +885,24 @@ textarea{resize:vertical;min-height:60px;}
         <div><label>Gmailアドレス（会員アプリログイン用）</label><input type="email" id="f-email" placeholder="example@gmail.com"></div>
       </div>
       <div class="form-row-2">
-        <div><label>入会経路</label>
-          <select id="f-source"><option value="">選択</option><option>TATORU紹介</option><option>SNS</option><option>ホームページ</option><option>その他</option></select>
+        <div><label>入会経路・きっかけ</label>
+          <select id="f-source-type" onchange="toggleMemberReferrerRow()">
+            <option value="SNS">SNS（Instagram等）</option>
+            <option value="friend">友人・知人の紹介</option>
+            <option value="member">既存会員の紹介</option>
+            <option value="walkin">通りすがり・看板</option>
+            <option value="search">検索・ホームページ</option>
+            <option value="other">その他</option>
+          </select>
         </div>
+      </div>
+      <div class="form-row" id="f-referrer-row" style="display:none;">
+        <label>紹介者の名前</label>
+        <input type="text" id="f-referrer" placeholder="例：田中 太郎（会員）">
+      </div>
+      <div class="form-row" id="f-source-other-row" style="display:none;">
+        <label>その他の詳細</label>
+        <input type="text" id="f-source-other" placeholder="きっかけを入力">
       </div>
       <div class="form-row"><label>連絡方法（決済リンクの送付方法）</label><select id="f-contactMethod"><option value="line">LINE（手動送付）</option><option value="email">メール（自動送信）</option><option value="cash">現金</option></select></div>
       <div class="form-row"><label>入会日 *</label><input type="date" id="f-joindate"></div>
@@ -3617,7 +3634,7 @@ function showToast(msg){
 }
 
 // ══ グローバル公開（type="module"はトップレベル関数をwindowに自動公開しないため、onclick属性から呼べるように明示的に公開する） ══
-window.showPage=showPage;window.openMemberModal=openMemberModal;window.closeMemberModal=closeMemberModal;
+window.showPage=showPage;window.openMemberModal=openMemberModal;window.closeMemberModal=closeMemberModal;window.toggleMemberReferrerRow=toggleMemberReferrerRow;
 window.addAttendance=addAttendance;window.changeRentalCalMonth=changeRentalCalMonth;window.closeExceptionModal=closeExceptionModal;
 window.closeRentalModal=closeRentalModal;window.closeScheduleModal=closeScheduleModal;window.closeSidebar=closeSidebar;
 window.closeTournamentModal=closeTournamentModal;window.closeTrialModal=closeTrialModal;window.deleteAttendance=deleteAttendance;
