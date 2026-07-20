@@ -134,7 +134,7 @@ window.memberLogout = async () => {
 const TERMS_VERSION = '2026-07-20';
 let pendingConsentUser = null;
 function hasConsent(){ return localStorage.getItem('ambis_terms_agreed') === TERMS_VERSION; }
-function showConsentModal(){ const m = document.getElementById('consent-modal'); if(m) m.classList.add('show'); }
+function showConsentModal(){ const m = document.getElementById('consent-modal'); if(m){ document.body.appendChild(m); m.classList.add('show'); } }
 window.agreeConsent = async () => {
   localStorage.setItem('ambis_terms_agreed', TERMS_VERSION);
   const m = document.getElementById('consent-modal'); if(m) m.classList.remove('show');
@@ -234,7 +234,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);min-height:100vh
 .avatar-wrap{position:relative;flex-shrink:0;cursor:pointer;}
 .avatar-edit-badge{position:absolute;right:-2px;bottom:-2px;width:22px;height:22px;border-radius:50%;background:var(--navy);border:2px solid #fff;display:flex;align-items:center;justify-content:center;}
 /* 利用規約 同意モーダル */
-#consent-modal{display:none;position:fixed;inset:0;background:rgba(10,22,40,0.82);z-index:9999;align-items:flex-end;justify-content:center;}
+#consent-modal{display:none;position:fixed;inset:0;background:rgba(10,22,40,0.82);z-index:99999;align-items:flex-end;justify-content:center;}
 #consent-modal.show{display:flex;}
 .consent-sheet{background:#fff;border-radius:18px 18px 0 0;padding:28px 24px 40px;width:100%;max-width:480px;animation:consentSlideUp 0.3s ease;}
 @keyframes consentSlideUp{from{transform:translateY(60px);opacity:0;}to{transform:translateY(0);opacity:1;}}
