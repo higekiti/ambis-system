@@ -600,24 +600,6 @@ input:focus,select:focus{border-color:var(--navy-light);}
   </div>
 </div>
 
-<!-- ══ 利用規約 同意モーダル ══ -->
-<div id="consent-modal">
-  <div class="consent-sheet">
-    <div class="consent-logo">AMBIs</div>
-    <div class="consent-title">はじめにご確認ください</div>
-    <div class="consent-summary">
-      AMBIs会員アプリをご利用いただくにあたり、<strong>利用規約</strong>および<strong>プライバシーポリシー</strong>にご同意をお願いします。<br><br>
-      本アプリでは、Googleアカウント・帯・出席記録・プロフィール写真等の個人情報をFirebaseに保存します。また、月会費等のクレジットカード決済にはStripeを利用し、カード情報は当道場では保持しません。データは会員管理・決済管理の目的のみに使用し、ご本人の同意なく第三者への提供は行いません。
-    </div>
-    <div class="consent-links">
-      <span class="consent-link" onclick="window.open('app_terms.html#terms','_blank')">利用規約を読む</span>
-      <span class="consent-link" onclick="window.open('app_terms.html#privacy','_blank')">プライバシーポリシーを読む</span>
-    </div>
-    <button class="consent-btn" onclick="agreeConsent()">同意してアプリを使用する</button>
-    <button class="consent-decline" onclick="declineConsent()">同意しない（ログアウト）</button>
-  </div>
-</div>
-
 <input type="file" id="member-photo-input" accept="image/*" style="display:none" onchange="handleMemberPhotoChange(event)">
 
 <!-- MAIN CONTENT -->
@@ -1781,6 +1763,25 @@ window.handleMemberPhotoChange = handleMemberPhotoChange;
 window.addEventListener('load',initCard);
 </script>
 </div><!-- /member-app-screen -->
+
+<!-- ══ 利用規約 同意モーダル ══ -->
+<div id="consent-modal">
+  <div class="consent-sheet">
+    <div class="consent-logo">AMBIs</div>
+    <div class="consent-title">はじめにご確認ください</div>
+    <div class="consent-summary">
+      AMBIs会員アプリをご利用いただくにあたり、<strong>利用規約</strong>および<strong>プライバシーポリシー</strong>にご同意をお願いします。<br><br>
+      本アプリでは、Googleアカウント・帯・出席記録・プロフィール写真等の個人情報をFirebaseに保存します。また、月会費等のクレジットカード決済にはStripeを利用し、カード情報は当道場では保持しません。データは会員管理・決済管理の目的のみに使用し、ご本人の同意なく第三者への提供は行いません。
+    </div>
+    <div class="consent-links">
+      <span class="consent-link" onclick="window.open('app_terms.html#terms','_blank')">利用規約を読む</span>
+      <span class="consent-link" onclick="window.open('app_terms.html#privacy','_blank')">プライバシーポリシーを読む</span>
+    </div>
+    <button class="consent-btn" onclick="agreeConsent()">同意してアプリを使用する</button>
+    <button class="consent-decline" onclick="declineConsent()">同意しない（ログアウト）</button>
+  </div>
+</div>
+
 
 <!-- PWA Service Worker 登録 -->
 <script>
