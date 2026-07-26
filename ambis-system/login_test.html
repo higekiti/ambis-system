@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AMBIs ログイン方式テスト</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{--navy:#0a1628;--gold:#c9a96e;--bg:#f0f2f7;--muted:#6a7a9a;}
+  body{font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;background:var(--bg);color:var(--navy);line-height:1.7;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .card{background:#fff;border-radius:16px;padding:28px 22px 34px;max-width:440px;width:100%;box-shadow:0 8px 32px rgba(10,22,40,0.12);}
+  .logo{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:3px;color:var(--navy);text-align:center;}
+  .sub{font-size:11px;letter-spacing:1px;color:var(--muted);text-align:center;margin-bottom:6px;}
+  h1{font-size:15px;text-align:center;margin:14px 0 4px;}
+  .note{font-size:12px;color:var(--muted);text-align:center;margin-bottom:20px;}
+  #gis-button{display:flex;justify-content:center;margin:20px 0;min-height:44px;}
+  .status{font-size:13px;padding:14px;border-radius:10px;margin-top:16px;white-space:pre-wrap;word-break:break-word;}
+  .status.ok{background:#e8f5ee;color:#1a6b3c;border:1px solid #b6e0c6;}
+  .status.err{background:#fdecec;color:#b3261e;border:1px solid #f5c6c6;}
+  .status.info{background:#eef1f7;color:#3a4a6a;border:1px solid #dfe4ee;}
+  .env{font-size:10px;color:var(--muted);margin-top:18px;padding-top:12px;border-top:1px solid #eee;word-break:break-all;}
+  button.signout{margin-top:14px;width:100%;padding:12px;background:none;border:1px solid var(--muted);border-radius:8px;color:var(--muted);font-size:13px;font-family:inherit;cursor:pointer;}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">AMBIs</div>
+  <div class="sub">LOGIN METHOD TEST</div>
+  <h1>Googleログイン方式テスト</h1>
+  <p class="note">この画面は動作確認用です。ば<br>下のGoogleボタンからログインして、エラーが出ないか確認します。</p>
+
+  <div id="gis-button"></div>
+
+  <div id="status" class="status info">Google Identity Services を初期化中…</div>
+  <button class="signout" id="signout" style="display:none;">サインアウトしてやり直す</button>
+
+  <div class="env" id="env"></div>
+</div>
+
+<script src="https://accounts.google.com/gsi/client" async></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithCredential, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+// ==== ここに Google Cloud の「ウェブ クライアント ID」を入れる ====
+const WEB_CLIENT_ID = "950081158370-hqu69kt33t4na39re896fv09t607b6uv.apps.googleusercontent.com";
+// =============================================================
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBA3sfUh7i2gldOXaHILJYlS4cu3YmnIyg",
+  authDomain: "ambis-jiu-jitsu.firebaseapp.com",
+  projectId: "ambis-jiu-jitsu",
+  storageBucket: "ambis-jiu-jitsu.firebasestorage.app",
+  messagingSenderId: "950081158370",
+  appId: "1:950081158370:web:8e33879ed3b429a99272bb"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+const statusEl = document.getElementById('status');
+const signoutBtn = document.getElementById('signout');
+const envEl = document.getElementById('env');
+
+function setStatus(msg, cls){ statusEl.textContent = msg; statusEl.className = 'status ' + cls; }
+
+envEl.textContent = 'UA: ' + navigator.userAgent + '\ncookieEnabled: ' + navigator.cookieEnabled;
+
+onAuthStateChanged(auth, (user) => {
+  if(user){
+    setStatus('✅ ログイン成功しました。\n\nメール: ' + (user.email || '(不明)') + '\n表示名: ' + (user.displayName || '(なし)') + '\n\nfirebaseapp.com のエラー画面は出ましたか？ 出なけれの成功です。', 'ok');
+    signoutBtn.style.display = 'block';
+  }
+});
+
+async function handleCredential(response){
+  try {
+    setStatus('Googleトクンを受け取りました。Firebaseにサインイン中…', 'info');
+    const cred = GoogleAuthProvider.credential(response.credential);
+    await signInWithCredential(auth, cred);
+  } catch(e){
+    setStatus('⚠️ Firebaseサインインでエラー:\n' + (e && e.code ? e.code : '') + '\n' + (e && e.message ? e.message : e), 'err');
+  }
+}
+
+function initGis(){
+  if(!(window.google && google.accounts && google.accounts.id)){
+    setStatus('Google Identity Services の読み込みを待っています…', 'info');
+    setTimeout(initGis, 300);
+    return;
+  }
+  if(WEB_CLIENT_ID.indexOf('__') === 0){
+    setStatus('⚠️ まだ「ウェブ クライアントID」が設定されていません。\nコード内の WEB_CLIENT_ID を実際の値に置き換えてください。', 'err');
+    return;
+  }
+  try {
+    google.accounts.id.initialize({
+      client_id: WEB_CLIENT_ID,
+      callback: handleCredential,
+      auto_select: false,
+      cancel_on_tap_outside: true
+    });
+    google.accounts.id.renderButton(
+      document.getElementById('gis-button'),
+      { theme: 'filled_blue', size: 'large', shape: 'pill', text: 'signin_with', locale: 'ja' }
+    );
+    setStatus('準備ができました。上のGoogleボタンからログインしてください。', 'info');
+  } catch(e){
+    setStatus('⚠️ GIS初期化エラー:\n' + (e && e.message ? e.message : e), 'err');
+  }
+}
+initGis();
+
+signoutBtn.addEventListener('click', async () => {
+  await signOut(auth);
+  if(window.google && google.accounts && google.accounts.id){ google.accounts.id.disableAutoSelect(); }
+  setStatus('サインアウトしました。もう一度ログインを試せます。', 'info');
+  signoutBtn.style.display = 'none';
+});
+</script>
+</body>
+</html>
