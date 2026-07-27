@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
+    <title>ご予約・お申込み | AMBIs Jiu-Jitsu Academy</title>
+    <meta name="robots" content="noindex">
+    <meta name="description" content="AMBIs Jiu-Jitsu Academyの体験レッスン予約・出稽古申込・レンタルスペース問い合わせフォーム。熊本市水前寺。">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/png" href="favicon-32.png" sizes="32x32">
+    <!-- GA4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-9F3JKVRCG1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-9F3JKVRCG1');
+    </script>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Playfair+Display:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --navy:      #1B2D4F;
+            --navy-dark: #0F1E35;
+            --gold:      #C9A84C;
+            --gold-lt:   #E2C97A;
+            --cream:     #F5F0E8;
+            --cream-dk:  #EDE6D8;
+            --text:      #3D3028;
+            --muted:     #8A7B6E;
+        }
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background: var(--cream);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+        a { text-decoration: none; color: inherit; }
+
+        /* ===== HEADER ===== */
+        .pg-header {
+            background: var(--navy-dark);
+            padding: 18px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .hd-logo { display: flex; align-items: center; gap: 12px; }
+        .hd-logo img { height: 38px; width: auto; display: block; }
+        .hd-logo-sub {
+            font-size: 10px;
+            font-weight: 300;
+            letter-spacing: 0.2em;
+            color: var(--gold);
+            white-space: nowrap;
+        }
+        @media (max-width: 380px) { .hd-logo-sub { display: none; } }
+        .hd-back {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            color: rgba(255,255,255,0.45);
+            transition: color 0.2s;
+            white-space: nowrap;
+        }
+        .hd-back:hover { color: var(--gold); }
+
+        /* ===== HERO ===== */
+        .pg-hero {
+            background: var(--navy);
+            padding: 48px 24px 40px;
+            text-align: center;
+        }
+        .pg-tag {
+            display: block;
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: 12px;
+            color: var(--gold);
+            margin-bottom: 12px;
+            letter-spacing: 0.08em;
+        }
+        .pg-title {
+            font-size: clamp(20px, 5vw, 28px);
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 12px;
+        }
+        .gold-bar {
+            width: 44px;
+            height: 1px;
+            background: var(--gold);
+            margin: 0 auto 14px;
+            opacity: 0.7;
+        }
+        .pg-sub {
+            font-size: 13px;
+            color: rgba(245,240,232,0.52);
+            line-height: 2;
+            max-width: 380px;
+            margin: 0 auto;
+        }
+
+        /* ===== FORM WRAP ===== */
+        .form-wrap {
+            max-width: 560px;
+            margin: 0 auto;
+            padding: 36px 20px 80px;
+        }
+
+        /* ===== 3-TAB SELECTOR ===== */
+        .tab-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 2px;
+            background: var(--cream-dk);
+            margin-bottom: 24px;
+        }
+        .tab-card {
+            background: var(--cream);
+            padding: 16px 8px 14px;
+            text-align: center;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: background 0.2s, border-color 0.2s;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .tab-card:hover { background: #faf7f2; }
+        .tab-card.active {
+            background: #fff;
+            border-bottom-color: var(--gold);
+        }
+        .tab-en {
+            font-size: 9px;
+            font-weight: 400;
+            letter-spacing: 0.18em;
+            color: var(--muted);
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        .tab-card.active .tab-en { color: var(--gold); }
+        .tab-ja {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--navy);
+            line-height: 1.3;
+        }
+
+        /* ===== INFO BOX ===== */
+        .info-box {
+            background: #fff;
+            border-left: 3px solid var(--gold);
+            padding: 13px 16px;
+            margin-bottom: 20px;
+            font-size: 12.5px;
+            color: var(--text);
+            line-height: 1.95;
+            display: none;
+        }
+        .info-box.active { display: block; }
+        .info-price {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            gap: 4px 10px;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid var(--cream-dk);
+        }
+        .price-val {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--navy);
+            line-height: 1;
+        }
+        .price-unit { font-size: 12px; color: var(--muted); }
+
+        /* ===== FORM CARD ===== */
+        .form-card {
+            background: #fff;
+            border: 1px solid var(--cream-dk);
+            padding: 28px 28px 32px;
+        }
+        @media (max-width: 480px) { .form-card { padding: 22px 16px 26px; } }
+
+        /* Field groups */
+        .field-group { display: none; }
+        .field-group.active { display: block; }
+
+        .f-row { margin-bottom: 18px; }
+        .f-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--navy);
+            letter-spacing: 0.07em;
+            margin-bottom: 6px;
+        }
+        .f-label .req {
+            margin-left: 6px;
+            font-size: 10px;
+            font-weight: 700;
+            color: #fff;
+            background: var(--navy);
+            padding: 1px 7px;
+        }
+        .f-label .opt {
+            margin-left: 6px;
+            font-size: 10px;
+            color: var(--muted);
+            font-weight: 400;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        input[type="date"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 11px 13px;
+            border: 1px solid #D5CBBC;
+            background: var(--cream);
+            font-family: 'Noto Sans JP', sans-serif;
+            font-size: 14px;
+            color: var(--text);
+            outline: none;
+            border-radius: 0;
+            -webkit-appearance: none;
+            appearance: none;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--gold);
+            background: #fff;
+        }
+        select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238A7B6E' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 13px center;
+            background-color: var(--cream);
+            padding-right: 34px;
+            cursor: pointer;
+        }
+        textarea { resize: vertical; min-height: 96px; }
+
+        /* Duration radios */
+        .radio-group { display: flex; gap: 16px; flex-wrap: wrap; }
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 13.5px;
+            cursor: pointer;
+        }
+        .radio-item input[type="radio"] {
+            width: 16px;
+            height: 16px;
+            padding: 0;
+            margin: 0;
+            cursor: pointer;
+            accent-color: var(--navy);
+        }
+
+        /* Common fields (shared across all tabs) */
+        .common-fields { margin-bottom: 0; }
+
+        /* Tab divider */
+        .tab-divider {
+            height: 1px;
+            background: var(--cream-dk);
+            margin: 18px 0;
+        }
+
+        /* ===== SUBMIT ===== */
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: var(--gold);
+            color: var(--navy);
+            font-family: 'Noto Sans JP', sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            letter-spacing: 0.06em;
+            transition: background 0.2s;
+            margin-top: 6px;
+        }
+        .submit-btn:hover { background: var(--gold-lt); }
+        .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* ===== LINE NOTE ===== */
+        .line-note {
+            text-align: center;
+            margin-top: 18px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+        .line-note a { color: var(--navy); text-decoration: underline; }
+
+        /* ===== SUCCESS ===== */
+        #success-box {
+            display: none;
+            text-align: center;
+            padding: 56px 20px;
+        }
+        .s-icon {
+            width: 58px;
+            height: 58px;
+            background: var(--navy);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 22px;
+        }
+        #success-box h2 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--navy);
+            margin-bottom: 14px;
+        }
+        #success-box p {
+            font-size: 13.5px;
+            color: var(--muted);
+            line-height: 2;
+        }
+        .back-btn {
+            display: inline-block;
+            margin-top: 28px;
+            padding: 13px 32px;
+            background: var(--navy);
+            color: var(--cream);
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: 0.04em;
+        }
+
+        /* ===== FOOTER ===== */
+        .pg-footer {
+            background: var(--navy-dark);
+            padding: 24px;
+            text-align: center;
+        }
+        .pg-footer p { font-size: 11px; color: rgba(255,255,255,0.28); }
+        .pg-footer a { color: rgba(255,255,255,0.38); text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="pg-header">
+    <a href="index.html" class="hd-logo">
+        <img src="logo-white.png" alt="AMBIs">
+        <span class="hd-logo-sub">Jiu-Jitsu Academy</span>
+    </a>
+</header>
+
+<!-- HERO -->
+<div class="pg-hero">
+    <span class="pg-tag">Trial Lesson · Visitor · Rental</span>
+    <h1 class="pg-title">ご予約・お申込みはこちら</h1>
+    <div class="gold-bar"></div>
+    <p class="pg-sub">
+        種別を選んでフォームにご記入ください。<br>
+        送信後2営業日以内にご連絡します。
+    </p>
+</div>
+
+<!-- FORM AREA -->
+<div class="form-wrap">
+
+    <!-- SUCCESS STATE -->
+    <div id="success-box">
+        <div class="s-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h2 id="success-title">ご予約を受け付けました</h2>
+        <p>
+            ご入力のメールアドレスに確認メールをお送りします。<br>
+            2営業日以内にご連絡します。<br><br>
+            ご不明な点はLINEよりお気軽にどうぞ。
+        </p>
+        <a href="index.html" class="back-btn">トップページへ戻る</a>
+    </div>
+
+    <!-- FORM SECTION -->
+    <div id="form-section">
+
+        <!-- TAB SELECTOR -->
+        <div class="tab-selector">
+            <div class="tab-card active" id="tab-taiken" onclick="switchTab('taiken')">
+                <div class="tab-en">Trial</div>
+                <div class="tab-ja">体験レッスン</div>
+            </div>
+            <div class="tab-card" id="tab-dejugi" onclick="switchTab('dejugi')">
+                <div class="tab-en">Visitor</div>
+                <div class="tab-ja">出稽古</div>
+            </div>
+            <div class="tab-card" id="tab-rental" onclick="switchTab('rental')">
+                <div class="tab-en">Rental</div>
+                <div class="tab-ja">レンタル</div>
+            </div>
+        </div>
+
+        <!-- INFO: 体験 -->
+        <div class="info-box active" id="info-taiken">
+            ・無料体験は1回のみ（勧誘は一切しません）<br>
+            ・道着・帯は無料でお貸しします。手ぶらでOK<br>
+            ・希望日・時間帯は「目安」として記入ください
+        </div>
+
+        <!-- INFO: 出稽古 -->
+        <div class="info-box" id="info-dejugi">
+            ・登録道場に所属している方が対象です<br>
+            ・事前にご連絡ください（当日飛び込み不可）<br>
+            ・道着レンタル ¥1,000 / 更衣室・シャワー利用可
+            <div class="info-price">
+                <span class="price-val">¥3,300</span><span class="price-unit">/ 回（税込）</span>
+            </div>
+        </div>
+
+        <!-- INFO: レンタル -->
+        <div class="info-box" id="info-rental">
+            ・事前予約制（前日までにご連絡ください）<br>
+            ・平日 09:00〜22:00（クラス開催時間を除く）<br>
+            ・80㎡ 全面マット / 更衣室・シャワー・ウォーターサーバー完備
+            <div class="info-price">
+                <span class="price-val">¥2,500</span><span class="price-unit">/ 1時間 &nbsp;|&nbsp;</span>
+                <span class="price-val">¥4,500</span><span class="price-unit">/ 2時間（税込）</span>
+            </div>
+        </div>
+
+        <!-- FORM CARD -->
+        <div class="form-card">
+            <form id="main-form" onsubmit="submitForm(event)">
+
+                <!-- 共通フィールド -->
+                <div class="common-fields">
+                    <div class="f-row">
+                        <label class="f-label" for="c-name">お名前<span class="req">必須</span></label>
+                        <input type="text" id="c-name" placeholder="例：山田 太郎" required>
+                    </div>
+                    <div class="f-row">
+                        <label class="f-label" for="c-email">メールアドレス<span class="req">必須</span></label>
+                        <input type="email" id="c-email" placeholder="example@email.com" required>
+                    </div>
+                    <div class="f-row">
+                        <label class="f-label" for="c-tel">電話番号<span class="opt">任意</span></label>
+                        <input type="tel" id="c-tel" placeholder="090-0000-0000">
+                    </div>
+                </div>
+
+                <div class="tab-divider"></div>
+
+                <!-- 体験フィールド -->
+                <div class="field-group active" id="fields-taiken">
+                    <div class="f-row">
+                        <label class="f-label" for="t-date">希望体験日<span class="opt">任意・目安</span></label>
+                        <input type="date" id="t-date">
+                    </div>
+                    <div class="f-row">
+                        <label class="f-label" for="t-time">希望時間帯<span class="opt">任意・目安</span></label>
+                        <select id="t-time">
+                            <option value="">- 選択してください -</option>
+                            <option>土曜 09:30〜10:30（初心者クラス）</option>
+                            <option>土曜 11:00〜12:00（オールレベルクラス）</option>
+                            <option>土曜 17:30〜18:30（初心者クラス）</option>
+                            <option>土曜 19:00〜20:00（オールレベルクラス）</option>
+                            <option>日曜 09:30〜10:30（初心者クラス）</option>
+                            <option>日曜 11:00〜12:00（オールレベルクラス）</option>
+                            <option>日曜 15:00〜16:00（初心者クラス）</option>
+                            <option>未定・相談したい</option>
+                        </select>
+                    </div>
+                    <div class="f-row">
+                        <label class="f-label" for="t-msg">メッセージ・ご質問<span class="opt">任意</span></label>
+                        <textarea id="t-msg" placeholder="「初心者で不安」「女性一人でも大丈夫ですか」など、なんでもお気軽にどうぞ。"></textarea>
+                    </div>
+                </div>
+
+                <!-- 出稽古フィールド -->
+                <div class="field-group" id="fields-dejugi">
+                    <div class="f-row">
+                        <label class="f-label" for="d-dojo">所属道場<span class="opt">任意</span></label>
+                        <input type="text" id="d-dojo" placeholder="例：〇〇柔術アカデミー">
+                    </div>
+                    <div class="f-row">
+                        <label class="f-label" for="d-date">希望日<span class="opt">任意・目安</span></label>
+                        <input type="date" id="d-date">
+                    </div>
+                    <div class="f-row">
+                        <label class="f-label" for="d-msg">メッセージ・ご質問<span class="opt">任意</span></label>
+                        <textarea id="d-msg" placeholder="帯のランク、参加希望クラス、その他ご質問など。"></textarea>
+                    </div>
+                </div>
+
+                <!-- レンタルフィールド -->
+                <div class="field-group" id="fields-rental">
+                    <div class="f-row">
+                        <label class="f-label" for="r-purpose">利用目的<span class="opt">任意</span></label>
+                        <select id="r-purpose">
+                            <option value="">- 選択してください -</option>
+                            <option>ヨガ・ピラティス</option>
+                            <option>ダンス・エアロビクス</option>
+                            <option>格闘技・武道の自主練</option>
+                            <option>撮影・動画制作</option>
+                            <option>ワークショップ・勉強会</option>
+                            <option>その他</option>
+                        </select>
+                    </div>
+                    <div class="f-row">
+                        <label class="f-label" for="r-date">希望日<span class="opt">任意・目安</span></label>
+                        <input type="date" id="r-date">
+                    </div>
+                    <div class="f-row">
+                        <label class="f-label" for="r-time">希望開始時刻<span class="opt">任意・目安</span></label>
+                        <select id="r-time">
+                            <option value="">- 選択してください -</option>
+                            <option>09:00〜</option><option>10:00〜</option>
+                            <option>11:00〜</option><option>13:00〜</option>
+                            <option>14:00〜</option><option>15:00〜</option>
+                            <option>16:00〜</option><option>17:00〜</option>
+                            <option>18:00〜</option><option>19:00〜</option>
+                            <option>20:00〜</option><option>未定・相談したい</option>
+                        </select>
+                    </div>
+                    <div class="f-row">
+                        <label class="f-label">利用時間<span class="opt">任意</span></label>
+                        <div class="radio-group">
+                            <label class="radio-item">
+                                <input type="radio" name="r-dur" value="1時間（¥2,500）"> 1時間（¥2,500）
+                            </label>
+                            <label class="radio-item">
+                                <input type="radio" name="r-dur" value="2時間（¥4,500）"> 2時間（¥4,500）
+                            </label>
+                            <label class="radio-item">
+                                <input type="radio" name="r-dur" value="相談"> 相談
+                            </label>
+                        </div>
+                    </div>
+                    <div class="f-row">
+                        <label class="f-label" for="r-msg">メッセージ・ご質問<span class="opt">任意</span></label>
+                        <textarea id="r-msg" placeholder="参加人数、持ち込み機材、その他ご質問などお気軽にどうぞ。"></textarea>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn" id="main-submit">体験を予約する</button>
+            </form>
+        </div>
+
+        <p class="line-note">
+            LINEでのお問い合わせは
+            <a href="https://lin.ee/67nT6Qw2" target="_blank" rel="noopener">こちら</a>からどうぞ
+        </p>
+        <p class="line-note" style="margin-top:8px;">
+            AMBIs ホームページは
+            <a href="https://ambis-jj.com" target="_blank" rel="noopener">こちら</a>
+        </p>
+    </div>
+
+</div>
+
+<!-- FOOTER -->
+<footer class="pg-footer">
+    <p>© 2026 AMBIs Jiu-Jitsu Academy &ensp;|&ensp; <a href="privacy.html">プライバシーポリシー</a> &ensp;|&ensp; <a href="tokutei.html">特定商取引法</a></p>
+</footer>
+
+<script>
+    let currentTab = 'taiken';
+
+    const tabConfig = {
+        taiken: { btn: '体験を予約する',    subject: title => `【AMBIs 体験レッスン予約】${title}`,    success: 'ご予約を受け付けました' },
+        dejugi: { btn: '出稽古を申し込む',  subject: title => `【AMBIs 出稽古申込】${title}`,         success: 'お申込みを受け付けました' },
+        rental: { btn: 'レンタルを問い合わせる', subject: title => `【AMBIs レンタルスペース問合せ】${title}`, success: 'お問い合わせを受け付けました' },
+    };
+
+    function switchTab(tab) {
+        currentTab = tab;
+
+        // Tab cards
+        ['taiken','dejugi','rental'].forEach(t => {
+            document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+            document.getElementById('info-' + t).classList.toggle('active', t === tab);
+            document.getElementById('fields-' + t).classList.toggle('active', t === tab);
+        });
+
+        // Submit button label
+        document.getElementById('main-submit').textContent = tabConfig[tab].btn;
+    }
+
+    // Init
+    switchTab('taiken');
+
+    /* ===== SUBMIT ===== */
+    async function submitForm(e) {
+        e.preventDefault();
+
+        const name  = document.getElementById('c-name').value.trim();
+        const email = document.getElementById('c-email').value.trim();
+        const tel   = document.getElementById('c-tel').value.trim();
+
+        if (!name || !email) {
+            alert('お名前とメールアドレスは必須です。');
+            return;
+        }
+
+        const btn = document.getElementById('main-submit');
+        const origLabel = btn.textContent;
+        btn.textContent = '送信中...';
+        btn.disabled = true;
+
+        let lines = [
+            `【種別】${currentTab === 'taiken' ? '体験レッスン予約' : currentTab === 'dejugi' ? '出稽古申込' : 'レンタルスペース問合せ'}`,
+            `【お名前】${name}`,
+            `【メール】${email}`,
+            tel ? `【電話番号】${tel}` : null,
+            `【送信元ページ】https://ambis-jj.com/taiken.html`,
+        ];
+
+        if (currentTab === 'taiken') {
+            const date = document.getElementById('t-date').value;
+            const time = document.getElementById('t-time').value;
+            const msg  = document.getElementById('t-msg').value.trim();
+            if (date) lines.push(`【希望体験日】${date}`);
+            if (time) lines.push(`【希望時間帯】${time}`);
+            if (msg)  lines.push(`\n【メッセージ】\n${msg}`);
+
+        } else if (currentTab === 'dejugi') {
+            const dojo = document.getElementById('d-dojo').value.trim();
+            const date = document.getElementById('d-date').value;
+            const msg  = document.getElementById('d-msg').value.trim();
+            if (dojo) lines.push(`【所属道場】${dojo}`);
+            if (date) lines.push(`【希望日】${date}`);
+            if (msg)  lines.push(`\n【メッセージ】\n${msg}`);
+
+        } else {
+            const purpose  = document.getElementById('r-purpose').value;
+            const date     = document.getElementById('r-date').value;
+            const time     = document.getElementById('r-time').value;
+            const duration = document.querySelector('input[name="r-dur"]:checked');
+            const msg      = document.getElementById('r-msg').value.trim();
+            if (purpose)  lines.push(`【利用目的】${purpose}`);
+            if (date)     lines.push(`【希望日】${date}`);
+            if (time)     lines.push(`【希望開始時刻】${time}`);
+            if (duration) lines.push(`【利用時間】${duration.value}`);
+            if (msg)      lines.push(`\n【メッセージ】\n${msg}`);
+        }
+
+        try {
+            const res = await fetch('https://api.web3forms.com/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    access_key: '878f390f-eafe-47a0-a0a3-ad1545c10fa5',
+                    subject: tabConfig[currentTab].subject(name),
+                    name,
+                    email,
+                    message: lines.filter(Boolean).join('\n'),
+                }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                document.getElementById('success-title').textContent = tabConfig[currentTab].success;
+                document.getElementById('form-section').style.display = 'none';
+                document.getElementById('success-box').style.display  = 'block';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                if (typeof gtag !== 'undefined') {
+                    gtag('event', 'form_submit', { event_category: 'form', event_label: currentTab });
+                }
+            } else {
+                throw new Error(data.message || 'error');
+            }
+        } catch (err) {
+            alert('送信に失敗しました。お手数ですがLINEよりご連絡ください。');
+            btn.textContent = origLabel;
+            btn.disabled = false;
+        }
+    }
+</script>
+</body>
+</html>
