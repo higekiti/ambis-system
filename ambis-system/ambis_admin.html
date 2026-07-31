@@ -3480,6 +3480,28 @@ async function loadFromFirestore(collectionName){
   }
 }
 
+// ══ ROSTER（非PII名簿）＆ roster_readers（閲覧許可リスト）同期 ══
+// membersから「非PIIのみ」を抽出してrosterへ、閲覧を許可するメールをroster_readersへ同期。
+// saveToFirestoreは「配列に無いドキュメントを自動削除」するため、退会・削除時のクリーンアップも自動。
+// チェックインタブレット等、会員以外で名簿を読ませたいGoogleアカウントのメールを下記に追加する。
+const ROSTER_DEVICE_EMAILS = [];  // 例: ['ambis-tablet@gmail.com']（タブレット設置時に追記）
+function buildRosterArray(){
+  return members.map(m=>({
+    id:m.id, name:m.name, belt:m.belt, stripe:m.stripe,
+    status:m.status, joindate:m.joindate||'', photo:m.photo||null
+  }));
+}
+function buildRosterReaders(){
+  const r=members.filter(m=>m.email).map(m=>({id:m.email.toLowerCase(), memberId:m.id}));
+  ROSTER_DEVICE_EMAILS.forEach(e=>{ if(e) r.push({id:e.toLowerCase(), device:true}); });
+  return r;
+}
+function syncRoster(){
+  if(!window.db) return;
+  saveToFirestore('roster', buildRosterArray());
+  saveToFirestore('roster_readers', buildRosterReaders());
+}
+
 // ══ SAVE ALL (Firestore + localStorage backup) ══
 function saveAll(){
   // localStorageバックアップ（オフライン対応）
@@ -3498,6 +3520,7 @@ function saveAll(){
   // Firestoreにも非同期で保存
   if(window.db){
     saveToFirestore('members', members);
+    syncRoster();
     saveToFirestore('attendance', attendance);
     saveToFirestore('belt_history', beltHistory);
     saveToFirestore('payments', payments);
@@ -3612,6 +3635,10 @@ window.initApp = async function(){
   } else if(!members.length){
     seedSampleData();
   }
+
+  // 名簿(roster)と閲覧許可リスト(roster_readers)を最新のmembersから同期（初回backfill・自己修復）
+  // Firestore取得に成功した場合のみ（誤上書き防止）
+  if(fbMembers !== null) syncRoster();
 
   // ナビゲーターのユーザー名を更新
   if(window.currentUser){
