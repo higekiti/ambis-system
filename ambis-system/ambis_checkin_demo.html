@@ -29,20 +29,8 @@ window.fbGetDocs = getDocs;
 window.fbAddDoc = addDoc;
 window.fbUpdateDoc = updateDoc;
 
-// 起動時にFirestoreから会員・出席データを取得
-window.addEventListener('load', async () => { try{await signInAnonymously(auth);}catch(e){console.warn('signInAnonymously failed:',e);}
-  try {
-    const [mSnap, aSnap] = await Promise.all([
-      getDocs(collection(db, 'members')),
-      getDocs(collection(db, 'attendance')),
-    ]);
-    const fbMembers = mSnap.docs.map(d => d.data());
-    const fbAttendance = aSnap.docs.map(d => d.data());
-    if(fbMembers.length)   { localStorage.setItem('ambis_members', JSON.stringify(fbMembers)); }
-    if(fbAttendance.length){ localStorage.setItem('ambis_attendance', JSON.stringify(fbAttendance)); }
-  } catch(e) {
-    console.warn('Firebase load error:', e.message);
-  }
+// デモ版：本番の会員データ(members)は一切読み込まない。サンプルデータのみで動作。
+window.addEventListener('load', () => {
   if(typeof initCheckin === 'function') initCheckin();
 });
 </script>
@@ -356,12 +344,12 @@ let currentMember=null;
 let selectedClass=null;
 
 function loadData(){
-  const stored=JSON.parse(localStorage.getItem('ambis_members')||'[]');
-  members=stored.length?stored:demoMembers;
-  attendance=JSON.parse(localStorage.getItem('ambis_attendance')||'[]');
+  // デモ版：本番の会員データは使わずサンプルのみ。出席もデモ専用キーに隔離。
+  members=demoMembers;
+  attendance=JSON.parse(localStorage.getItem('ambis_demo_attendance')||'[]');
 }
 function saveData(){
-  localStorage.setItem('ambis_attendance',JSON.stringify(attendance));
+  localStorage.setItem('ambis_demo_attendance',JSON.stringify(attendance));
 }
 function getToday(){return new Date().toISOString().slice(0,10);}
 function getTime(){const n=new Date();return `${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;}

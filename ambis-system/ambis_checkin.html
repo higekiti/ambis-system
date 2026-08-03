@@ -6,9 +6,10 @@
 <title>AMBIs チェックイン</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, doc, getDocs, addDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"; import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, doc, getDocs, addDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"; import { getAuth, signInWithCredential, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBA3sfUh7i2gldOXaHILJYlS4cu3YmnIyg",
@@ -29,11 +30,30 @@ window.fbGetDocs = getDocs;
 window.fbAddDoc = addDoc;
 window.fbUpdateDoc = updateDoc;
 
-// 起動時にFirestoreから会員・出席データを取得
-window.addEventListener('load', async () => { try{await signInAnonymously(auth);}catch(e){console.warn('signInAnonymously failed:',e);}
+// ── 認証：道場専用Googleアカウントでログイン（Google Identity Services方式） ──
+// 匿名認証を廃止。タブレットは道場アカウントで1回ログインすれば以後セッションが保持される。
+// これにより「正規の読み手(roster_readers)」として名簿(roster)を読める＝部外者は読めない。
+const CI_GIS_CLIENT_ID = "950081158370-hqu69kt33t4na39re896fv09t607b6uv.apps.googleusercontent.com";
+async function ci_handleGisCredential(response){
+  try {
+    const cred = GoogleAuthProvider.credential(response.credential);
+    await signInWithCredential(auth, cred);
+  } catch(e){ console.error('GIS login error:', e); }
+}
+function ci_initGis(){
+  const box = document.getElementById('ci-gis-button');
+  if(!box){ setTimeout(ci_initGis, 300); return; }
+  if(!(window.google && google.accounts && google.accounts.id)){ setTimeout(ci_initGis, 300); return; }
+  try {
+    google.accounts.id.initialize({ client_id: CI_GIS_CLIENT_ID, callback: ci_handleGisCredential, auto_select: true, cancel_on_tap_outside: false });
+    box.innerHTML=''; google.accounts.id.renderButton(box, { theme:'filled_blue', size:'large', shape:'pill', text:'signin_with', locale:'ja', width:260 });
+  } catch(e){ console.error('GIS init error:', e); }
+}
+// 起動時にroster（非PII名簿）と出席データを取得
+async function ci_loadAndStart(){
   try {
     const [mSnap, aSnap] = await Promise.all([
-      getDocs(collection(db, 'members')),
+      getDocs(collection(db, 'roster')),
       getDocs(collection(db, 'attendance')),
     ]);
     const fbMembers = mSnap.docs.map(d => d.data());
@@ -44,6 +64,16 @@ window.addEventListener('load', async () => { try{await signInAnonymously(auth);
     console.warn('Firebase load error:', e.message);
   }
   if(typeof initCheckin === 'function') initCheckin();
+}
+onAuthStateChanged(auth, (user) => {
+  const overlay = document.getElementById('ci-login-overlay');
+  if(user){
+    if(overlay) overlay.style.display = 'none';
+    ci_loadAndStart();
+  } else {
+    if(overlay) overlay.style.display = 'flex';
+    ci_initGis();
+  }
 });
 </script>
 <style>
@@ -254,6 +284,11 @@ html,body{width:100%;height:100%;font-family:'Noto Sans JP',sans-serif;backgroun
 </style>
 </head>
 <body>
+<div id="ci-login-overlay" style="display:flex;position:fixed;inset:0;background:#0a1628;z-index:9999;flex-direction:column;align-items:center;justify-content:center;gap:20px;">
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:34px;letter-spacing:5px;color:#c9a96e;">AMBIs CHECK-IN</div>
+  <div style="font-size:13px;color:#8a9ab8;letter-spacing:1px;">道場アカウントでログインしてください</div>
+  <div id="ci-gis-button" style="min-height:44px;"></div>
+</div>
 <div class="app">
 
   <!-- HEADER -->

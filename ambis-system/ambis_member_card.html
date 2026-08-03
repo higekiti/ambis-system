@@ -16,7 +16,7 @@
 <script src="https://accounts.google.com/gsi/client" async></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, signInWithCredential, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -38,6 +38,14 @@ async function loadFromFirestore(collName){
     const snap = await getDocs(collection(db, collName));
     return snap.docs.map(d => d.data());
   } catch(e) { return null; }
+}
+
+// 自分の会員レコードだけをメールで1件取得（全件ダウンロードしない＝他人のPIIを取得しない）
+async function loadOwnMember(email){
+  try {
+    const snap = await getDocs(query(collection(db,'members'), where('email','==', email)));
+    return snap.docs.length ? snap.docs[0].data() : null;
+  } catch(e){ return null; }
 }
 
 // 個別ドキュメント単位の書き込み・削除（コレクション全体を上書きしないため安全）
@@ -78,9 +86,11 @@ function showMemberLogin(errorMsg){
 async function loadAndInit(user){
   const email = user.email.toLowerCase();
 
-  const [fbMembers, fbAttendance, fbTournaments, fbBeltHistory,
-         fbNews, fbSchedule, fbScheduleEx, fbMatchRecords] = await Promise.all([
-    loadFromFirestore('members'),
+  // 会員一覧・他会員の表示は「非PIIのroster」から取得（電話・メール・備考などは含まれない）。
+  // 自分のレコードだけは members から1件だけ取得（全件ダウンロードしない）。
+  const [fbRoster, fbAttendance, fbTournaments, fbBeltHistory,
+         fbNews, fbSchedule, fbScheduleEx, fbMatchRecords, myDoc] = await Promise.all([
+    loadFromFirestore('roster'),
     loadFromFirestore('attendance'),
     loadFromFirestore('tournaments'),
     loadFromFirestore('belt_history'),
@@ -88,9 +98,10 @@ async function loadAndInit(user){
     loadFromFirestore('schedule'),
     loadFromFirestore('schedule_exceptions'),
     loadFromFirestore('match_records'),
+    loadOwnMember(email),
   ]);
 
-  if(fbMembers && fbMembers.length)          { members = fbMembers;     localStorage.setItem('ambis_members',             JSON.stringify(members)); }
+  if(fbRoster && fbRoster.length)            { members = fbRoster;      localStorage.setItem('ambis_members',             JSON.stringify(members)); }
   if(fbAttendance && fbAttendance.length)    { attendance = fbAttendance; localStorage.setItem('ambis_attendance',        JSON.stringify(attendance)); }
   if(fbTournaments && fbTournaments.length)  { localStorage.setItem('ambis_tournaments',        JSON.stringify(fbTournaments)); }
   if(fbBeltHistory && fbBeltHistory.length)  { localStorage.setItem('ambis_belt_history',       JSON.stringify(fbBeltHistory)); }
@@ -99,13 +110,11 @@ async function loadAndInit(user){
   if(fbScheduleEx && fbScheduleEx.length)    { localStorage.setItem('ambis_schedule_exceptions',JSON.stringify(fbScheduleEx)); }
   if(fbMatchRecords && fbMatchRecords.length){ localStorage.setItem('ambis_match_records',      JSON.stringify(fbMatchRecords)); }
 
-  // メール照合
-  const matched = members.find(function(m){
-    return (m.email||'').toLowerCase()===email || (m.contact||'').toLowerCase()===email;
-  });
-
-  if(matched){
-    window.loggedInMemberId = matched.id;
+  // 自分の完全なレコード（PII含む）を members 配列の自分の要素に反映（自分の会員証で使用）
+  if(myDoc){
+    const i = members.findIndex(m=>m.id===myDoc.id);
+    if(i!==-1) members[i] = myDoc; else members.push(myDoc);
+    window.loggedInMemberId = myDoc.id;
     showMemberApp();
     if(typeof initCard === 'function') initCard();
     if(typeof renderNewsMember === 'function') renderNewsMember();
