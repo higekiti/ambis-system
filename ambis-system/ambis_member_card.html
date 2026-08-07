@@ -67,14 +67,23 @@ let appReady = false; // アプリ表示済みフラグ
 let manualLogout = false; // 明示的にログアウトボタンが押された場合のみtrueにする
 
 // ── 画面切替 ──
+function hideMemberLoading(){ const l=document.getElementById('member-loading'); if(l) l.style.display='none'; }
+// ログイン成功〜データ読み込み完了までの「ログイン中…」表示（ログイン画面が残って見えるのを防ぐ）
+function showMemberLoading(){
+  document.getElementById('member-login-screen').style.display = 'none';
+  document.getElementById('member-app-screen').style.display = 'none';
+  const l=document.getElementById('member-loading'); if(l) l.style.display='flex';
+}
 function showMemberApp(){
   document.getElementById('member-login-screen').style.display = 'none';
   document.getElementById('member-app-screen').style.display = 'block';
+  hideMemberLoading();
   appReady = true;
 }
 function showMemberLogin(errorMsg){
   document.getElementById('member-login-screen').style.display = 'flex';
   document.getElementById('member-app-screen').style.display = 'none';
+  hideMemberLoading();
   appReady = false;
   if(errorMsg){
     document.getElementById('member-login-error').style.display = 'block';
@@ -130,6 +139,7 @@ const GIS_CLIENT_ID = "950081158370-hqu69kt33t4na39re896fv09t607b6uv.apps.google
 async function handleGisCredential(response){
   try {
     const err = document.getElementById('member-login-error'); if(err) err.style.display = 'none';
+    showMemberLoading();
     const cred = GoogleAuthProvider.credential(response.credential);
     await signInWithCredential(auth, cred);
   } catch(e){
@@ -169,6 +179,7 @@ window.agreeConsent = async () => {
   const m = document.getElementById('consent-modal'); if(m) m.classList.remove('show');
   const u = pendingConsentUser; pendingConsentUser = null;
   if(u){
+    showMemberLoading();
     await loadAndInit(u);
     // 同意日時をFirestoreにも記録（セキュリティルールで許可されている場合のみ成功）
     try {
@@ -190,6 +201,7 @@ getRedirectResult(auth).catch(e => console.error('Google redirect login error:',
     // すでにアプリ表示済みなら何もしない（トークン更新時の誤動作を防ぐ）
     if(appReady) return;
     if(hasConsent()){
+      showMemberLoading();
       loadAndInit(user);
     } else {
       pendingConsentUser = user;
@@ -585,6 +597,16 @@ input:focus,select:focus{border-color:var(--navy-light);}
     <div class="member-login-error" id="member-login-error"></div>
   </div>
 </div>
+
+<!-- MEMBER LOADING (ログイン後のデータ読み込み中) -->
+<div id="member-loading" style="display:none;position:fixed;inset:0;background:var(--navy);z-index:9998;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+  <div class="member-spinner"></div>
+  <div style="color:#8a9ab8;font-size:13px;letter-spacing:1px;">ログイン中…</div>
+</div>
+<style>
+.member-spinner{width:34px;height:34px;border:3px solid rgba(201,169,110,0.25);border-top-color:#c9a96e;border-radius:50%;animation:member-spin .8s linear infinite;}
+@keyframes member-spin{to{transform:rotate(360deg);}}
+</style>
 
 <!-- MEMBER APP SCREEN -->
 <div id="member-app-screen" style="display:none;width:100%;">
