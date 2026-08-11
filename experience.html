@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
+    <meta name="robots" content="index,follow">
+    <title>体験の流れ | AMBIs Jiu-Jitsu Academy</title>
+    <meta name="description" content="AMBIs Jiu-Jitsu Academyの体験・初回参加の流れ。事前連絡から当日の流れまで、初めての方にも安心の3ステップ＋当日5ステップでご案内します。">
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/png" href="favicon-32.png" sizes="32x32">
+    <!-- Google Analytics GA4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-9F3JKVRCG1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-9F3JKVRCG1');
+    </script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Playfair+Display:ital,wght@0,600;1,400;1,600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --navy:        #1B2D4F;
+            --navy-dark:   #0F1E35;
+            --cream:       #F5F0E8;
+            --gold:        #C9A84C;
+            --text-body:   #3D3028;
+            --text-muted:  #8A7B6E;
+            --white:       #FFFFFF;
+            --font-jp:      'Noto Sans JP', sans-serif;
+            --font-display: 'Playfair Display', serif;
+        }
+        html { scroll-behavior: smooth; font-size: 16px; }
+        body { font-family: var(--font-jp); color: var(--text-body); line-height: 1.7; background: var(--navy-dark); overflow-x: hidden; }
+        a { text-decoration: none; color: inherit; }
+        ul { list-style: none; }
+        .container { max-width: 860px; margin: 0 auto; padding: 0 28px; }
+
+        /* ===== HEADER ===== */
+        nav { background: var(--navy-dark); padding: 16px 0; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid rgba(201,168,76,0.15); }
+        .nav-inner { max-width: 1100px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; }
+        .nav-logo { display: flex; align-items: center; gap: 14px; }
+        .nav-logo img { height: 46px; width: auto; display: block; }
+        .nav-logo-sep { width: 1px; height: 20px; background: #C5A35A; opacity: 0.5; flex-shrink: 0; }
+        .nav-logo-sub { font-size: 11px; font-weight: 300; letter-spacing: 0.18em; color: #C5A35A; white-space: nowrap; }
+        @media (max-width: 640px) { .nav-logo img { height: 36px; } .nav-logo-sub { display: none; } }
+        .nav-back { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: rgba(255,255,255,0.6); transition: var(--transition); }
+        .nav-back:hover { color: var(--gold); }
+
+        /* ===== PAGE HERO ===== */
+        .page-hero { padding: 72px 0 60px; text-align: center; }
+        .page-hero-tag {
+            font-family: var(--font-display); font-style: italic; font-size: 14px;
+            color: var(--gold); margin-bottom: 12px; display: block; letter-spacing: 0.2em;
+        }
+        .page-hero h1 {
+            font-size: clamp(24px, 4.5vw, 38px); font-weight: 700;
+            color: var(--cream); letter-spacing: 0.04em; margin-bottom: 16px; line-height: 1.3;
+        }
+        .page-hero p {
+            font-size: 14.5px; color: rgba(245,240,232,0.58);
+            line-height: 1.85; max-width: 480px; margin: 0 auto;
+        }
+        .page-hero-divider {
+            width: 50px; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+            margin: 20px auto 0;
+        }
+
+        /* ===== NOTICE CARD ===== */
+        .notice-card {
+            background: rgba(201,168,76,0.08);
+            border: 1px solid rgba(201,168,76,0.25);
+            padding: 20px 28px;
+            margin-bottom: 64px;
+            display: flex; align-items: flex-start; gap: 16px;
+        }
+        .notice-icon { color: var(--gold); flex-shrink: 0; margin-top: 2px; }
+        .notice-card p { font-size: 13px; color: rgba(245,240,232,0.65); line-height: 1.85; }
+        .notice-card strong { color: var(--cream); }
+
+        /* ===== SECTION BLOCKS ===== */
+        .flow-block { margin-bottom: 72px; }
+        .flow-block-header {
+            display: flex; align-items: center; gap: 16px;
+            margin-bottom: 36px; padding-bottom: 16px;
+            border-bottom: 1px solid rgba(201,168,76,0.15);
+        }
+        .flow-block-num {
+            font-family: var(--font-display); font-style: italic;
+            font-size: 13px; color: var(--gold); letter-spacing: 0.2em; white-space: nowrap;
+        }
+        .flow-block-title { font-size: 18px; font-weight: 700; color: var(--cream); letter-spacing: 0.04em; }
+
+        /* ===== STEP ITEMS ===== */
+        .steps { display: flex; flex-direction: column; gap: 2px; }
+        .step {
+            display: grid; grid-template-columns: 52px 1fr;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(201,168,76,0.1);
+            overflow: hidden; transition: background .2s;
+        }
+        .step:hover { background: rgba(255,255,255,0.055); }
+        .step-left {
+            background: rgba(10,22,40,0.5);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 24px 0;
+            border-right: 1px solid rgba(201,168,76,0.1);
+        }
+        .step-num {
+            font-family: var(--font-display); font-style: italic;
+            font-size: 22px; color: var(--gold); line-height: 1;
+        }
+        .step-right { padding: 24px 28px; }
+        .step-tag {
+            font-size: 10px; letter-spacing: 0.2em; color: var(--gold);
+            font-weight: 700; margin-bottom: 6px;
+        }
+        .step-title { font-size: 16px; font-weight: 700; color: var(--cream); margin-bottom: 8px; }
+        .step-desc { font-size: 13px; color: rgba(245,240,232,0.55); line-height: 1.85; }
+        .step-sub {
+            margin-top: 12px; padding: 12px 16px;
+            background: rgba(255,255,255,0.04);
+            border-left: 2px solid rgba(201,168,76,0.3);
+        }
+        .step-sub p { font-size: 12px; color: rgba(245,240,232,0.42); line-height: 1.75; }
+        .step-sub strong { color: rgba(245,240,232,0.65); }
+
+        /* Arrow connector between steps */
+        .step-arrow {
+            text-align: center; padding: 4px 0;
+            color: rgba(201,168,76,0.35); font-size: 14px; line-height: 1;
+        }
+
+        /* ===== RENTAL TABLE ===== */
+        .rental-table {
+            width: 100%; border-collapse: collapse; margin-top: 8px;
+        }
+        .rental-table th, .rental-table td {
+            padding: 10px 14px; font-size: 12.5px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            text-align: left;
+        }
+        .rental-table th { color: var(--gold); font-weight: 500; letter-spacing: 0.08em; }
+        .rental-table td { color: rgba(245,240,232,0.6); }
+        .rental-table td:last-child { color: rgba(245,240,232,0.45); }
+
+        /* ===== FAQ MINI ===== */
+        .faq-mini { margin-bottom: 72px; }
+        .faq-mini-title {
+            font-size: 11px; letter-spacing: 0.22em; font-weight: 700;
+            color: var(--gold); text-transform: uppercase; margin-bottom: 20px;
+        }
+        .faq-row {
+            padding: 18px 0; border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .faq-q { font-size: 14px; font-weight: 700; color: var(--cream); margin-bottom: 6px; }
+        .faq-a { font-size: 13px; color: rgba(245,240,232,0.52); line-height: 1.8; }
+
+        /* ===== CTA ===== */
+        .taiken-cta { text-align: center; padding-bottom: 80px; }
+        .taiken-cta-lead {
+            font-size: 20px; font-weight: 700; color: var(--cream);
+            letter-spacing: 0.04em; margin-bottom: 10px;
+        }
+        .taiken-cta-sub {
+            font-size: 13.5px; color: rgba(245,240,232,0.48);
+            margin-bottom: 32px; line-height: 1.7;
+        }
+        .cta-buttons { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; }
+        .btn-line {
+            display: inline-flex; align-items: center; gap: 10px;
+            background: #06C755; color: #fff;
+            padding: 14px 28px; font-size: 14px; font-weight: 700;
+            letter-spacing: 0.04em; border-radius: 3px; transition: opacity .2s;
+        }
+        .btn-line:hover { opacity: 0.88; }
+        .btn-outline {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: transparent; color: var(--cream);
+            padding: 13px 24px; font-size: 13.5px;
+            border: 1px solid rgba(245,240,232,0.2); border-radius: 3px;
+            letter-spacing: 0.04em; transition: border-color .2s;
+        }
+        .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+        .back-link {
+            display: inline-block; margin-top: 20px;
+            font-size: 12.5px; color: rgba(245,240,232,0.35);
+            border-bottom: 1px solid rgba(245,240,232,0.12);
+            padding-bottom: 1px; transition: color .2s;
+        }
+        .back-link:hover { color: var(--gold); }
+
+        /* ===== FOOTER ===== */
+        footer {
+            background: #060d1a; color: rgba(245,240,232,0.3);
+            padding: 24px 0; text-align: center; font-size: 11.5px; letter-spacing: 0.06em;
+        }
+        footer a { color: var(--gold); }
+
+        @media (max-width: 600px) {
+            .step { grid-template-columns: 40px 1fr; }
+            .step-left { padding: 18px 0; }
+            .step-num { font-size: 17px; }
+            .step-right { padding: 18px 18px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<nav>
+    <div class="nav-inner">
+        <a href="index.html" class="nav-logo">
+            <img src="logo-white.svg" alt="AMBIs">
+            <span class="nav-logo-sep"></span>
+            <span class="nav-logo-sub">Jiu-Jitsu Academy</span>
+        </a>
+        <a href="index.html" class="nav-back">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>
+            トップページに戻る
+        </a>
+    </div>
+</nav>
+
+<!-- ===== PAGE HERO ===== -->
+<div class="page-hero">
+    <div class="container">
+        <span class="page-hero-tag">First Visit Guide</span>
+        <h1>初めてでも、<br>迷わない流れで。</h1>
+        <p>道着がなくても、体力に自信がなくても大丈夫。お問い合わせから当日の流れまで、全部わかりやすくご案内します。</p>
+        <div class="page-hero-divider"></div>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- ===== NOTICE ===== -->
+    <div class="notice-card">
+        <div class="notice-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <p><strong>グランドオープンは2026年秋を予定しています。</strong>現在はLINE先行登録を受付中です。登録いただいた方に開業情報をいち早くお届けします。</p>
+    </div>
+
+    <!-- ===== BLOCK 1: 事前準備 ===== -->
+    <div class="flow-block">
+        <div class="flow-block-header">
+            <span class="flow-block-num">STEP 01–03</span>
+            <h2 class="flow-block-title">参加するまでの流れ</h2>
+        </div>
+
+        <div class="steps">
+            <div class="step">
+                <div class="step-left"><span class="step-num">1</span></div>
+                <div class="step-right">
+                    <div class="step-tag">CONTACT</div>
+                    <div class="step-title">LINE・Instagram DM・フォームでご連絡</div>
+                    <p class="step-desc">公式LINE、InstagramのDM、またはホームページのフォームからご連絡ください。クラスの詳細・持ち物・料金など、どんなご質問もお気軽に。</p>
+                    <div class="step-sub">
+                        <p><strong>こんな質問、よくあります：</strong><br>「柔術は初めてで体力に自信がない」「道着は持っていない」「一人でも大丈夫？」→ 全部大丈夫です、気軽に聞いてください。</p>
+                    </div>
+                </div>
+            </div>
+            <div class="step-arrow">↓</div>
+
+            <div class="step">
+                <div class="step-left"><span class="step-num">2</span></div>
+                <div class="step-right">
+                    <div class="step-tag">SCHEDULE</div>
+                    <div class="step-title">参加クラス・日程を確認</div>
+                    <p class="step-desc">初めての方は<strong style="color:var(--cream);">初心者クラス</strong>への参加をおすすめします。体力・経験不問で、基礎から丁寧に練習します。ご都合の良い日程をお知らせください。</p>
+                    <div class="step-sub">
+                        <p><strong>初心者クラスの時間帯：</strong><br>
+                        土曜　09:30〜10:30 / 17:30〜18:30<br>
+                        日曜　09:30〜10:30 / 15:00〜16:00</p>
+                    </div>
+                </div>
+            </div>
+            <div class="step-arrow">↓</div>
+
+            <div class="step">
+                <div class="step-left"><span class="step-num">3</span></div>
+                <div class="step-right">
+                    <div class="step-tag">PREPARE</div>
+                    <div class="step-title">持ち物を確認して、当日へ</div>
+                    <p class="step-desc">事前に持ち物を確認しておくと安心です。道着は当日レンタルできます（<strong style="color:var(--gold);">初回無料</strong>）。動きやすい服装でそのまま来ていただいてもOKです。</p>
+                    <div class="step-sub">
+                        <p><strong>持ち物チェックリスト：</strong><br>
+                        ✓ 動きやすい服装（道着がなければラッシュガード・スパッツ等）<br>
+                        ✓ 着替え・タオル（販売あり）<br>
+                        ✓ 水分補給用の飲み物<br>
+                        ✓ 道着レンタルを希望の場合は事前にご連絡を</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== BLOCK 2: 当日の流れ ===== -->
+    <div class="flow-block">
+        <div class="flow-block-header">
+            <span class="flow-block-num">STEP 04–08</span>
+            <h2 class="flow-block-title">当日の流れ</h2>
+        </div>
+
+        <div class="steps">
+            <div class="step">
+                <div class="step-left"><span class="step-num">4</span></div>
+                <div class="step-right">
+                    <div class="step-tag">ARRIVE</div>
+                    <div class="step-title">道場に到着・受付</div>
+                    <p class="step-desc">クラス開始の10〜15分前にお越しいただけると余裕をもって準備できます。到着後はスタッフにお声がけください。簡単な説明と書類記入をお願いします。</p>
+                    <div class="step-sub">
+                        <p><strong>場所：</strong>熊本市中央区水前寺1丁目15−2 ダイコー水前寺駅通り5 5階<br>市電「水前寺公園」電停より徒歩5分／1階共用駐車場3台あり</p>
+                    </div>
+                </div>
+            </div>
+            <div class="step-arrow">↓</div>
+
+            <div class="step">
+                <div class="step-left"><span class="step-num">5</span></div>
+                <div class="step-right">
+                    <div class="step-tag">CHANGE</div>
+                    <div class="step-title">着替え・道着の準備</div>
+                    <p class="step-desc">男女別更衣室で着替えていただけます。道着レンタルをご希望の方はここでお渡しします。シャワー完備（練習後にもご利用いただけます）。</p>
+                    <div class="step-sub">
+                        <table class="rental-table">
+                            <tr><th>レンタル品</th><th>料金（税込）</th></tr>
+                            <tr><td>道着 ＋ 帯</td><td style="color:rgba(201,168,76,0.9);font-weight:700;">初回無料 <span style="color:rgba(245,240,232,0.35);font-size:11px;font-weight:400;">（2回目以降 ¥1,000）</span></td></tr>
+                            <tr><td>帯のみ</td><td>¥500</td></tr>
+                            <tr><td>タオル販売</td><td>あり</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="step-arrow">↓</div>
+
+            <div class="step">
+                <div class="step-left"><span class="step-num">6</span></div>
+                <div class="step-right">
+                    <div class="step-tag">WARM-UP</div>
+                    <div class="step-title">ウォームアップ</div>
+                    <p class="step-desc">クラスはウォームアップから始まります。軽いジョギング・ストレッチ・転がり方の練習など。柔術特有の動きに体を慣らしていきます。無理のない範囲で構いません。</p>
+                </div>
+            </div>
+            <div class="step-arrow">↓</div>
+
+            <div class="step">
+                <div class="step-left"><span class="step-num">7</span></div>
+                <div class="step-right">
+                    <div class="step-tag">CLASS</div>
+                    <div class="step-title">テクニック練習・ドリル</div>
+                    <p class="step-desc">インストラクターが基本的な技・ポジションを丁寧に説明します。初心者クラスでは「抑え込み」「エスケープ」など安全で実用的な動きを中心に練習します。2人1組でゆっくり反復します。</p>
+                    <div class="step-sub">
+                        <p>スパーリング（実戦練習）は自由参加です。「まず見学したい」という方も大歓迎です。</p>
+                    </div>
+                </div>
+            </div>
+            <div class="step-arrow">↓</div>
+
+            <div class="step">
+                <div class="step-left"><span class="step-num">8</span></div>
+                <div class="step-right">
+                    <div class="step-tag">AFTER</div>
+                    <div class="step-title">クールダウン・質問・雑談</div>
+                    <p class="step-desc">クラス後はストレッチとクールダウン。終了後は入会の手続き説明・質問タイムを設けています。次回の参加方法・料金・道具の揃え方など、なんでも聞いてください。</p>
+                    <div class="step-sub">
+                        <p>練習後のシャワー利用もできます。道場内でそのままお話しできる時間を大切にしています。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== FAQ MINI ===== -->
+    <div class="faq-mini">
+        <p class="faq-mini-title">よくある不安 Q&amp;A</p>
+
+        <div class="faq-row">
+            <div class="faq-q">Q. 体力に自信がなくても大丈夫ですか？</div>
+            <div class="faq-a">大丈夫です。初心者クラスは強さを競う場所ではありません。「自分のペースで続けること」を大切にしています。60代の方も元気に練習しています。</div>
+        </div>
+        <div class="faq-row">
+            <div class="faq-q">Q. 一人で来るのが不安です。</div>
+            <div class="faq-a">ほとんどの方が一人で始めています。インストラクターが最初から一緒にサポートしますので、知り合いがいなくてもすぐに慣れます。</div>
+        </div>
+        <div class="faq-row">
+            <div class="faq-q">Q. 女性一人でも参加できますか？</div>
+            <div class="faq-a">はい、歓迎です。更衣室は男女別に完備しています。初心者クラスは和やかな雰囲気で進めますので安心してお越しください。</div>
+        </div>
+        <div class="faq-row">
+            <div class="faq-q">Q. 道着（柔術衣）は最初から必要ですか？</div>
+            <div class="faq-a">不要です。当日は道着＋帯のレンタルが<strong>初回無料</strong>です。まず体験してみて、続けたいと思ったら購入を検討していただければOKです。</div>
+        </div>
+
+        <div style="margin-top:24px;text-align:center;">
+            <a href="faq.html" style="font-size:13px;color:rgba(201,168,76,0.75);border-bottom:1px solid rgba(201,168,76,0.3);padding-bottom:2px;letter-spacing:0.06em;">その他のよくある質問はこちら（全17問）→</a>
+        </div>
+    </div>
+
+    <!-- ===== CTA ===== -->
+    <div class="taiken-cta">
+        <p class="taiken-cta-lead">気軽にご連絡ください。</p>
+        <p class="taiken-cta-sub">「参加したい」「どんな道場か知りたい」なんでもOK。<br>LINE・Instagram DM・フォームの3つから選べます。</p>
+        <div class="cta-buttons">
+            <a href="https://lin.ee/67nT6Qw2" target="_blank" rel="noopener" class="btn-line">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.07 2 11.1c0 2.652 1.228 5.025 3.168 6.67l-.52 3.49a.4.4 0 0 0 .574.42l3.893-2.05A11.3 11.3 0 0 0 12 20.2c5.523 0 10-4.07 10-9.1S17.523 2 12 2z"/></svg>
+                LINEで先行登録・お問い合わせ
+            </a>
+            <a href="https://www.instagram.com/ambis_bjj/" target="_blank" rel="noopener" class="btn-outline">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" stroke="none"/></svg>
+                Instagram DM
+            </a>
+            <a href="index.html#trial" class="btn-outline">
+                フォームで問い合わせる
+            </a>
+        </div>
+        <br>
+        <a href="index.html" class="back-link">← トップページに戻る</a>
+    </div>
+
+</div><!-- /.container -->
+
+<!-- ===== FOOTER ===== -->
+<footer>
+    <div class="container" style="text-align:center;">
+        <p style="margin-bottom:8px;">AMBIs Jiu-Jitsu Academy — 熊本市中央区水前寺 / 2026年秋グランドオープン</p>
+        <p><a href="index.html">トップ</a> &nbsp;|&nbsp; <a href="experience.html">体験の流れ</a> &nbsp;|&nbsp; <a href="faq.html">FAQ</a> &nbsp;|&nbsp; <a href="app.html">会員アプリ</a> &nbsp;|&nbsp; <a href="gallery.html">ギャラリー</a> &nbsp;|&nbsp; <a href="privacy.html">プライバシーポリシー</a></p>
+        <p style="margin-top:16px;">© 2026 AMBIs Jiu-Jitsu Academy. All rights reserved.</p>
+    </div>
+</footer>
+
+</body>
+</html>

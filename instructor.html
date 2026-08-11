@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
+    <title>代表プロフィール | AMBIs Jiu-Jitsu Academy</title>
+    <meta name="description" content="AMBIs Jiu-Jitsu Academy 代表・志水抄太のプロフィール。33歳で柔術を始め、熊本・水前寺に道場を開いた理由。">
+    <meta name="robots" content="noindex">
+    <!-- OGP -->
+    <meta property="og:title" content="代表プロフィール | AMBIs Jiu-Jitsu Academy">
+    <meta property="og:description" content="33歳で柔術を始め、熊本・水前寺に道場を開いた理由。AMBIs代表・志水抄太のプロフィール。">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ambis-jj.com/instructor.html">
+    <meta property="og:image" content="https://ambis-jj.com/ogp.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="AMBIs Jiu-Jitsu Academy">
+    <meta property="og:locale" content="ja_JP">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="代表プロフィール | AMBIs Jiu-Jitsu Academy">
+    <meta name="twitter:description" content="33歳で柔術を始め、熊本・水前寺に道場を開いた理由。AMBIs代表・志水抄太のプロフィール。">
+    <meta name="twitter:image" content="https://ambis-jj.com/ogp.png">
+    <!-- Google Analytics GA4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-9F3JKVRCG1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-9F3JKVRCG1');
+    </script>
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/png" href="favicon-32.png" sizes="32x32">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Playfair+Display:ital,wght@0,600;1,400;1,600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --navy: #1B2D4F;
+            --navy-dark: #111e35;
+            --gold: #C5A35A;
+            --cream: #F7F4EE;
+            --cream-dark: #EEEBE3;
+            --text-body: #3A3A3A;
+            --text-muted: #888;
+            --transition: all 0.3s ease;
+        }
+        body { font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Noto Sans JP', sans-serif; background: var(--cream); color: var(--text-body); line-height: 1.7; }
+        a { color: var(--navy); text-decoration: none; }
+        .container { max-width: 720px; margin: 0 auto; padding: 0 24px; }
+
+        /* Navbar */
+        nav { background: var(--navy-dark); padding: 16px 0; position: sticky; top: 0; z-index: 100; }
+        .nav-inner { max-width: 1100px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; }
+        .nav-logo { display: flex; align-items: center; gap: 14px; text-decoration: none; }
+        .nav-logo img { height: 46px; width: auto; display: block; }
+        .nav-logo-sep { width: 1px; height: 20px; background: var(--gold); opacity: 0.5; flex-shrink: 0; }
+        .nav-logo-sub { font-size: 11px; font-weight: 300; letter-spacing: 0.18em; color: var(--gold); white-space: nowrap; }
+        .nav-back { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: rgba(255,255,255,0.6); text-decoration: none; transition: var(--transition); }
+        .nav-back:hover { color: var(--gold); }
+        @media (max-width: 768px) { .nav-logo img { height: 36px; } .nav-logo-sub { display: none; } }
+
+        /* Hero */
+        .page-hero { background: var(--navy-dark); padding: 64px 0 56px; }
+        .page-hero-tag { font-size: 10px; letter-spacing: 0.28em; color: var(--gold); font-weight: 400; display: block; margin-bottom: 14px; }
+        .page-hero-title { font-size: clamp(24px, 4vw, 34px); font-weight: 700; color: #fff; margin-bottom: 6px; }
+        .page-hero-sub { font-size: 12px; letter-spacing: 0.18em; color: rgba(255,255,255,0.45); }
+
+        /* Profile */
+        .profile-wrap { padding: 64px 0 88px; }
+
+        /* Quote */
+        .profile-quote {
+            font-family: 'Playfair Display', 'Hiragino Mincho ProN', Georgia, serif;
+            font-style: italic;
+            font-size: clamp(18px, 3vw, 22px);
+            color: var(--navy);
+            line-height: 1.7;
+            border-left: 3px solid var(--gold);
+            padding: 4px 0 4px 24px;
+            margin-bottom: 48px;
+        }
+
+        /* Blocks */
+        .profile-block { margin-bottom: 48px; }
+        .profile-block-label {
+            font-size: 10px;
+            letter-spacing: 0.22em;
+            color: var(--gold);
+            font-weight: 500;
+            margin-bottom: 14px;
+            display: block;
+        }
+        .profile-block p {
+            font-size: 15px;
+            line-height: 2;
+            color: var(--text-body);
+            margin-bottom: 14px;
+        }
+        .profile-block p:last-child { margin-bottom: 0; }
+
+        /* Divider */
+        .profile-divider {
+            width: 40px; height: 2px;
+            background: var(--gold);
+            margin: 48px 0;
+            opacity: 0.5;
+        }
+
+        /* Meta chips */
+        .profile-meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 40px; margin-bottom: 48px; }
+        .profile-meta span {
+            font-size: 12px; color: var(--navy);
+            background: rgba(27,45,79,0.07);
+            padding: 6px 16px;
+            border-radius: 2px;
+        }
+
+        /* CTA */
+        .profile-cta {
+            background: var(--navy);
+            padding: 40px 32px;
+            text-align: center;
+            margin-top: 16px;
+        }
+        .profile-cta p {
+            font-size: 14px;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 24px;
+            line-height: 1.8;
+        }
+        .cta-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+        .btn-line {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: #06C755; color: #fff;
+            padding: 13px 28px; font-size: 14px; font-weight: 700;
+            text-decoration: none; letter-spacing: 0.05em;
+            transition: var(--transition);
+        }
+        .btn-line:hover { opacity: 0.88; }
+        .btn-contact {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: transparent; color: #fff;
+            border: 1px solid rgba(255,255,255,0.4);
+            padding: 13px 28px; font-size: 14px;
+            text-decoration: none; letter-spacing: 0.05em;
+            transition: var(--transition);
+        }
+        .btn-contact:hover { border-color: var(--gold); color: var(--gold); }
+
+        /* Footer */
+        footer { background: var(--navy-dark); padding: 28px 0; text-align: center; }
+        footer p { font-size: 12px; color: rgba(255,255,255,0.35); }
+        footer a { color: rgba(255,255,255,0.5); }
+        footer a:hover { color: var(--gold); }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="nav-inner">
+        <a href="index.html" class="nav-logo">
+            <img src="logo-white.svg" alt="AMBIs">
+            <span class="nav-logo-sep"></span>
+            <span class="nav-logo-sub">Jiu-Jitsu Academy</span>
+        </a>
+        <a href="index.html" class="nav-back">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>
+            トップページに戻る
+        </a>
+    </div>
+</nav>
+
+<div class="page-hero">
+    <div class="container">
+        <span class="page-hero-tag">Instructor Profile</span>
+        <h1 class="page-hero-title">志水 抄太</h1>
+        <p class="page-hero-sub">Founder &amp; Head Instructor</p>
+    </div>
+</div>
+
+<div class="profile-wrap">
+    <div class="container">
+
+        <div class="profile-quote">
+            "最初の理由は、何でもいい。<br>続けているうちに、それ以上のものが見つかるから。"
+        </div>
+
+        <div class="profile-block">
+            <p>「運動しなきゃ」と思いながら、ジムも続かず、週末がなんとなく終わっていく。そんな毎日、覚えがありませんか。</p>
+            <p>仕事も、家族も、悪くない。でもどこか、なーなーと過ぎていく感じ。「このままでいいのか」と思いながら、何も変えられていない。33歳の私も、ずっとそうでした。</p>
+            <p>始めたきっかけはダイエットです。「週1回だけ」という気持ちで、道場の扉を開けました。</p>
+            <p>驚いたのは、中にいる人たちでした。公務員、医者、経営者、学生——年齢も職業もバラバラなのに、同じ場所で普通に汗をかいて、仕事の話も人生の話も気兼ねなくしている。「こんな場所が、あったんだ」と思いました。仕事以外で、自分の居場所ができた瞬間でした。</p>
+            <p>続けるうちに、久しぶりの感覚が戻ってきました。挑戦することが、楽しいという感覚。</p>
+        </div>
+
+        <div class="profile-divider"></div>
+
+        <div class="profile-block">
+            <p>あれから7年。今も会社員を続けながら、週末はここに立っています。IBJJF認定の黒帯を取得しましたが、大切にしているのは強さではなく「続けること」です。大人になってから始めても、確かに続けられる——私自身が、その証拠です。</p>
+            <p>AMBIsは、強さを競う場所ではありません。最初の目的はダイエットでも、ストレス解消でも、何でもいい。会員のほとんどが、未経験からのスタートです。</p>
+        </div>
+
+        <div class="profile-divider"></div>
+
+        <div class="profile-block">
+            <p>3ヶ月後には、週末が楽しみになっています。半年後には、名前を呼んでくれる仲間ができています。1年後、きっと「もっと早く始めればよかった」と言っているはずです。私も、今でもそう思っています。</p>
+            <p>見学だけでも大丈夫です。熊本・水前寺に、そんな場所を作ります。一度、来てみてください。</p>
+            <p style="margin-top: 32px; font-size: 14px; color: var(--text-muted); letter-spacing: 0.05em;">志水 抄太　AMBIs Jiu-Jitsu Academy 代表</p>
+        </div>
+
+        <div class="profile-meta">
+            <span>IBJJF認定 黒帯</span>
+            <span>柔道三段</span>
+            <span>国内外大会出場</span>
+        </div>
+
+        <div class="profile-cta">
+            <p>まずは体験から。<br>気軽にLINEでご連絡ください。</p>
+            <div class="cta-buttons">
+                <a href="https://lin.ee/67nT6Qw2" target="_blank" rel="noopener" class="btn-line">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.03 2 11c0 2.76 1.3 5.22 3.36 6.93L4.5 22l4.28-2.22C9.7 19.92 10.83 20 12 20c5.52 0 10-4.03 10-9s-4.48-9-10-9z"/></svg>
+                    LINEで問い合わせる
+                </a>
+                <a href="index.html#contact" class="btn-contact">
+                    体験を申し込む
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </a>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<footer>
+    <div class="container" style="text-align:center;">
+        <p style="margin-bottom:8px;">AMBIs Jiu-Jitsu Academy — 熊本市中央区水前寺 / 2026年秋グランドオープン</p>
+        <p><a href="index.html">トップ</a> &nbsp;|&nbsp; <a href="experience.html">体験の流れ</a> &nbsp;|&nbsp; <a href="faq.html">FAQ</a> &nbsp;|&nbsp; <a href="app.html">会員アプリ</a> &nbsp;|&nbsp; <a href="gallery.html">ギャラリー</a> &nbsp;|&nbsp; <a href="privacy.html">プライバシーポリシー</a></p>
+        <p style="margin-top:16px;">© 2026 AMBIs Jiu-Jitsu Academy. All rights reserved.</p>
+    </div>
+</footer>
+
+</body>
+</html>
