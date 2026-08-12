@@ -38,6 +38,7 @@ window.fbSignInGoogle = async () => {
 };
 window.fbSignInGoogleRedirect = async () => { return signInWithRedirect(auth, googleProvider); }; window.fbSignOut = async () => {
   manualLogout = true;
+  try{ Object.keys(localStorage).filter(k=>k.startsWith('ambis_')).forEach(k=>localStorage.removeItem(k)); }catch(e){}
   return signOut(auth);
 };
 window.fbGetDocs = getDocs;
@@ -404,6 +405,11 @@ textarea{resize:vertical;min-height:60px;}
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
+<script>
+/* セキュリティ: 描画用ヘルパー（XSS多層防御） */
+function safePhotoSrc(p){ return (typeof p==='string' && /^data:image\/(png|jpe?g|webp);base64,[A-Za-z0-9+/=]+$/.test(p)) ? p : ''; }
+function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+</script>
 
 <!-- LOGIN SCREEN -->
 <div id="login-screen" class="login-screen" style="display:flex;">
@@ -1536,7 +1542,7 @@ function renderMembers(data) {
       const belt=beltMap[m.belt]||beltMap.white;
       const status=statusMap[m.status]||statusMap.active;
       const stripes=[0,1,2,3].map(i=>`<div class="s-dot${i<m.stripe?'':' empty'}"></div>`).join('');
-      const avatarContent=m.photo?`<img src="${m.photo}" alt="">`:(m.name||'').slice(0,2);
+      const avatarContent=m.photo?`<img src="${safePhotoSrc(m.photo)}" alt="">`:(m.name||'').slice(0,2);
       const monthCount=attendance.filter(a=>a.memberId===m.id&&a.date&&a.date.startsWith(ym)).length;
       const yearCount=attendance.filter(a=>a.memberId===m.id&&a.date&&a.date.startsWith(thisYear)).length;
       const totalCount=attendance.filter(a=>a.memberId===m.id).length;
@@ -1774,7 +1780,7 @@ function showQR(id){
   const m=members.find(x=>x.id===id); if(!m)return;
   document.getElementById('qr-name').textContent=m.name;
   document.getElementById('qr-id').textContent=m.id;
-  const url=`https://ambisjj.com/checkin?id=${m.id}`;
+  const url=`https://ambis-jj.com/ambis-system/ambis_checkin.html?id=${m.id}`;
   document.getElementById('qr-url-text').textContent=url;
   const canvas=document.getElementById('qr-canvas');
   canvas.innerHTML='';
@@ -1978,7 +1984,7 @@ function renderPayment(){
     else if(bs==='canceled'){ stripeLabel='解約済み'; stripeCls='status-neutral'; }
     else { stripeLabel='未確認'; stripeCls='status-neutral'; }
     return `<tr>
-      <td><div class="member-cell"><div class="avatar">${m.photo?`<img src="${m.photo}">`:(m.name||'').slice(0,2)}</div><div class="member-name-cell"><div class="name">${m.name}</div><div class="id">${m.id}</div></div></div></td>
+      <td><div class="member-cell"><div class="avatar">${m.photo?`<img src="${safePhotoSrc(m.photo)}">`:(m.name||'').slice(0,2)}</div><div class="member-name-cell"><div class="name">${escapeHtml(m.name)}</div><div class="id">${m.id}</div></div></div></td>
       <td style="font-family:'Bebas Neue',sans-serif;font-size:18px;">¥${fee}</td>
       <td style="font-size:12px;color:var(--text-muted);">${m.entryFee?'¥'+m.entryFee.toLocaleString():'―'}</td>
       <td><span class="status-pill ${stCls}">${stLabel}</span><br><span class="status-pill ${stripeCls}" style="margin-top:4px;">Stripe: ${stripeLabel}</span></td>
@@ -3086,7 +3092,7 @@ function renderAnalyticsTable(){
   tbody.innerHTML = stats.map(s=>{
     const m = s.member;
     const belt = (beltMap[m.belt]||beltMap.white);
-    const av = m.photo ? `<img src="${m.photo}" alt="">` : (m.name||'').slice(0,2);
+    const av = m.photo ? `<img src="${safePhotoSrc(m.photo)}" alt="">` : (m.name||'').slice(0,2);
     return `<tr>
       <td><div class="member-cell"><div class="avatar">${av}</div><div class="member-name-cell"><div class="name">${m.name}</div><div class="id">${m.id}</div></div></div></td>
       <td><span class="belt-pill ${belt.cls}"><span class="belt-dot"></span>${belt.label}</span></td>
@@ -3204,7 +3210,7 @@ function renderDormant(){
     const belt=m=>beltMap[m.belt]||beltMap.white;
     tbody.innerHTML=withLastAtt.map(m=>{
       const risk=m.diffDays>=90?'<span class="status-pill status-left">高リスク</span>':m.diffDays>=30?'<span class="status-pill status-inactive">要フォロー</span>':'<span class="status-pill" style="background:#fff8e6;color:#e67e22;">注意</span>';
-      const av=m.photo?`<img src="${m.photo}" alt="">`:(m.name||'').slice(0,2);
+      const av=m.photo?`<img src="${safePhotoSrc(m.photo)}" alt="">`:(m.name||'').slice(0,2);
       return `<tr>
         <td><div class="member-cell"><div class="avatar">${av}</div><div class="member-name-cell"><div class="name">${m.name}</div><div class="id">${m.id}</div></div></div></td>
         <td><span class="belt-pill ${belt(m).cls}"><span class="belt-dot"></span>${belt(m).label}</span></td>
@@ -3345,7 +3351,7 @@ function renderBirthday(){
   empty.style.display='none';
   tbody.innerHTML=withBday.map(m=>{
     const belt=beltMap[m.belt]||beltMap.white;
-    const av=m.photo?`<img src="${m.photo}" alt="">`:(m.name||'').slice(0,2);
+    const av=m.photo?`<img src="${safePhotoSrc(m.photo)}" alt="">`:(m.name||'').slice(0,2);
     const isThisMonth=m.bdayMonth===thisMonth;
     const isSoon=m.diffDays<=7;
     return `<tr${isThisMonth?' style="background:#fffdf0;"':''}>

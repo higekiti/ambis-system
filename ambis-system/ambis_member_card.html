@@ -166,6 +166,7 @@ window.addEventListener("load", initMemberGis);
 
 window.memberLogout = async () => {
   manualLogout = true;
+  try{ Object.keys(localStorage).filter(k=>k.startsWith('ambis_')).forEach(k=>localStorage.removeItem(k)); }catch(e){}
   await signOut(auth);
 };
 
@@ -583,6 +584,11 @@ input:focus,select:focus{border-color:var(--navy-light);}
 </style>
 </head>
 <body>
+<script>
+/* セキュリティ: 描画用ヘルパー（XSS多層防御） */
+function safePhotoSrc(p){ return (typeof p==='string' && /^data:image\/(png|jpe?g|webp);base64,[A-Za-z0-9+/=]+$/.test(p)) ? p : ''; }
+function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+</script>
 
 <!-- MEMBER LOGIN SCREEN -->
 <div id="member-login-screen" class="member-login-screen" style="display:flex;">
@@ -1224,7 +1230,7 @@ function getNextClassInfo(){const now=new Date();for(let i=0;i<21;i++){const d=n
   const monthCount=myAtt.filter(a=>a.date&&a.date.startsWith(ym)).length;
   const yearCount=myAtt.filter(a=>a.date&&a.date.startsWith(thisYear)).length;
   const belt=beltMap[member.belt]||beltMap.white;
-  const avatarHTML=member.photo?`<img src="${member.photo}" alt="">`:(member.name||'').slice(0,2);
+  const avatarHTML=member.photo?`<img src="${safePhotoSrc(member.photo)}" alt="">`:(member.name||'').slice(0,2);
 
   const cardHTML=`
   <div class="member-card">
@@ -1288,7 +1294,7 @@ function renderMemberList(){
   if(!active.length){body.innerHTML=`<div class="empty-msg">会員が登録されていません</div>`;return;}
   body.innerHTML=active.map(m=>{
     const belt=beltMap[m.belt]||beltMap.white;
-    const av=m.photo?`<img src="${m.photo}" alt="">`:(m.name||'').slice(0,2);
+    const av=m.photo?`<img src="${safePhotoSrc(m.photo)}" alt="">`:(m.name||'').slice(0,2);
     const stripes=[0,1,2,3].map(i=>`<div class="sd${i<(m.stripe||0)?'':' e'}" style="width:6px;height:6px;"></div>`).join('');
     return `<div class="ml-row">
       <div class="ml-avatar">${av}</div>
