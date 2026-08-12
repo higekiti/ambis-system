@@ -6,12 +6,13 @@
 <title>AMBIs Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async></script>
 <script type="module">
 // ══ FIREBASE SETUP ══
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 import { getFirestore, collection, doc, getDocs, setDoc, deleteDoc, writeBatch, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getAuth, signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, signInWithCredential, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBA3sfUh7i2gldOXaHILJYlS4cu3YmnIyg",
@@ -95,6 +96,36 @@ async function checkAndLogin(user) {
 getRedirectResult(auth).catch(e => console.error('Google redirect login error:', e)); onAuthStateChanged(auth, (user) => {
   checkAndLogin(user);
 });
+
+// ── Googleログイン（Google Identity Services方式：firebaseapp.com経由を回避／Edge・スマホ対応）──
+const GIS_CLIENT_ID = "950081158370-hqu69kt33t4na39re896fv09t607b6uv.apps.googleusercontent.com";
+async function handleAdminGisCredential(response){
+  const errEl = document.getElementById('login-error');
+  try {
+    if(errEl) errEl.style.display = 'none';
+    const cred = GoogleAuthProvider.credential(response.credential);
+    await signInWithCredential(auth, cred);
+  } catch(e){
+    console.error('GIS credential login error:', e);
+    if(errEl){ errEl.textContent = 'ログインに失敗しました。もう一度お試しください。'; errEl.style.display = 'block'; }
+  }
+}
+function initAdminGis(){
+  const box = document.getElementById('admin-gis-button');
+  const ua = navigator.userAgent;
+  if(/FBAN|FBAV|Instagram|MicroMessenger|Twitter/i.test(ua) || ua.indexOf('Line/') !== -1){
+    if(box) box.style.display = 'none';
+    const err = document.getElementById('login-error');
+    if(err){ err.style.display='block'; err.textContent='アプリ内ブラウザではGoogleログインできません。ChromeまたはSafariで開き直してください。'; }
+    return;
+  }
+  if(!(window.google && google.accounts && google.accounts.id)){ setTimeout(initAdminGis, 300); return; }
+  try {
+    google.accounts.id.initialize({ client_id: GIS_CLIENT_ID, callback: handleAdminGisCredential, auto_select: false, cancel_on_tap_outside: true });
+    if(box){ box.innerHTML=''; google.accounts.id.renderButton(box, { theme:'filled_blue', size:'large', shape:'pill', text:'signin_with', locale:'ja', width:260 }); }
+  } catch(e){ console.error('GIS init error:', e); }
+}
+window.addEventListener("load", initAdminGis);
 
 const fbFunctions = getFunctions(fbApp, 'asia-northeast1');
 window.fbCallCreateMemberBillingLink = httpsCallable(fbFunctions, 'createMemberBillingLink');
@@ -424,10 +455,7 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
     <input type="password" id="login-password" class="login-input" placeholder="パスワード">
     <button class="login-btn" onclick="handleEmailLogin()">ログイン</button>
     <div class="login-divider">または</div>
-    <button class="login-btn-google" onclick="handleGoogleLogin()">
-      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-      Googleでログイン
-    </button>
+    <div id="admin-gis-button" style="display:flex;justify-content:center;min-height:44px;"></div>
   </div>
 </div>
 
