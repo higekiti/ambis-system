@@ -9,6 +9,7 @@
 <script src="https://accounts.google.com/gsi/client" async></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js";
 import { getFirestore, collection, doc, getDocs, addDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"; import { getAuth, signInWithCredential, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -21,6 +22,8 @@ const firebaseConfig = {
 };
 
 const fbApp = initializeApp(firebaseConfig);
+/* App Check（監視モードで導入：正規アプリからのアクセスを識別。現時点では何もブロックしません） */
+const appCheck = initializeAppCheck(fbApp, { provider: new ReCaptchaV3Provider('6LcZgYItAAAAADKzEtB6ccNQbYe5AV_3d9pknKOK'), isTokenAutoRefreshEnabled: true });
 const db = getFirestore(fbApp); const auth = getAuth(fbApp);
 
 window.fbDb = db;
