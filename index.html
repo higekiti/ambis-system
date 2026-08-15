@@ -2021,6 +2021,7 @@
 
                 <form id="contact-form" method="post" action="https://api.web3forms.com/submit" novalidate onsubmit="submitForm(event)">
                 <input type="hidden" name="access_key" value="878f390f-eafe-47a0-a0a3-ad1545c10fa5">
+                <input type="checkbox" name="botcheck" id="f-botcheck" style="display:none !important;" tabindex="-1" autocomplete="off" aria-hidden="true">
                 <div class="f-group">
                     <label for="f-type">お問い合わせ種別 <span class="req">*</span></label>
                     <select id="f-type" name="inquiry_type" required aria-required="true" aria-describedby="f-type-err">
@@ -2370,6 +2371,7 @@
 
         const body = {
             access_key: '878f390f-eafe-47a0-a0a3-ad1545c10fa5',
+            botcheck: document.getElementById('f-botcheck').checked,
             subject: `【AMBIs お問い合わせ】${type}`,
             name: name,
             email: email,
