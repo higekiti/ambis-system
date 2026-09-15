@@ -89,39 +89,229 @@
             margin: 16px auto 0;
         }
 
-        /* ===== GALLERY ===== */
-        .gallery-section { padding: 72px 0; }
-
-        .gallery-hero-img {
-            width: 100%;
-            height: clamp(240px, 42vw, 520px);
+        /* ===== PHONE MOCKUP SECTION ===== */
+        .phone-section {
+            background: #060d1a;
+            padding: 88px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 72px;
+            position: relative;
+            overflow: hidden;
+        }
+        .phone-section::before {
+            content: '';
+            position: absolute;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(201,168,76,0.05) 0%, transparent 65%);
+            border-radius: 50%;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+        /* 3D phone frame */
+        .phone-frame {
+            width: 248px;
+            height: 516px;
+            background: #111827;
+            border-radius: 40px;
+            border: 9px solid #243352;
+            box-shadow:
+                0 0 0 1px rgba(255,255,255,0.04),
+                inset 0 0 0 1px rgba(255,255,255,0.025),
+                0 40px 100px rgba(0,0,0,0.85),
+                0 0 80px rgba(201,168,76,0.06);
+            position: relative;
+            overflow: hidden;
+            transform: perspective(900px) rotateY(-12deg) rotateX(4deg);
+            transition: transform 0.7s cubic-bezier(0.23, 1, 0.32, 1);
+            flex-shrink: 0;
+            z-index: 1;
+        }
+        .phone-frame:hover {
+            transform: perspective(900px) rotateY(-3deg) rotateX(1deg);
+        }
+        /* Notch */
+        .phone-frame::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 50%;
+            transform: translateX(-50%);
+            width: 90px; height: 22px;
+            background: #111827;
+            border-radius: 0 0 13px 13px;
+            z-index: 10;
+        }
+        /* Screen glare */
+        .phone-frame::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(140deg, rgba(255,255,255,0.06) 0%, transparent 45%);
+            pointer-events: none;
+            z-index: 5;
+            border-radius: 32px;
+        }
+        .phone-video {
+            width: 100%; height: 100%;
             object-fit: cover;
             display: block;
-            background: var(--navy-dark);
-            filter: grayscale(100%);
         }
-        /* placeholder when image not yet available */
-        .img-placeholder {
-            background: linear-gradient(135deg, #1B2D4F 0%, #0F1E35 100%);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            gap: 12px;
-            color: rgba(201,168,76,0.4);
-            font-size: 12px; letter-spacing: 0.16em;
+        /* Text alongside phone */
+        .phone-text {
+            max-width: 300px;
+            z-index: 1;
         }
-        .img-placeholder svg { opacity: 0.25; }
+        .phone-eyebrow {
+            font-size: 10px;
+            letter-spacing: 0.24em;
+            color: var(--gold);
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .phone-eyebrow::before {
+            content: '';
+            display: inline-block;
+            width: 24px; height: 1px;
+            background: var(--gold);
+        }
+        .phone-title {
+            font-size: clamp(26px, 3.5vw, 36px);
+            font-family: var(--font-display);
+            font-style: italic;
+            color: var(--cream);
+            line-height: 1.25;
+            margin-bottom: 20px;
+        }
+        .phone-desc {
+            font-size: 13px;
+            line-height: 2;
+            color: rgba(245,240,232,0.5);
+            letter-spacing: 0.03em;
+        }
+        .live-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 28px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.16em;
+            color: rgba(255,80,80,0.9);
+            text-transform: uppercase;
+        }
+        .live-dot {
+            width: 7px; height: 7px;
+            background: #ff4444;
+            border-radius: 50%;
+            animation: livepulse 1.6s ease-in-out infinite;
+        }
+        @keyframes livepulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.45; transform: scale(1.4); }
+        }
 
-        .gallery-grid {
+        /* ===== PHOTO SECTION ===== */
+        .photo-section {
+            background: var(--cream);
+            padding: 72px 0 0;
+        }
+        .section-label {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.22em;
+            color: var(--gold);
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-label::before {
+            content: '';
+            display: inline-block;
+            width: 24px; height: 1px;
+            background: var(--gold);
+        }
+        .section-title {
+            font-size: clamp(20px, 3vw, 28px);
+            font-weight: 700;
+            color: var(--navy);
+            letter-spacing: 0.04em;
+            margin-bottom: 8px;
+        }
+        .section-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.9;
+        }
+        .photo-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 4px;
-            margin-top: 4px;
+            margin-top: 28px;
         }
-        .gallery-grid img,
-        .gallery-grid .img-placeholder {
+        .photo-grid img {
+            width: 100%; height: 220px;
+            object-fit: cover;
+            filter: brightness(0.92) contrast(1.04);
+            transition: filter 0.35s ease, transform 0.35s ease;
+            display: block;
+        }
+        .photo-grid img:hover {
+            filter: brightness(1.02) contrast(1.0);
+            transform: scale(1.03);
+            position: relative;
+            z-index: 2;
+        }
+
+        /* ===== CONCEPT IMAGE SECTION ===== */
+        .concept-section {
+            background: var(--navy-dark);
+            padding: 80px 0;
+        }
+        .concept-img-wrap {
+            position: relative;
+            margin-top: 32px;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .concept-img-wrap img {
             width: 100%;
-            height: 200px;
-            filter: grayscale(100%);
+            height: clamp(280px, 42vw, 520px);
+            object-fit: cover;
+            object-position: center 30%;
+            display: block;
+            filter: brightness(0.88);
         }
+        .concept-badge {
+            position: absolute;
+            top: 16px; right: 16px;
+            background: rgba(15,30,53,0.82);
+            border: 1px solid rgba(201,168,76,0.35);
+            padding: 6px 14px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            color: var(--gold);
+            text-transform: uppercase;
+        }
+
+        /* ===== UPDATE NOTE ===== */
+        .update-note {
+            text-align: center;
+            padding: 48px 0;
+            color: var(--text-muted);
+            font-size: 13px;
+            letter-spacing: 0.04em;
+            border-top: 1px solid rgba(0,0,0,0.07);
+        }
+        .update-note strong { color: var(--navy); }
 
         /* ===== SPECS ===== */
         .specs-section {
@@ -217,9 +407,23 @@
         }
         footer a { color: var(--gold); }
 
+        @media (max-width: 768px) {
+            .phone-section { flex-direction: column; padding: 64px 24px; gap: 44px; }
+            .phone-frame {
+                width: 210px; height: 440px;
+                transform: perspective(700px) rotateY(-6deg) rotateX(2deg);
+            }
+            .phone-frame:hover {
+                transform: perspective(700px) rotateY(-1deg) rotateX(0deg);
+            }
+            .phone-text { text-align: center; max-width: 100%; }
+            .phone-eyebrow { justify-content: center; }
+            .phone-eyebrow::before { display: none; }
+            .live-badge { justify-content: center; }
+        }
         @media (max-width: 640px) {
-            .gallery-grid { grid-template-columns: repeat(2, 1fr); }
-            .gallery-grid img, .gallery-grid .img-placeholder { height: 160px; }
+            .photo-grid { grid-template-columns: repeat(2, 1fr); }
+            .photo-grid img { height: 160px; }
             .spec-card { flex-direction: column; gap: 14px; }
         }
     </style>
@@ -243,77 +447,74 @@
 
 <!-- ===== PAGE HERO ===== -->
 <div class="page-hero">
-    <span class="page-hero-tag">Progress</span>
+    <span class="page-hero-tag">Construction Diary</span>
     <h1>道場ができるまで</h1>
-    <p>80㎡のマットスペースと設備が、2026年秋に完成します。</p>
+    <p>2026年9月、内装工事が始まりました。11月のオープンに向けて。</p>
     <div class="page-hero-divider"></div>
 </div>
 
-<!-- ===== GALLERY ===== -->
-<section class="gallery-section" style="padding-bottom: 0;">
-    <div class="container" style="padding:0;max-width:100%;">
-
-        <!-- ヒーロー写真 -->
-        <img src="gallery_01.jpg" alt="AMBIs Jiu-Jitsu Academy マットスペース 80㎡" class="gallery-hero-img"
-             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-        <div class="gallery-hero-img img-placeholder" style="display:none;">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-            <span>PHOTO COMING SOON</span>
+<!-- ===== PHONE MOCKUP + VIDEO ===== -->
+<div class="phone-section">
+    <div class="phone-frame">
+        <video class="phone-video" autoplay muted loop playsinline>
+            <source src="files/construction-video.mp4" type="video/mp4">
+        </video>
+    </div>
+    <div class="phone-text">
+        <div class="phone-eyebrow">Construction Diary — Sep. 2026</div>
+        <h2 class="phone-title">工事が、<br>始まった。</h2>
+        <p class="phone-desc">
+            元・空手道場の居抜き物件から、<br>
+            AMBIsのための空間へ。<br>
+            傷んだ壁を新しくして——<br>
+            ひとつずつ、丁寧に作っています。
+        </p>
+        <div class="live-badge">
+            <span class="live-dot"></span>
+            Construction Live — 現在進行中
         </div>
+    </div>
+</div>
 
-        <!-- 5枚グリッド -->
-        <div class="gallery-grid">
-            <div style="position:relative;">
-                <img src="gallery_06.jpg" alt="入口・シューズラック"
-                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                <div class="img-placeholder" style="display:none;height:200px;">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                    <span style="font-size:10px;">入口・シューズラック</span>
-                </div>
-            </div>
-            <div>
-                <img src="gallery_02.jpg" alt="更衣室通路"
-                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                <div class="img-placeholder" style="display:none;height:200px;">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                    <span style="font-size:10px;">更衣室通路</span>
-                </div>
-            </div>
-            <div>
-                <img src="gallery_03.jpg" alt="更衣室内部"
-                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                <div class="img-placeholder" style="display:none;height:200px;">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                    <span style="font-size:10px;">更衣室内部</span>
-                </div>
-            </div>
-            <div>
-                <img src="gallery_04.jpg" alt="女子更衣室" style="object-position:center 30%;"
-                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                <div class="img-placeholder" style="display:none;height:200px;">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                    <span style="font-size:10px;">女子更衣室</span>
-                </div>
-            </div>
-            <div>
-                <img src="gallery_05.jpg" alt="男子更衣室" style="object-position:center 30%;"
-                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                <div class="img-placeholder" style="display:none;height:200px;">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                    <span style="font-size:10px;">男子更衣室</span>
-                </div>
-            </div>
-            <!-- 6枠目：工事中プレースホルダー -->
-            <div class="img-placeholder" style="height:200px;">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                <span style="font-size:10px;">工事完成後に更新予定</span>
-            </div>
-        </div>
+<!-- ===== PHOTO GRID ===== -->
+<section class="photo-section">
+    <div class="container">
+        <div class="section-label">工事中の記録 — 2026.09</div>
+        <h2 class="section-title">現在の道場の様子</h2>
+        <p class="section-desc">
+            まだ工事中。壁をリニューアルし、新しいマットの搬入を待っています。<br>
+            完成に向けて、ここを随時更新していきます。
+        </p>
+    </div>
+    <div class="photo-grid">
+        <img src="files/construction-09.jpg" alt="工事中の壁面 — 壁リニューアル前の状態" loading="lazy">
+        <img src="files/construction-10.jpg" alt="壁リニューアル工事中 — 廃材の撤去" loading="lazy">
+        <img src="files/construction-11.jpg" alt="工事中の廊下・入口エリア" loading="lazy" style="object-position:center 40%;">
+        <img src="files/construction-02.jpg" alt="壁面工事 — ドリル作業の様子" loading="lazy" style="object-position:center 30%;">
+        <img src="files/construction-04.jpg" alt="職人による内装工事作業" loading="lazy" style="object-position:center 20%;">
+        <img src="files/construction-03.jpg" alt="壁面の木製パネル施工中" loading="lazy">
+        <img src="files/construction-06.jpg" alt="道場スペース — 工事中の現状" loading="lazy">
+        <img src="files/construction-08.jpg" alt="道場内部と窓 — 工事中" loading="lazy">
+        <img src="files/construction-05.jpg" alt="道場スペース全景 — 工事進行中" loading="lazy">
+    </div>
+    <div class="update-note container" style="max-width:1000px;padding:36px 28px;">
+        新しいマットは現在発注中・木製棚は撤去予定です。<br>
+        <strong>できあがっていく様子を、随時こちらで公開します。</strong>
+    </div>
+</section>
 
-        <div class="update-note container" style="max-width:1000px;padding:40px 28px;">
-            2026年秋オープンに向けて、内装工事が進行中です。<br>
-            <strong>完成した道場の写真は随時こちらに追加していきます。</strong><br>
-            最新情報はLINEとInstagramでもお届けします。
+<!-- ===== 完成イメージ ===== -->
+<section class="concept-section">
+    <div class="container">
+        <div class="section-label" style="color:var(--gold);">Vision — 完成イメージ</div>
+        <h2 class="section-title" style="color:var(--cream);">こんな道場を作っています</h2>
+        <p class="section-desc" style="color:rgba(245,240,232,0.5);">
+            白い壁、新しい柔術マット、AMBIsのロゴ。<br>
+            2026年11月、この空間が熊本に誕生します。
+        </p>
+        <div class="concept-img-wrap">
+            <img src="files/concept-01.jpg" alt="AMBIs Jiu-Jitsu Academy 完成イメージ — 白壁と新しいマット" loading="lazy">
+            <span class="concept-badge">完成イメージ（CG）</span>
         </div>
     </div>
 </section>
@@ -374,8 +575,8 @@
                 </div>
                 <div class="spec-body">
                     <div class="spec-label">Access</div>
-                    <div class="spec-value">駅から徒歩5分</div>
-                    <div class="spec-desc">熊本市電「新水前寺駅前」電停より徒歩約5分。水前寺1丁目15−2 ダイコー水前寺駅通り5 5階。</div>
+                    <div class="spec-value">徒歩1〜3分圏内</div>
+                    <div class="spec-desc">バス停 徒歩1分・市電 2分・JR新水前寺 3分。熊本市水前寺1丁目15−2 ダイコー水前寺駅通り5 5階。</div>
                 </div>
             </div>
 
@@ -410,7 +611,7 @@
 <!-- ===== FOOTER ===== -->
 <footer>
     <div class="container" style="text-align:center;">
-        <p style="margin-bottom:8px;">AMBIs Jiu-Jitsu Academy — 熊本市中央区水前寺 / 2026年秋グランドオープン</p>
+        <p style="margin-bottom:8px;">AMBIs Jiu-Jitsu Academy — 熊本市中央区水前寺 / 2026年11月グランドオープン</p>
         <p style="margin-bottom:8px;">TEL <a href="tel:07085978887" style="color:inherit;">070-8597-8887</a></p>
         <p><a href="index.html">トップ</a> &nbsp;|&nbsp; <a href="experience.html">体験の流れ</a> &nbsp;|&nbsp; <a href="faq.html">FAQ</a> &nbsp;|&nbsp; <a href="app.html">会員アプリ</a> &nbsp;|&nbsp; <a href="gallery.html">ギャラリー</a> &nbsp;|&nbsp; <a href="privacy.html">プライバシーポリシー</a></p>
         <p style="margin-top:16px;">© 2026 AMBIs Jiu-Jitsu Academy. All rights reserved.</p>
