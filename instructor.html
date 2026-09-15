@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light">
     <title>代表プロフィール | AMBIs Jiu-Jitsu Academy</title>
-    <meta name="description" content="AMBIs Jiu-Jitsu Academy 代表・志水抄太のプロフィール。33歳で柔術を始め、熊本・水前寺に道場を開いた理由。">
+    <meta name="description" content="AMBIs Jiu-Jitsu Academy 代表・志水抄太のプロフィール。柔道経験を経て33歳で柔術を始め、国際大会にも出場。熊本・水前寺に道場を開いた理由。">
     <meta name="robots" content="index,follow">
     <!-- OGP -->
     <meta property="og:title" content="代表プロフィール | AMBIs Jiu-Jitsu Academy">
@@ -40,105 +40,263 @@
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
-            --navy: #1B2D4F;
-            --navy-dark: #111e35;
-            --gold: #C5A35A;
-            --cream: #F7F4EE;
-            --cream-dark: #EEEBE3;
-            --text-body: #3A3A3A;
-            --text-muted: #888;
-            --transition: all 0.3s ease;
+            --navy:        #1B2D4F;
+            --navy-dark:   #0F1E35;
+            --cream:       #F5F0E8;
+            --cream-dark:  #EDE6D8;
+            --gold:        #C9A84C;
+            --text-body:   #3D3028;
+            --text-muted:  #8A7B6E;
+            --white:       #FFFFFF;
+            --font-jp:      'Noto Sans JP', sans-serif;
+            --font-display: 'Playfair Display', serif;
+            --transition:   all 0.3s ease;
         }
-        body { font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Noto Sans JP', sans-serif; background: var(--cream); color: var(--text-body); line-height: 1.7; }
-        a { color: var(--navy); text-decoration: none; }
-        .container { max-width: 720px; margin: 0 auto; padding: 0 24px; }
+        html { scroll-behavior: smooth; font-size: 16px; }
+        body { font-family: var(--font-jp); color: var(--text-body); line-height: 1.7; background: var(--cream); overflow-x: hidden; }
+        img { max-width: 100%; display: block; object-fit: cover; }
+        a { text-decoration: none; color: inherit; }
+        .container { max-width: 760px; margin: 0 auto; padding: 0 28px; }
 
-        /* Navbar */
-        nav { background: var(--navy-dark); padding: 16px 0; position: sticky; top: 0; z-index: 100; }
+        /* ===== NAV ===== */
+        nav { background: var(--navy-dark); padding: 16px 0; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid rgba(201,168,76,0.15); }
         .nav-inner { max-width: 1100px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; }
-        .nav-logo { display: flex; align-items: center; gap: 14px; text-decoration: none; }
+        .nav-logo { display: flex; align-items: center; gap: 14px; }
         .nav-logo img { height: 46px; width: auto; display: block; }
         .nav-logo-sep { width: 1px; height: 20px; background: var(--gold); opacity: 0.5; flex-shrink: 0; }
         .nav-logo-sub { font-size: 11px; font-weight: 300; letter-spacing: 0.18em; color: var(--gold); white-space: nowrap; }
-        .nav-back { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: rgba(255,255,255,0.6); text-decoration: none; transition: var(--transition); }
+        @media (max-width: 640px) { .nav-logo img { height: 36px; } .nav-logo-sub { display: none; } }
+        .nav-back { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: rgba(255,255,255,0.6); transition: var(--transition); }
         .nav-back:hover { color: var(--gold); }
-        @media (max-width: 768px) { .nav-logo img { height: 36px; } .nav-logo-sub { display: none; } }
 
-        /* Hero */
-        .page-hero { background: var(--navy-dark); padding: 64px 0 56px; }
-        .page-hero-tag { font-size: 10px; letter-spacing: 0.28em; color: var(--gold); font-weight: 400; display: block; margin-bottom: 14px; }
-        .page-hero-title { font-size: clamp(24px, 4vw, 34px); font-weight: 700; color: #fff; margin-bottom: 6px; }
-        .page-hero-sub { font-size: 12px; letter-spacing: 0.18em; color: rgba(255,255,255,0.45); }
-
-        /* Profile */
-        .profile-wrap { padding: 64px 0 88px; }
-
-        /* Quote */
-        .profile-quote {
-            font-family: 'Playfair Display', 'Hiragino Mincho ProN', Georgia, serif;
-            font-style: italic;
-            font-size: clamp(18px, 3vw, 22px);
-            color: var(--navy);
-            line-height: 1.7;
-            border-left: 3px solid var(--gold);
-            padding: 4px 0 4px 24px;
-            margin-bottom: 48px;
+        /* ===== HERO ===== */
+        .instructor-hero {
+            background: var(--navy-dark);
+            display: flex;
+            align-items: stretch;
         }
-
-        /* Blocks */
-        .profile-block { margin-bottom: 48px; }
-        .profile-block-label {
-            font-size: 10px;
-            letter-spacing: 0.22em;
-            color: var(--gold);
-            font-weight: 500;
-            margin-bottom: 14px;
+        .instructor-hero-img {
+            flex: 0 0 42%;
+            position: relative;
+            overflow: hidden;
+            min-height: 460px;
+        }
+        .instructor-hero-img img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            object-position: center 15%;
             display: block;
         }
-        .profile-block p {
-            font-size: 15px;
-            line-height: 2;
-            color: var(--text-body);
-            margin-bottom: 14px;
+        .instructor-hero-text {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 56px 56px;
         }
-        .profile-block p:last-child { margin-bottom: 0; }
-
-        /* Divider */
-        .profile-divider {
-            width: 40px; height: 2px;
-            background: var(--gold);
-            margin: 48px 0;
-            opacity: 0.5;
+        .hero-tag {
+            font-size: 10px; letter-spacing: 0.26em; color: var(--gold);
+            font-weight: 700; text-transform: uppercase; margin-bottom: 18px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .hero-tag::before { content: ''; display: inline-block; width: 24px; height: 1px; background: var(--gold); }
+        .hero-name {
+            font-size: clamp(30px, 4vw, 42px);
+            font-weight: 700; color: var(--cream);
+            letter-spacing: 0.06em; margin-bottom: 6px;
+        }
+        .hero-name rt { font-size: 11px; color: rgba(245,240,232,0.45); letter-spacing: 0.05em; font-weight: 400; }
+        .hero-role {
+            font-size: 12px; letter-spacing: 0.18em; color: rgba(245,240,232,0.5);
+            text-transform: uppercase; margin-bottom: 26px;
+        }
+        .hero-quote {
+            font-family: var(--font-display); font-style: italic;
+            font-size: clamp(16px, 2vw, 19px);
+            color: var(--cream);
+            line-height: 1.75;
+            border-left: 2px solid var(--gold);
+            padding-left: 20px;
+        }
+        @media (max-width: 900px) {
+            .instructor-hero { flex-direction: column; }
+            .instructor-hero-img { flex: none; min-height: 340px; }
+            .instructor-hero-text { padding: 40px 28px 48px; }
         }
 
-        /* Meta chips */
-        .profile-meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 40px; margin-bottom: 48px; }
-        .profile-meta span {
-            font-size: 12px; color: var(--navy);
-            background: rgba(27,45,79,0.07);
-            padding: 6px 16px;
-            border-radius: 2px;
+        /* ===== STATS STRIP ===== */
+        .stats-strip {
+            background: var(--white);
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            background-color: rgba(0,0,0,0.06);
         }
-
-        /* CTA */
-        .profile-cta {
-            background: var(--navy);
-            padding: 40px 32px;
+        .stat-card {
+            background: var(--white);
+            padding: 28px 16px;
             text-align: center;
-            margin-top: 16px;
         }
-        .profile-cta p {
-            font-size: 14px;
-            color: rgba(255,255,255,0.7);
-            margin-bottom: 24px;
-            line-height: 1.8;
+        .stat-num {
+            font-family: var(--font-display); font-style: italic;
+            font-size: clamp(22px, 3vw, 30px);
+            color: var(--navy);
+            margin-bottom: 4px;
+        }
+        .stat-label {
+            font-size: 11px; letter-spacing: 0.08em; color: var(--text-muted);
+            line-height: 1.5;
+        }
+        @media (max-width: 640px) {
+            .stats-strip { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        /* ===== SECTION LABEL (shared pattern) ===== */
+        .section-label {
+            font-size: 10px; font-weight: 700; letter-spacing: 0.22em;
+            color: var(--gold); text-transform: uppercase; margin-bottom: 6px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .section-label::before { content: ''; display: inline-block; width: 24px; height: 1px; background: var(--gold); }
+        .section-label.on-dark { color: var(--gold); }
+        .section-title { font-size: clamp(20px, 3vw, 26px); font-weight: 700; color: var(--navy); letter-spacing: 0.04em; margin-bottom: 8px; }
+        .section-title.on-dark { color: var(--cream); }
+
+        /* ===== TIMELINE ===== */
+        .timeline-section { padding: 72px 0; background: var(--cream); }
+        .timeline { margin-top: 40px; position: relative; }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 5px; top: 6px; bottom: 6px;
+            width: 1px;
+            background: rgba(201,168,76,0.35);
+        }
+        .timeline-item { position: relative; padding-left: 32px; margin-bottom: 40px; }
+        .timeline-item:last-child { margin-bottom: 0; }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 6px;
+            width: 11px; height: 11px;
+            border-radius: 50%;
+            background: var(--cream);
+            border: 2px solid var(--gold);
+        }
+        .timeline-year {
+            font-size: 10px; letter-spacing: 0.16em; color: var(--gold);
+            font-weight: 700; text-transform: uppercase; margin-bottom: 8px;
+        }
+        .timeline-item h3 {
+            font-size: 16px; color: var(--navy); font-weight: 700;
+            margin-bottom: 10px; letter-spacing: 0.02em;
+        }
+        .timeline-item p {
+            font-size: 14.5px; line-height: 1.95; color: var(--text-body);
+            margin-bottom: 10px;
+        }
+        .timeline-item p:last-child { margin-bottom: 0; }
+        .timeline-thumbs { display: flex; gap: 6px; margin: 14px 0 6px; }
+        .timeline-thumbs img {
+            width: 130px; height: 90px; object-fit: cover;
+            filter: grayscale(0.3) brightness(0.97) contrast(1.05);
+            border: 1px solid rgba(0,0,0,0.08);
+        }
+        .timeline-caption { font-size: 11px; color: var(--text-muted); letter-spacing: 0.04em; margin-top: 6px; }
+
+        /* ===== ACHIEVEMENT ===== */
+        .achievement-section {
+            background: var(--navy-dark);
+            padding: 72px 0;
+        }
+        .achievement-grid {
+            display: flex;
+            gap: 44px;
+            align-items: center;
+            margin-top: 32px;
+        }
+        .achievement-photo {
+            flex: 0 0 240px;
+        }
+        .achievement-photo img {
+            width: 100%; border-radius: 2px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+        }
+        .achievement-text { flex: 1; }
+        .achievement-list {
+            list-style: none;
+            margin: 18px 0 22px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .achievement-list li {
+            font-size: 11.5px; color: var(--navy);
+            background: var(--gold);
+            padding: 6px 14px;
+            border-radius: 2px;
+            letter-spacing: 0.02em;
+            font-weight: 700;
+        }
+        .achievement-text p {
+            font-size: 14.5px; line-height: 1.95;
+            color: rgba(245,240,232,0.75);
+        }
+        .achievement-note {
+            margin-top: 20px;
+            font-family: var(--font-display); font-style: italic;
+            font-size: 15px; color: var(--gold);
+            line-height: 1.7;
+        }
+        @media (max-width: 760px) {
+            .achievement-grid { flex-direction: column; }
+            .achievement-photo { flex: none; width: 220px; }
+        }
+
+        /* ===== TEACHING MOMENT ===== */
+        .teaching-section { background: var(--cream); padding: 72px 0; }
+        .teaching-grid {
+            display: flex;
+            gap: 44px;
+            align-items: center;
+            margin-top: 32px;
+        }
+        .teaching-photo { flex: 0 0 280px; }
+        .teaching-photo img { width: 100%; border-radius: 2px; }
+        .teaching-text { flex: 1; }
+        .teaching-text p { font-size: 14.5px; line-height: 1.95; color: var(--text-body); margin-bottom: 12px; }
+        .teaching-text p:last-child { margin-bottom: 0; }
+        @media (max-width: 760px) {
+            .teaching-grid { flex-direction: column; }
+            .teaching-photo { flex: none; width: 240px; }
+        }
+
+        /* ===== FINAL QUOTE / SIGNATURE ===== */
+        .signature-block {
+            padding: 56px 0 0;
+            background: var(--cream);
+            text-align: center;
+        }
+        .signature-block p {
+            font-size: 13px; color: var(--text-muted); letter-spacing: 0.06em;
+        }
+
+        /* ===== CTA ===== */
+        .profile-cta {
+            background: var(--navy-dark);
+            padding: 64px 0;
+            text-align: center;
+        }
+        .profile-cta p.lead {
+            font-size: 15px; color: rgba(245,240,232,0.7);
+            margin-bottom: 24px; line-height: 1.8;
         }
         .cta-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
         .btn-line {
             display: inline-flex; align-items: center; gap: 8px;
             background: #06C755; color: #fff;
-            padding: 13px 28px; font-size: 14px; font-weight: 700;
-            text-decoration: none; letter-spacing: 0.05em;
+            padding: 14px 30px; font-size: 14px; font-weight: 700;
+            letter-spacing: 0.04em; border-radius: 3px;
             transition: var(--transition);
         }
         .btn-line:hover { opacity: 0.88; }
@@ -146,17 +304,24 @@
             display: inline-flex; align-items: center; gap: 8px;
             background: transparent; color: #fff;
             border: 1px solid rgba(255,255,255,0.4);
-            padding: 13px 28px; font-size: 14px;
-            text-decoration: none; letter-spacing: 0.05em;
-            transition: var(--transition);
+            padding: 14px 30px; font-size: 14px;
+            letter-spacing: 0.04em; transition: var(--transition);
         }
         .btn-contact:hover { border-color: var(--gold); color: var(--gold); }
+        .ig-link {
+            display: inline-flex; align-items: center; gap: 8px;
+            margin-top: 26px;
+            font-size: 13px; color: rgba(245,240,232,0.5);
+            border: 1px solid rgba(245,240,232,0.18);
+            padding: 8px 18px;
+            transition: var(--transition);
+        }
+        .ig-link:hover { border-color: var(--gold); color: var(--gold); }
 
-        /* Footer */
-        footer { background: var(--navy-dark); padding: 28px 0; text-align: center; }
-        footer p { font-size: 12px; color: rgba(255,255,255,0.35); }
-        footer a { color: rgba(255,255,255,0.5); }
-        footer a:hover { color: var(--gold); }
+        /* ===== FOOTER ===== */
+        footer { background: #060d1a; padding: 24px 0; text-align: center; }
+        footer p { font-size: 11.5px; color: rgba(245,240,232,0.35); letter-spacing: 0.06em; }
+        footer a { color: var(--gold); }
     </style>
 </head>
 <body>
@@ -175,70 +340,154 @@
     </div>
 </nav>
 
-<div class="page-hero">
-    <div class="container">
-        <span class="page-hero-tag">Instructor Profile</span>
-        <h1 class="page-hero-title">志水 抄太</h1>
-        <p class="page-hero-sub">Founder &amp; Head Instructor</p>
+<!-- ===== HERO ===== -->
+<div class="instructor-hero">
+    <div class="instructor-hero-img">
+        <img src="files/instructor-hero.jpg" alt="AMBIs Jiu-Jitsu Academy 代表 志水抄太">
+    </div>
+    <div class="instructor-hero-text">
+        <span class="hero-tag">Founder's Story</span>
+        <h1 class="hero-name"><ruby>志水 抄太<rt>しみず しょうた</rt></ruby></h1>
+        <div class="hero-role">Founder &amp; Head Instructor</div>
+        <div class="hero-quote">
+            "最初の理由は、何でもいい。<br>続けているうちに、それ以上のものが見つかるから。"
+        </div>
     </div>
 </div>
 
-<div class="profile-wrap">
+<!-- ===== STATS ===== -->
+<div class="stats-strip">
+    <div class="stat-card">
+        <div class="stat-num">7</div>
+        <div class="stat-label">柔術歴<br>年</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-num">黒帯</div>
+        <div class="stat-label">IBJJF認定<br>ブラックベルト</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-num">三段</div>
+        <div class="stat-label">柔道<br>（小4〜大学）</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-num">Int'l</div>
+        <div class="stat-label">国内外<br>大会出場</div>
+    </div>
+</div>
+
+<!-- ===== TIMELINE ===== -->
+<section class="timeline-section">
     <div class="container">
+        <div class="section-label">Journey</div>
+        <h2 class="section-title">続けてきた、ということ</h2>
+    </div>
+    <div class="container">
+        <div class="timeline">
 
-        <div class="profile-quote">
-            "最初の理由は、何でもいい。<br>続けているうちに、それ以上のものが見つかるから。"
+            <div class="timeline-item">
+                <div class="timeline-year">小4〜大学</div>
+                <h3>気づけば、10年続いていた柔道。</h3>
+                <p>小学4年生のとき、人に誘われて柔道を始めました。正直、始める気はなかったのに、なんとなく入門。でも始めてみると楽しくなって、気づけば大学卒業まで10年以上——青春はずっと柔道と共にありました。</p>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-year">大学卒業〜33歳</div>
+                <h3>運動から離れた10年間</h3>
+                <p>大学を卒業してからは運動を何もせず、サラリーマンとして働く日々。「運動しなきゃ」と思いながら、ジムも続かず、週末がなんとなく終わっていく。仕事も家族も悪くない、でもどこか、なーなーと過ぎていく感じ。33歳の私は、ずっとそうでした。</p>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-year">33歳</div>
+                <h3>ダイエット目的で、柔術と出会う</h3>
+                <p>始めたきっかけはダイエットです。「週1回だけ」という気持ちで、道場の扉を開けました。</p>
+                <p>驚いたのは、中にいる人たちでした。公務員、医者、経営者、学生——年齢も職業もバラバラなのに、同じ場所で普通に汗をかいて、仕事の話も人生の話も気兼ねなくしている。「こんな場所が、あったんだ」と思いました。仕事以外で、自分の居場所ができた瞬間でした。</p>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-year">7年間</div>
+                <h3>続けた結果、見えてきたもの</h3>
+                <p>続けるうちに、久しぶりの感覚が戻ってきました。挑戦することが、楽しいという感覚。今も会社員を続けながら、週末はここに立っています。</p>
+                <p>大切にしているのは強さではなく「続けること」です。大人になってから始めても、確かに続けられる——私自身が、その証拠です。</p>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-year">今</div>
+                <h3>熊本・水前寺に、AMBIsを</h3>
+                <p>AMBIsは、強さを競う場所ではありません。最初の目的はダイエットでも、ストレス解消でも、何でもいい。会員のほとんどが、未経験からのスタートです。</p>
+                <p>3ヶ月後には、週末が楽しみになっています。半年後には、名前を呼んでくれる仲間ができています。1年後、きっと「もっと早く始めればよかった」と言っているはずです。私も、今でもそう思っています。</p>
+            </div>
+
         </div>
+    </div>
+</section>
 
-        <div class="profile-block">
-            <p>「運動しなきゃ」と思いながら、ジムも続かず、週末がなんとなく終わっていく。そんな毎日、覚えがありませんか。</p>
-            <p>仕事も、家族も、悪くない。でもどこか、なーなーと過ぎていく感じ。「このままでいいのか」と思いながら、何も変えられていない。33歳の私も、ずっとそうでした。</p>
-            <p>始めたきっかけはダイエットです。「週1回だけ」という気持ちで、道場の扉を開けました。</p>
-            <p>驚いたのは、中にいる人たちでした。公務員、医者、経営者、学生——年齢も職業もバラバラなのに、同じ場所で普通に汗をかいて、仕事の話も人生の話も気兼ねなくしている。「こんな場所が、あったんだ」と思いました。仕事以外で、自分の居場所ができた瞬間でした。</p>
-            <p>続けるうちに、久しぶりの感覚が戻ってきました。挑戦することが、楽しいという感覚。</p>
-        </div>
-
-        <div class="profile-divider"></div>
-
-        <div class="profile-block">
-            <p>あれから7年。今も会社員を続けながら、週末はここに立っています。IBJJF認定の黒帯を取得しましたが、大切にしているのは強さではなく「続けること」です。大人になってから始めても、確かに続けられる——私自身が、その証拠です。</p>
-            <p>AMBIsは、強さを競う場所ではありません。最初の目的はダイエットでも、ストレス解消でも、何でもいい。会員のほとんどが、未経験からのスタートです。</p>
-        </div>
-
-        <div class="profile-divider"></div>
-
-        <div class="profile-block">
-            <p>3ヶ月後には、週末が楽しみになっています。半年後には、名前を呼んでくれる仲間ができています。1年後、きっと「もっと早く始めればよかった」と言っているはずです。私も、今でもそう思っています。</p>
-            <p>見学だけでも大丈夫です。熊本・水前寺に、そんな場所を作ります。一度、来てみてください。</p>
-            <p style="margin-top: 32px; font-size: 14px; color: var(--text-muted); letter-spacing: 0.05em;">志水 抄太　AMBIs Jiu-Jitsu Academy 代表</p>
-        </div>
-
-        <div class="profile-meta">
-            <span>IBJJF認定 黒帯</span>
-            <span>柔道三段</span>
-            <span>国内外大会出場</span>
-        </div>
-
-        <div class="profile-cta">
-            <p>まずは体験から。<br>気軽にLINEでご連絡ください。</p>
-            <div class="cta-buttons">
-                <a href="https://lin.ee/67nT6Qw2" target="_blank" rel="noopener" class="btn-line">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.03 2 11c0 2.76 1.3 5.22 3.36 6.93L4.5 22l4.28-2.22C9.7 19.92 10.83 20 12 20c5.52 0 10-4.03 10-9s-4.48-9-10-9z"/></svg>
-                    LINEで問い合わせる
-                </a>
-                <a href="index.html#contact" class="btn-contact">
-                    体験を申し込む
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                </a>
+<!-- ===== ACHIEVEMENT ===== -->
+<section class="achievement-section">
+    <div class="container">
+        <div class="section-label on-dark">Results</div>
+        <h2 class="section-title on-dark">続けた先に、あった景色</h2>
+        <div class="achievement-grid">
+            <div class="achievement-photo">
+                <img src="files/instructor-medal.jpg" alt="国際大会の会場でベルトを締める志水抄太">
+            </div>
+            <div class="achievement-text">
+                <p>ダイエット目的で始めた柔術でしたが、続けるうちに国内外の大会にも出場するようになりました。</p>
+                <ul class="achievement-list">
+                    <li>World Master 2025</li>
+                    <li>SJJIF World Championship 2026 Tokyo</li>
+                    <li>All Japan Master</li>
+                    <li>Asian Open</li>
+                    <li>Kyushu International</li>
+                </ul>
+                <p>ただ、大切にしているのは順位や強さではありません。「続けたら、こんな景色も見える」——それを、これから始める人にも伝えたいと思っています。</p>
+                <div class="achievement-note">強さよりも、続けることの美しさ。</div>
             </div>
         </div>
+    </div>
+</section>
 
+<!-- ===== TEACHING MOMENT ===== -->
+<section class="teaching-section">
+    <div class="container" style="max-width:600px;text-align:center;">
+        <div class="section-label" style="display:inline-flex;">Now</div>
+        <h2 class="section-title">今は、支える側として</h2>
+        <div class="teaching-text" style="margin-top:24px;">
+            <p>今は、道場に来てくれる生徒たちをサポートする側に立っています。技術を教えるだけでなく、続けたいと思える場所であること——それを一番大切にしています。</p>
+            <p>見学だけでも大丈夫です。熊本・水前寺に、そんな場所を作ります。一度、来てみてください。</p>
+        </div>
+    </div>
+</section>
+
+<div class="signature-block">
+    <div class="container">
+        <p>志水 抄太　AMBIs Jiu-Jitsu Academy 代表</p>
+    </div>
+</div>
+
+<!-- ===== CTA ===== -->
+<div class="profile-cta">
+    <div class="container">
+        <p class="lead">まずは体験から。<br>気軽にLINEでご連絡ください。</p>
+        <div class="cta-buttons">
+            <a href="https://lin.ee/67nT6Qw2" target="_blank" rel="noopener" class="btn-line">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.03 2 11c0 2.76 1.3 5.22 3.36 6.93L4.5 22l4.28-2.22C9.7 19.92 10.83 20 12 20c5.52 0 10-4.03 10-9s-4.48-9-10-9z"/></svg>
+                LINEで問い合わせる
+            </a>
+            <a href="index.html#contact" class="btn-contact">
+                体験を申し込む
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </a>
+        </div>
+        <a href="https://www.instagram.com/shota.bjj" target="_blank" rel="noopener" class="ig-link">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+            @shota.bjj
+        </a>
     </div>
 </div>
 
 <footer>
     <div class="container" style="text-align:center;">
-        <p style="margin-bottom:8px;">AMBIs Jiu-Jitsu Academy — 熊本市中央区水前寺 / 2026年秋グランドオープン</p>
+        <p style="margin-bottom:8px;">AMBIs Jiu-Jitsu Academy — 熊本市中央区水前寺 / 2026年11月グランドオープン</p>
         <p style="margin-bottom:8px;">TEL <a href="tel:07085978887" style="color:inherit;">070-8597-8887</a></p>
         <p><a href="index.html">トップ</a> &nbsp;|&nbsp; <a href="experience.html">体験の流れ</a> &nbsp;|&nbsp; <a href="faq.html">FAQ</a> &nbsp;|&nbsp; <a href="app.html">会員アプリ</a> &nbsp;|&nbsp; <a href="gallery.html">ギャラリー</a> &nbsp;|&nbsp; <a href="privacy.html">プライバシーポリシー</a></p>
         <p style="margin-top:16px;">© 2026 AMBIs Jiu-Jitsu Academy. All rights reserved.</p>
