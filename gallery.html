@@ -156,6 +156,7 @@
         .phone-video {
             width: 100%; height: 100%;
             object-fit: cover;
+            object-position: 12% center;
             display: block;
         }
         /* Text alongside phone */
@@ -249,6 +250,42 @@
             font-size: 13px;
             color: var(--text-muted);
             line-height: 1.9;
+        }
+        .beforeafter-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 32px;
+            margin-top: 32px;
+        }
+        .ba-imgs { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
+        .ba-item { position: relative; overflow: hidden; }
+        .ba-item img {
+            width: 100%; height: 200px;
+            object-fit: cover;
+            display: block;
+            filter: brightness(0.96) contrast(1.03);
+        }
+        .ba-tag {
+            position: absolute; top: 10px; left: 10px;
+            font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+            padding: 4px 10px;
+            background: rgba(27,45,79,0.85);
+            color: var(--cream);
+        }
+        .ba-tag-now { background: var(--gold); color: var(--navy-dark); }
+        .ba-caption {
+            text-align: center; margin-top: 10px;
+            font-size: 12px; letter-spacing: 0.06em;
+            color: var(--text-muted);
+        }
+        .ba-divider {
+            text-align: center; margin: 40px 0 4px;
+            font-size: 11px; letter-spacing: 0.14em;
+            color: var(--text-muted);
+        }
+        @media (max-width: 640px) {
+            .beforeafter-grid { grid-template-columns: 1fr; gap: 24px; }
+            .ba-item img { height: 170px; }
         }
         .photo-grid {
             display: grid;
@@ -457,21 +494,21 @@
 <div class="phone-section">
     <div class="phone-frame">
         <video class="phone-video" autoplay muted loop playsinline>
-            <source src="files/construction-video.mp4" type="video/mp4">
+            <source src="files/construction-video-2.mp4" type="video/mp4">
         </video>
     </div>
     <div class="phone-text">
-        <div class="phone-eyebrow">Construction Diary — Sep. 2026</div>
-        <h2 class="phone-title">工事が、<br>始まった。</h2>
+        <div class="phone-eyebrow">壁工事の進捗 — Sep. 2026</div>
+        <h2 class="phone-title">少しずつ、<br>形になってきました。</h2>
         <p class="phone-desc">
-            元・空手道場の居抜き物件から、<br>
-            AMBIsのための空間へ。<br>
-            傷んだ壁を新しくして——<br>
-            ひとつずつ、丁寧に作っています。
+            壁の下地工事が完了。<br>
+            次は壁紙の仕上げへ。<br>
+            新しいマットの搬入も、<br>
+            もうすぐです。
         </p>
         <div class="live-badge">
             <span class="live-dot"></span>
-            Construction Live — 現在進行中
+            Construction Update — 2026.09.15
         </div>
     </div>
 </div>
@@ -479,12 +516,41 @@
 <!-- ===== PHOTO GRID ===== -->
 <section class="photo-section">
     <div class="container">
-        <div class="section-label">工事中の記録 — 2026.09</div>
+        <div class="section-label">壁工事アップデート — 2026.09.15</div>
         <h2 class="section-title">現在の道場の様子</h2>
         <p class="section-desc">
-            まだ工事中。壁をリニューアルし、新しいマットの搬入を待っています。<br>
+            壁の下地工事が完了しました。次は壁紙の仕上げ、そして新しいマットの搬入へ。<br>
             完成に向けて、ここを随時更新していきます。
         </p>
+        <div class="beforeafter-grid">
+            <div>
+                <div class="ba-imgs">
+                    <div class="ba-item">
+                        <img src="files/construction-12.jpg" alt="窓際の壁面 — 下地工事前">
+                        <span class="ba-tag">BEFORE</span>
+                    </div>
+                    <div class="ba-item">
+                        <img src="files/construction-13.jpg" alt="窓際の壁面 — 下地工事完了後">
+                        <span class="ba-tag ba-tag-now">NOW</span>
+                    </div>
+                </div>
+                <p class="ba-caption">窓際の壁面</p>
+            </div>
+            <div>
+                <div class="ba-imgs">
+                    <div class="ba-item">
+                        <img src="files/construction-14.jpg" alt="入口廊下の壁面 — 下地工事前">
+                        <span class="ba-tag">BEFORE</span>
+                    </div>
+                    <div class="ba-item">
+                        <img src="files/construction-15.jpg" alt="入口廊下の壁面 — 下地工事完了後">
+                        <span class="ba-tag ba-tag-now">NOW</span>
+                    </div>
+                </div>
+                <p class="ba-caption">入口廊下の壁面</p>
+            </div>
+        </div>
+        <div class="ba-divider">これまでの記録</div>
     </div>
     <div class="photo-grid">
         <img src="files/construction-09.jpg" alt="工事中の壁面 — 壁リニューアル前の状態" loading="lazy">
