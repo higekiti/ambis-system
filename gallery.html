@@ -112,7 +112,7 @@
         }
         /* 3D phone frame */
         .phone-frame {
-            width: 248px;
+            width: 298px;   /* 画面を9:16にして動画の左右が切れないように */
             height: 516px;
             background: #111827;
             border-radius: 40px;
@@ -156,12 +156,12 @@
         .phone-video {
             width: 100%; height: 100%;
             object-fit: cover;
-            object-position: 12% center;
+            object-position: center center;
             display: block;
         }
         /* Text alongside phone */
         .phone-text {
-            max-width: 300px;
+            max-width: 380px;
             z-index: 1;
         }
         .phone-eyebrow {
@@ -188,6 +188,7 @@
             color: var(--cream);
             line-height: 1.25;
             margin-bottom: 20px;
+            white-space: nowrap;
         }
         .phone-desc {
             font-size: 13px;
@@ -447,7 +448,7 @@
         @media (max-width: 768px) {
             .phone-section { flex-direction: column; padding: 64px 24px; gap: 44px; }
             .phone-frame {
-                width: 210px; height: 440px;
+                width: 234px; height: 402px;
                 transform: perspective(700px) rotateY(-6deg) rotateX(2deg);
             }
             .phone-frame:hover {
@@ -486,7 +487,7 @@
 <div class="page-hero">
     <span class="page-hero-tag">Construction Diary</span>
     <h1>道場ができるまで</h1>
-    <p>2026年9月、内装工事が始まりました。11月のオープンに向けて。</p>
+    <p>2026年9月、内装工事が始まりました。11月22日のオープンに向けて。</p>
     <div class="page-hero-divider"></div>
 </div>
 
@@ -494,21 +495,20 @@
 <div class="phone-section">
     <div class="phone-frame">
         <video class="phone-video" autoplay muted loop playsinline>
-            <source src="files/construction-video-2.mp4" type="video/mp4">
+            <source src="files/construction-video-3.mp4" type="video/mp4">
         </video>
     </div>
     <div class="phone-text">
-        <div class="phone-eyebrow">壁工事の進捗 — Sep. 2026</div>
-        <h2 class="phone-title">少しずつ、<br>形になってきました。</h2>
+        <div class="phone-eyebrow">シャワー・トイレ工事 — Oct. 2026</div>
+        <h2 class="phone-title">水まわりの工事が、<br>始まりました。</h2>
         <p class="phone-desc">
-            壁の下地工事が完了。<br>
-            次は壁紙の仕上げへ。<br>
-            新しいマットの搬入も、<br>
-            もうすぐです。
+            トイレと洗面があった場所を解体して、<br>
+            シャワールームとトイレを<br>
+            新しく作っています。
         </p>
         <div class="live-badge">
             <span class="live-dot"></span>
-            Construction Update — 2026.09.15
+            Construction Update — 2026.10.03
         </div>
     </div>
 </div>
@@ -516,12 +516,41 @@
 <!-- ===== PHOTO GRID ===== -->
 <section class="photo-section">
     <div class="container">
-        <div class="section-label">壁工事アップデート — 2026.09.15</div>
+        <div class="section-label">シャワー・トイレ工事アップデート — 2026.10.03</div>
         <h2 class="section-title">現在の道場の様子</h2>
         <p class="section-desc">
-            壁の下地工事が完了しました。次は壁紙の仕上げ、そして新しいマットの搬入へ。<br>
+            10月から、シャワールームとトイレの工事が始まりました。まずは解体から。<br>
             完成に向けて、ここを随時更新していきます。
         </p>
+        <div class="beforeafter-grid">
+            <div>
+                <div class="ba-imgs">
+                    <div class="ba-item">
+                        <img src="files/construction-16.jpg" alt="道場の奥 — 9月19日・工事前">
+                        <span class="ba-tag">BEFORE</span>
+                    </div>
+                    <div class="ba-item">
+                        <img src="files/construction-17.jpg" alt="道場の奥 — 10月3日・解体工事中">
+                        <span class="ba-tag ba-tag-now">NOW</span>
+                    </div>
+                </div>
+                <p class="ba-caption">道場の奥（シャワー・トイレ側）</p>
+            </div>
+            <div>
+                <div class="ba-imgs">
+                    <div class="ba-item">
+                        <img src="files/construction-18.jpg" alt="トイレ・洗面のスペース — 9月19日・工事前">
+                        <span class="ba-tag">BEFORE</span>
+                    </div>
+                    <div class="ba-item">
+                        <img src="files/construction-19.jpg" alt="シャワールームとトイレの工事中 — 10月2日">
+                        <span class="ba-tag ba-tag-now">NOW</span>
+                    </div>
+                </div>
+                <p class="ba-caption">トイレ・洗面のスペース</p>
+            </div>
+        </div>
+        <div class="ba-divider">壁工事 — 2026.09.15</div>
         <div class="beforeafter-grid">
             <div>
                 <div class="ba-imgs">
@@ -553,6 +582,9 @@
         <div class="ba-divider">これまでの記録</div>
     </div>
     <div class="photo-grid">
+        <img src="files/construction-20.jpg" alt="シャワー・トイレ工事 — 解体作業の様子" loading="lazy">
+        <img src="files/construction-21.jpg" alt="シャワー・トイレ工事 — 配管工事の様子" loading="lazy">
+        <img src="files/construction-22.jpg" alt="シャワールームとトイレの下地工事" loading="lazy">
         <img src="files/construction-09.jpg" alt="工事中の壁面 — 壁リニューアル前の状態" loading="lazy">
         <img src="files/construction-10.jpg" alt="壁リニューアル工事中 — 廃材の撤去" loading="lazy">
         <img src="files/construction-11.jpg" alt="工事中の廊下・入口エリア" loading="lazy" style="object-position:center 40%;">
@@ -564,7 +596,7 @@
         <img src="files/construction-05.jpg" alt="道場スペース全景 — 工事進行中" loading="lazy">
     </div>
     <div class="update-note container" style="max-width:1000px;padding:36px 28px;">
-        新しいマットは現在発注中・木製棚は撤去予定です。<br>
+        10月から、シャワールームとトイレの工事が始まりました。<br>
         <strong>できあがっていく様子を、随時こちらで公開します。</strong>
     </div>
 </section>
