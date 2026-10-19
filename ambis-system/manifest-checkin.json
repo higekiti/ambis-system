@@ -1,0 +1,15 @@
+{
+  "id": "./ambis_checkin.html",
+  "name": "AMBIs チェックイン",
+  "short_name": "AMBIs受付",
+  "description": "AMBIs Jiu-Jitsu Academy 受付チェックイン",
+  "start_url": "./ambis_checkin.html",
+  "display": "standalone",
+  "background_color": "#0a1628",
+  "theme_color": "#0a1628",
+  "orientation": "any",
+  "icons": [
+    { "src": "icon-checkin-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-checkin-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
