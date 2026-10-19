@@ -125,6 +125,15 @@ html,body{width:100%;height:100%;font-family:'Noto Sans JP',sans-serif;backgroun
   box-shadow:0 2px 8px rgba(10,22,40,0.08);
 }
 #video{width:100%;height:100%;object-fit:cover;}
+#video.mirror{transform:scaleX(-1);}
+.cam-switch{
+  position:absolute;top:12px;right:12px;z-index:12;
+  display:flex;align-items:center;gap:6px;
+  font-size:12px;color:var(--navy);background:rgba(255,255,255,0.92);
+  border:1px solid rgba(10,22,40,0.12);border-radius:20px;padding:7px 14px;
+  box-shadow:0 2px 8px rgba(10,22,40,0.08);cursor:pointer;
+}
+.cam-switch:active{transform:scale(0.96);}
 #canvas{display:none;}
 
 /* SCAN FRAME */
@@ -317,6 +326,7 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
     <!-- CAMERA -->
     <div class="camera-side">
       <div class="camera-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>会員QRコードをカメラにかざしてください</div>
+      <button type="button" class="cam-switch" id="cam-switch" onclick="switchCamera()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7h-3.5L14 4h-4L7.5 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M9 13a3 3 0 0 1 5.5-1.7M15 13a3 3 0 0 1-5.5 1.7"/><polyline points="14.5 9 14.5 11.3 12.3 11.3"/><polyline points="9.5 17 9.5 14.7 11.7 14.7"/></svg><span id="cam-switch-label">外カメラに切替</span></button>
       <video id="video" autoplay playsinline muted></video>
       <canvas id="canvas"></canvas>
       <div class="scan-frame" id="scan-frame">
@@ -439,14 +449,32 @@ function updateClock(){
 }
 
 // CAMERA
+// 'user'=内カメラ（初期設定） / 'environment'=外カメラ。選択はタブレットに記憶
+let cameraFacing='user';
+try{const saved=localStorage.getItem('ambisCheckinCamera');if(saved==='user'||saved==='environment')cameraFacing=saved;}catch(e){}
+let scanLoopStarted=false;
+function updateCameraUI(){
+  document.getElementById('video').classList.toggle('mirror',cameraFacing==='user');
+  document.getElementById('cam-switch-label').textContent=cameraFacing==='user'?'外カメラに切替':'内カメラに切替';
+}
+async function switchCamera(){
+  cameraFacing=cameraFacing==='user'?'environment':'user';
+  try{localStorage.setItem('ambisCheckinCamera',cameraFacing);}catch(e){}
+  await startCamera();
+}
 async function startCamera(){
+  const video=document.getElementById('video');
+  if(video.srcObject){video.srcObject.getTracks().forEach(t=>t.stop());video.srcObject=null;}
   try{
     const stream=await navigator.mediaDevices.getUserMedia({
-      video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}
+      video:{facingMode:{ideal:cameraFacing},width:{ideal:1280},height:{ideal:720}}
     });
-    const video=document.getElementById('video');
     video.srcObject=stream;
-    video.addEventListener('loadedmetadata',()=>{video.play();requestAnimationFrame(scanFrame);});
+    video.style.display='';
+    document.getElementById('scan-frame').style.display='';
+    document.getElementById('no-camera-msg').style.display='none';
+    updateCameraUI();
+    video.onloadedmetadata=()=>{video.play();if(!scanLoopStarted){scanLoopStarted=true;requestAnimationFrame(scanFrame);}};
   }catch(e){
     document.getElementById('video').style.display='none';
     document.getElementById('scan-frame').style.display='none';
