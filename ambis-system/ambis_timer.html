@@ -250,9 +250,9 @@ body.remote-mode .remote{display:flex;flex-direction:column;min-height:100vh;min
       <div class="sep"></div>
       <span class="lbl">ブザー</span>
       <select id="in-sound">
+        <option value="balanced">A バランス</option>
         <option value="buzzer">ブザー（ビィッ！ビィー）</option>
         <option value="clear">B クリア</option>
-        <option value="balanced">A バランス</option>
         <option value="high">C 高め</option>
         <option value="arena">D 太め</option>
       </select>
@@ -343,7 +343,7 @@ const $=id=>document.getElementById(id);
 
 // ── プリセット ──
 const PRESETS={
-  sparring:[{label:'3分',work:180,rest:30,rounds:5},{label:'5分',work:300,rest:30,rounds:6},{label:'6分',work:360,rest:30,rounds:5},{label:'8分',work:480,rest:30,rounds:4}],
+  sparring:[{label:'3分',work:180,rest:18,rounds:5},{label:'5分',work:300,rest:18,rounds:6},{label:'6分',work:360,rest:18,rounds:5},{label:'8分',work:480,rest:18,rounds:4}],
   circuit:[{label:'30/15',work:30,rest:15,rounds:8},{label:'40/20',work:40,rest:20,rounds:8},{label:'60/30',work:60,rest:30,rounds:6}],
   class:[{label:'60分',work:3600,rest:0,rounds:1},{label:'75分',work:4500,rest:0,rounds:1},{label:'90分',work:5400,rest:0,rounds:1}],
 };
@@ -363,12 +363,12 @@ const SCHEDULE=[
 ];
 
 // ── 状態 ──
-const S={mode:'sparring',preset:1,work:300,rest:30,rounds:6,free:false,
+const S={mode:'sparring',preset:1,work:300,rest:18,rounds:6,free:false,
   phase:'ready',   // ready | work | rest | done
   running:false,round:1,remain:300,endAt:0,warned:false,lastTick:-1};
 
 // ── 設定の保存 ──
-function saveSettings(){try{localStorage.setItem('ambis_timer_settings',JSON.stringify({mode:S.mode,preset:S.preset,work:S.work,rest:S.rest,rounds:S.rounds,free:S.free,sound:$('in-sound').value,soundV:2,warn:$('in-warn').checked,warnSec:$('in-warnsec').value}));}catch(e){}}
+function saveSettings(){try{localStorage.setItem('ambis_timer_settings',JSON.stringify({mode:S.mode,preset:S.preset,work:S.work,rest:S.rest,rounds:S.rounds,free:S.free,sound:$('in-sound').value,soundV:2,v:3,warn:$('in-warn').checked,warnSec:$('in-warnsec').value}));}catch(e){}}
 function loadSettings(){try{return JSON.parse(localStorage.getItem('ambis_timer_settings')||'null');}catch(e){return null;}}
 
 // ── 音（Web Audio） ──
@@ -404,7 +404,7 @@ function buzz(spec,at,dur,gainMul){
   spec.v.forEach((f,i)=>{const o=c.createOscillator(),a=c.createGain();o.type=spec.t[i];o.frequency.setValueAtTime(f,t0);a.gain.value=spec.l[i];o.connect(a).connect(am);o.start(t0);o.stop(t0+dur+.02);});
 }
 function snd(kind){
-  const spec=VOICES[$('in-sound').value]||VOICES.buzzer;
+  const spec=VOICES[$('in-sound').value]||VOICES.balanced;
   if(kind==='start'){tone(spec,0,.6);}                         // 開始：長め1回
   else if(kind==='end'){tone(spec,0,.2);tone(spec,.215,.6);} // 終了：ビィッ！ビィー（間はごく短く）
   else if(kind==='warn'){const soft={v:[880,1760],l:[.16,.05],t:['sine','sine'],m:.55};tone(soft,0,.12);tone(soft,.18,.12);} // 予告：控えめな2音
@@ -588,8 +588,8 @@ document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement
 
 // ── 起動 ──
 const saved=loadSettings();
-if(saved){
-  S.mode=saved.mode||'sparring';S.preset=saved.preset??1;S.work=saved.work||300;S.rest=saved.rest??30;S.rounds=saved.rounds||6;S.free=!!saved.free;
+if(saved&&saved.v===3){
+  S.mode=saved.mode||'sparring';S.preset=saved.preset??1;S.work=saved.work||300;S.rest=saved.rest??18;S.rounds=saved.rounds||6;S.free=!!saved.free;
   if(saved.sound&&saved.soundV===2)$('in-sound').value=saved.sound;if(saved.warn===false)$('in-warn').checked=false;if(saved.warnSec)$('in-warnsec').value=saved.warnSec;
 }
 syncInputs();resetTimer();
