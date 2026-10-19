@@ -474,9 +474,10 @@ async function startCamera(){
   if(video.srcObject){video.srcObject.getTracks().forEach(t=>t.stop());video.srcObject=null;}
   try{
     const stream=await navigator.mediaDevices.getUserMedia({
-      video:{facingMode:{ideal:cameraFacing},width:{ideal:1280},height:{ideal:720}}
+      video:{facingMode:{ideal:cameraFacing},width:{ideal:1920},height:{ideal:1080}}
     });
     video.srcObject=stream;
+    try{const tr=stream.getVideoTracks()[0];const cap=tr.getCapabilities?tr.getCapabilities():{};if(cap.focusMode&&cap.focusMode.includes('continuous'))tr.applyConstraints({advanced:[{focusMode:'continuous'}]}).catch(()=>{});}catch(e){}
     video.style.display='';
     document.getElementById('scan-frame').style.display='';
     document.getElementById('no-camera-msg').style.display='none';
@@ -489,24 +490,48 @@ async function startCamera(){
   }
 }
 
-function playTone(freq,duration,delay,type,vol){try{if(!window.__ambisAudioCtx)window.__ambisAudioCtx=new (window.AudioContext||window.webkitAudioContext)();const ctx=window.__ambisAudioCtx;const osc=ctx.createOscillator();const gain=ctx.createGain();osc.type=type||'sine';osc.frequency.value=freq;const startTime=ctx.currentTime+(delay||0);osc.connect(gain);gain.connect(ctx.destination);gain.gain.setValueAtTime(0.0001,startTime);gain.gain.exponentialRampToValueAtTime(vol||0.2,startTime+0.01);gain.gain.exponentialRampToValueAtTime(0.0001,startTime+duration);osc.start(startTime);osc.stop(startTime+duration+0.05);}catch(e){console.error('sound error:',e);}}/* AMBIs 金のベル音（発表動画と同じ系統） */function playBell(f,dur,delay,vol){[[1,1],[2.01,.45],[2.76,.28],[5.4,.1]].forEach(function(h){playTone(f*h[0],dur*(1/h[0]+.3),delay,'sine',vol*h[1]);});}function playScanSound(){playBell(1319,0.35,0,0.26);playBell(1760,0.6,0.09,0.26);}function playCheckinSound(){playBell(880,1.4,0,0.15);playBell(1109,1.4,0.12,0.14);playBell(1319,1.8,0.24,0.16);}function scanFrame(){
-  const video=document.getElementById('video');
-  const canvas=document.getElementById('canvas');
-  if(video.readyState===video.HAVE_ENOUGH_DATA){
-    canvas.width=video.videoWidth;canvas.height=video.videoHeight;
-    const ctx=canvas.getContext('2d');
-    ctx.drawImage(video,0,0,canvas.width,canvas.height);
-    const imageData=ctx.getImageData(0,0,canvas.width,canvas.height);
-    const code=jsQR(imageData.data,imageData.width,imageData.height,{inversionAttempts:'dontInvert'});
-    if(code){
-      const now=Date.now();
-      if(code.data!==lastScanned||(now-lastScannedTime)>3000){
-        lastScanned=code.data;lastScannedTime=now;
-        handleQR(code.data);
-      }
-    }
+function playTone(freq,duration,delay,type,vol){try{if(!window.__ambisAudioCtx)window.__ambisAudioCtx=new (window.AudioContext||window.webkitAudioContext)();const ctx=window.__ambisAudioCtx;const osc=ctx.createOscillator();const gain=ctx.createGain();osc.type=type||'sine';osc.frequency.value=freq;const startTime=ctx.currentTime+(delay||0);osc.connect(gain);gain.connect(ctx.destination);gain.gain.setValueAtTime(0.0001,startTime);gain.gain.exponentialRampToValueAtTime(vol||0.2,startTime+0.01);gain.gain.exponentialRampToValueAtTime(0.0001,startTime+duration);osc.start(startTime);osc.stop(startTime+duration+0.05);}catch(e){console.error('sound error:',e);}}/* AMBIs 金のベル音（発表動画と同じ系統） */function playBell(f,dur,delay,vol){[[1,1],[2.01,.45],[2.76,.28],[5.4,.1]].forEach(function(h){playTone(f*h[0],dur*(1/h[0]+.3),delay,'sine',vol*h[1]);});}function playScanSound(){playBell(1319,0.35,0,0.26);playBell(1760,0.6,0.09,0.26);}function playCheckinSound(){playBell(880,1.4,0,0.15);playBell(1109,1.4,0.12,0.14);playBell(1319,1.8,0.24,0.16);}/* ── QR読み取り（強化版）──
+   1) Android Chrome等の標準QR検出(BarcodeDetector)を優先：高速・高精度
+   2) 非対応端末はjsQR。縮小＋中央切り出し＋間引きで軽くし、取りこぼしを減らす */
+let qrDetector=null, qrBusy=false, lastScanAt=0, jsqrToggle=0;
+try{ if('BarcodeDetector' in window){ BarcodeDetector.getSupportedFormats().then(f=>{ if(f.includes('qr_code')) qrDetector=new BarcodeDetector({formats:['qr_code']}); }).catch(()=>{}); } }catch(e){}
+function onQRFound(text){
+  const now=Date.now();
+  if(text!==lastScanned||(now-lastScannedTime)>3000){
+    lastScanned=text;lastScannedTime=now;
+    handleQR(text);
   }
+}
+async function scanFrame(){
   requestAnimationFrame(scanFrame);
+  const video=document.getElementById('video');
+  if(qrBusy||video.readyState!==video.HAVE_ENOUGH_DATA) return;
+  const now=performance.now();
+  if(now-lastScanAt<(qrDetector?60:110)) return;
+  lastScanAt=now; qrBusy=true;
+  try{
+    if(qrDetector){
+      const codes=await qrDetector.detect(video);
+      if(codes&&codes.length&&codes[0].rawValue){ onQRFound(codes[0].rawValue); }
+    }else{
+      const vw=video.videoWidth, vh=video.videoHeight;
+      // 1回ごとに「中央を拡大」と「全体を縮小」を交互に試す
+      const center=(jsqrToggle++%2===0);
+      const side=Math.min(vw,vh);
+      const sw=center?Math.round(side*0.8):vw, sh=center?Math.round(side*0.8):vh;
+      const sx=Math.round((vw-sw)/2), sy=Math.round((vh-sh)/2);
+      const scale=Math.min(1, 640/Math.max(sw,sh));
+      const cw=Math.round(sw*scale), ch=Math.round(sh*scale);
+      const canvas=document.getElementById('canvas');
+      canvas.width=cw; canvas.height=ch;
+      const ctx=canvas.getContext('2d',{willReadFrequently:true});
+      ctx.drawImage(video,sx,sy,sw,sh,0,0,cw,ch);
+      const img=ctx.getImageData(0,0,cw,ch);
+      const code=jsQR(img.data,cw,ch,{inversionAttempts:'attemptBoth'});
+      if(code&&code.data) onQRFound(code.data);
+    }
+  }catch(e){ /* 1フレームの失敗は無視して次へ */ }
+  qrBusy=false;
 }
 
 function handleQR(data){
