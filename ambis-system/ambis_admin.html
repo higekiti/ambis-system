@@ -3643,18 +3643,19 @@ window.initApp = async function(){
     loadFromFirestore('trial_visitors'),
   ]);
 
+  // 取得に成功したデータは0件でも反映する（全削除が他の端末で復活しないように）。会員(members)だけは安全のため空なら上書きしない。
   if(fbMembers && fbMembers.length)     members          = fbMembers;
-  if(fbAttendance && fbAttendance.length) attendance     = fbAttendance;
-  if(fbBeltHistory && fbBeltHistory.length) beltHistory  = fbBeltHistory;
-  if(fbPayments && fbPayments.length)   payments         = fbPayments;
-  if(fbTournaments && fbTournaments.length) tournaments  = fbTournaments;
-  if(fbCoaching && fbCoaching.length)   coachingNotes    = fbCoaching;
-  if(fbNews && fbNews.length)           news             = fbNews;
-  if(fbSchedule && fbSchedule.length)   classSchedule    = fbSchedule;
-  if(fbScheduleEx && fbScheduleEx.length) scheduleExceptions = fbScheduleEx;
-  if(fbWithdrawal && fbWithdrawal.length) withdrawalReasons = fbWithdrawal;
-  if(fbRental && fbRental.length)       rentalBookings   = fbRental;
-  if(fbTrial && fbTrial.length)         trialVisitors    = fbTrial;
+  if(Array.isArray(fbAttendance)) attendance     = fbAttendance;
+  if(Array.isArray(fbBeltHistory)) beltHistory  = fbBeltHistory;
+  if(Array.isArray(fbPayments))   payments         = fbPayments;
+  if(Array.isArray(fbTournaments)) tournaments  = fbTournaments;
+  if(Array.isArray(fbCoaching))   coachingNotes    = fbCoaching;
+  if(Array.isArray(fbNews))           news             = fbNews;
+  if(Array.isArray(fbSchedule))   classSchedule    = fbSchedule;
+  if(Array.isArray(fbScheduleEx)) scheduleExceptions = fbScheduleEx;
+  if(Array.isArray(fbWithdrawal)) withdrawalReasons = fbWithdrawal;
+  if(Array.isArray(fbRental))       rentalBookings   = fbRental;
+  if(Array.isArray(fbTrial))         trialVisitors    = fbTrial;
 
   // サンプルデータ投入判定（安全版）：
   // 以前はページ読み込み時に無条件でmembersが空ならサンプルデータを投入しsaveAll()を呼んでいたが、

@@ -101,6 +101,7 @@ async function loadAndInit(user){
 
   // 会員一覧・他会員の表示は「非PIIのroster」から取得（電話・メール・備考などは含まれない）。
   // 自分のレコードだけは members から1件だけ取得（全件ダウンロードしない）。
+  // 取得に成功したデータは0件でも反映する（管理アプリで全削除した内容が残らないように）。名簿(roster)だけは空なら上書きしない。
   const [fbRoster, fbAttendance, fbTournaments, fbBeltHistory,
          fbNews, fbSchedule, fbScheduleEx, fbMatchRecords, myDoc] = await Promise.all([
     loadFromFirestore('roster'),
@@ -115,13 +116,13 @@ async function loadAndInit(user){
   ]);
 
   if(fbRoster && fbRoster.length)            { members = fbRoster;      localStorage.setItem('ambis_members',             JSON.stringify(members)); }
-  if(fbAttendance && fbAttendance.length)    { attendance = fbAttendance; localStorage.setItem('ambis_attendance',        JSON.stringify(attendance)); }
-  if(fbTournaments && fbTournaments.length)  { localStorage.setItem('ambis_tournaments',        JSON.stringify(fbTournaments)); }
-  if(fbBeltHistory && fbBeltHistory.length)  { localStorage.setItem('ambis_belt_history',       JSON.stringify(fbBeltHistory)); }
-  if(fbNews && fbNews.length)                { localStorage.setItem('ambis_news',               JSON.stringify(fbNews)); }
-  if(fbSchedule && fbSchedule.length)        { localStorage.setItem('ambis_schedule',           JSON.stringify(fbSchedule)); }
-  if(fbScheduleEx && fbScheduleEx.length)    { localStorage.setItem('ambis_schedule_exceptions',JSON.stringify(fbScheduleEx)); }
-  if(fbMatchRecords && fbMatchRecords.length){ localStorage.setItem('ambis_match_records',      JSON.stringify(fbMatchRecords)); }
+  if(Array.isArray(fbAttendance))    { attendance = fbAttendance; localStorage.setItem('ambis_attendance',        JSON.stringify(attendance)); }
+  if(Array.isArray(fbTournaments))  { localStorage.setItem('ambis_tournaments',        JSON.stringify(fbTournaments)); }
+  if(Array.isArray(fbBeltHistory))  { localStorage.setItem('ambis_belt_history',       JSON.stringify(fbBeltHistory)); }
+  if(Array.isArray(fbNews))                { localStorage.setItem('ambis_news',               JSON.stringify(fbNews)); }
+  if(Array.isArray(fbSchedule))        { localStorage.setItem('ambis_schedule',           JSON.stringify(fbSchedule)); }
+  if(Array.isArray(fbScheduleEx))    { localStorage.setItem('ambis_schedule_exceptions',JSON.stringify(fbScheduleEx)); }
+  if(Array.isArray(fbMatchRecords)){ localStorage.setItem('ambis_match_records',      JSON.stringify(fbMatchRecords)); }
 
   // 自分の完全なレコード（PII含む）を members 配列の自分の要素に反映（自分の会員証で使用）
   if(myDoc){
