@@ -1,0 +1,25 @@
+{
+  "id": "./ambis_timer.html",
+  "name": "AMBIs タイマー",
+  "short_name": "AMBIsタイマー",
+  "description": "AMBIs Jiu-Jitsu Academy 道場タイマー",
+  "start_url": "./ambis_timer.html",
+  "display": "fullscreen",
+  "background_color": "#0b1d36",
+  "theme_color": "#0b1d36",
+  "orientation": "landscape",
+  "icons": [
+    {
+      "src": "icon-timer-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-timer-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

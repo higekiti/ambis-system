@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>AMBIs タイマー</title>
+<link rel="manifest" href="manifest-timer.json" id="mf">
+<script>if(new URLSearchParams(location.search).has('remote')){document.getElementById('mf').href='manifest-timer-remote.json';}</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+<script src="https://accounts.google.com/gsi/client" async></script>
+<meta name="theme-color" content="#0b1d36">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="AMBIsタイマー">
+<link rel="icon" href="icon-timer-192.png">
+<link rel="apple-touch-icon" href="icon-timer-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#122E53; --navy-deep:#0b1d36; --navy-ink:#07142a;
+  --gold:#C8A769; --gold-light:#E6D3A8; --cream:#F4F1E9;
+  --muted:rgba(244,241,233,.55); --line:rgba(200,167,105,.28);
+  --rest:#8fb0d6;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{background:radial-gradient(120% 90% at 50% 35%,#16365f 0%,var(--navy-deep) 60%,var(--navy-ink) 100%);color:var(--cream);font-family:'Noto Sans JP',sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none;}
+.app{height:100vh;height:100dvh;display:flex;flex-direction:column;}
+
+/* HEADER */
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;border-bottom:1px solid var(--line);}
+.hdr-logo{display:flex;align-items:center;gap:12px;}
+.hdr-logo svg{height:46px;width:auto;}
+.modes{display:flex;gap:4px;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:30px;padding:4px;}
+.mode{background:none;border:none;color:var(--muted);font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:3px;padding:8px 22px;border-radius:24px;cursor:pointer;}
+.mode.active{background:var(--gold);color:var(--navy-deep);}
+.clock{text-align:right;}
+.clock .d{font-size:12px;color:var(--muted);letter-spacing:1px;}
+.clock .t{font-family:'Bebas Neue',sans-serif;font-size:34px;letter-spacing:2px;line-height:1;}
+
+/* STAGE */
+.stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;min-height:0;}
+.phase{display:flex;align-items:center;gap:18px;font-family:'Bebas Neue',sans-serif;font-size:clamp(20px,3.2vh,40px);letter-spacing:.45em;color:var(--gold);text-indent:.45em;}
+.phase::before,.phase::after{content:'';width:clamp(40px,7vw,120px);height:1px;background:var(--line);}
+.time{font-family:'Bebas Neue',sans-serif;font-size:clamp(120px,min(34vw,52vh),640px);line-height:.92;letter-spacing:.02em;color:var(--cream);font-variant-numeric:tabular-nums;margin:1vh 0;transition:color .3s;}
+.round{font-family:'Bebas Neue',sans-serif;font-size:clamp(20px,3.6vh,44px);letter-spacing:.3em;color:var(--muted);}
+.round b{color:var(--cream);font-weight:400;font-size:1.35em;margin:0 .15em;}
+.bar{width:min(78vw,1300px);height:5px;background:rgba(255,255,255,.08);border-radius:3px;margin-top:3vh;overflow:hidden;}
+.bar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#a9874f,var(--gold),var(--gold-light));transition:width .25s linear;}
+.next-up{margin-top:2vh;font-size:clamp(12px,1.8vh,20px);color:var(--muted);letter-spacing:2px;min-height:1.5em;}
+
+/* 状態ごとの色 */
+body.st-rest .time{color:var(--rest);}
+body.st-rest .phase{color:var(--rest);}
+body.st-rest .bar i{background:linear-gradient(90deg,#4b6d96,var(--rest));}
+body.st-warn .time{color:var(--gold);}
+body.st-warn .stage{animation:pulse 1s ease-in-out infinite;}
+@keyframes pulse{0%,100%{background:transparent;}50%{background:rgba(200,167,105,.06);}}
+body.st-done .time{color:var(--gold-light);}
+body.st-paused .time{opacity:.55;}
+
+/* CONTROLS */
+.ctl{border-top:1px solid var(--line);background:rgba(7,20,42,.65);padding:14px 24px 16px;display:flex;flex-direction:column;gap:12px;}
+.ctl-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;}
+.lbl{font-size:11px;color:var(--muted);letter-spacing:1.5px;}
+.preset{background:rgba(255,255,255,.04);border:1px solid var(--line);color:var(--cream);border-radius:10px;padding:9px 16px;font-size:15px;cursor:pointer;min-width:64px;}
+.preset.active{border-color:var(--gold);color:var(--gold);background:rgba(200,167,105,.1);}
+.btn{border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--cream);border-radius:12px;padding:10px 18px;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:6px;}
+.btn-main{background:linear-gradient(180deg,#d6b77a,#b7955a);color:var(--navy-deep);border:none;font-weight:700;font-size:17px;padding:14px 44px;letter-spacing:2px;border-radius:14px;min-width:190px;justify-content:center;}
+.btn-main.running{background:rgba(255,255,255,.08);color:var(--cream);border:1px solid var(--gold);}
+.num{display:flex;align-items:center;gap:4px;}
+.num input{width:56px;background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--cream);border-radius:8px;padding:7px 6px;font-size:15px;text-align:center;}
+.num span{font-size:12px;color:var(--muted);}
+.sep{width:1px;height:28px;background:var(--line);}
+select{background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--cream);border-radius:8px;padding:8px 10px;font-size:13px;}
+select option{color:#122E53;}
+.toggle{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--cream);cursor:pointer;}
+.toggle input{accent-color:var(--gold);width:16px;height:16px;}
+.hint{text-align:center;font-size:11px;color:rgba(244,241,233,.35);letter-spacing:1px;}
+
+/* MONITOR（全画面表示） */
+body.monitor .ctl{display:none;}
+body.monitor .modes{visibility:hidden;}
+.exit-mon{display:none;position:fixed;right:16px;bottom:14px;background:rgba(255,255,255,.08);border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;opacity:.25;}
+.exit-mon:hover{opacity:1;}
+body.monitor .exit-mon{display:block;}
+
+/* 待機画面（サイネージ） */
+.idle{position:fixed;inset:0;display:none;background:radial-gradient(120% 90% at 30% 40%,#16365f 0%,var(--navy-deep) 60%,var(--navy-ink) 100%);cursor:pointer;z-index:50;padding:5vh 5vw;}
+body.idle-on .idle{display:grid;grid-template-columns:1fr 1.15fr;gap:5vw;align-items:center;}
+.idle-left{display:flex;flex-direction:column;align-items:center;gap:2.4vh;}
+.idle-logo svg{height:min(36vh,360px);width:auto;filter:drop-shadow(0 6px 18px rgba(0,0,0,.35));}
+.idle-tag{font-family:'Bebas Neue',sans-serif;font-size:clamp(18px,3vh,34px);letter-spacing:.5em;text-indent:.5em;color:var(--cream);}
+.idle-rule{width:60px;height:1px;background:var(--gold);}
+.idle-clock{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,9vh,110px);letter-spacing:4px;color:var(--cream);line-height:1;}
+.idle-date{font-size:clamp(13px,2vh,22px);color:var(--muted);letter-spacing:2px;}
+.idle-right{border-left:1px solid var(--line);padding-left:5vw;}
+.sch-head{display:flex;align-items:baseline;gap:16px;margin-bottom:2.6vh;}
+.sch-head .k{font-family:'Bebas Neue',sans-serif;font-size:clamp(20px,3.6vh,42px);letter-spacing:.35em;color:var(--gold);}
+.sch-head .d{font-family:'Noto Serif JP',serif;font-size:clamp(16px,2.6vh,30px);color:var(--cream);}
+.sch-list{display:flex;flex-direction:column;gap:1.2vh;}
+.sch-row{display:grid;grid-template-columns:auto 1fr auto;gap:2vw;align-items:center;padding:1.6vh 1.6vw;border:1px solid rgba(244,241,233,.08);border-radius:14px;background:rgba(255,255,255,.025);}
+.sch-row .tm{font-family:'Bebas Neue',sans-serif;font-size:clamp(22px,4.2vh,48px);letter-spacing:2px;color:var(--cream);}
+.sch-row .nm{font-family:'Noto Serif JP',serif;font-size:clamp(18px,3.4vh,40px);color:var(--cream);}
+.sch-row .bd{font-family:'Bebas Neue',sans-serif;font-size:clamp(12px,1.9vh,22px);letter-spacing:.2em;padding:.4vh 1vw;border-radius:30px;color:var(--muted);}
+.sch-row.past{opacity:.35;}
+.sch-row.now{border-color:var(--gold);background:rgba(200,167,105,.12);}
+.sch-row.now .bd{background:var(--gold);color:var(--navy-deep);}
+.sch-row.next{border-color:rgba(200,167,105,.45);}
+.sch-row.next .bd{border:1px solid var(--gold);color:var(--gold);}
+.sch-empty{font-family:'Noto Serif JP',serif;font-size:clamp(16px,2.6vh,28px);color:var(--muted);}
+.sch-week{margin-top:3vh;display:grid;grid-template-columns:repeat(7,1fr);gap:.6vw;}
+.wk{text-align:center;padding:1vh 0;border-radius:10px;border:1px solid rgba(244,241,233,.07);}
+.wk .w{font-size:clamp(11px,1.7vh,18px);color:var(--muted);}
+.wk .c{font-family:'Bebas Neue',sans-serif;font-size:clamp(18px,3.2vh,36px);line-height:1.1;color:var(--cream);letter-spacing:1px;}
+.wk .u{font-size:clamp(9px,1.3vh,14px);color:var(--muted);letter-spacing:1px;}
+.wk.today{border-color:var(--gold);}
+.wk.off .c{color:rgba(244,241,233,.25);}
+.idle-tap{position:fixed;bottom:2.4vh;left:0;right:0;text-align:center;font-size:12px;color:rgba(244,241,233,.3);letter-spacing:2px;}
+@media (max-width:820px){body.idle-on .idle{grid-template-columns:1fr;gap:3vh;overflow:auto;}.idle-right{border-left:none;padding-left:0;}}
+
+/* 音を有効にする案内（ブラウザの仕様で、最初に1回タップが必要） */
+.unlock{position:fixed;inset:0;background:rgba(7,20,42,.88);display:flex;align-items:center;justify-content:center;z-index:100;cursor:pointer;}
+.unlock-box{text-align:center;border:1px solid var(--gold);border-radius:18px;padding:34px 46px;background:var(--navy-deep);}
+.unlock-box .t{font-family:'Noto Serif JP',serif;font-size:22px;margin:14px 0 6px;}
+.unlock-box .s{font-size:13px;color:var(--muted);}
+
+
+/* ── スマホ連携 ── */
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:rgba(244,241,233,.25);margin-left:4px;}
+.dot.on{background:#5fd18a;box-shadow:0 0 8px #5fd18a;}
+.modal{position:fixed;inset:0;background:rgba(7,20,42,.82);display:none;align-items:center;justify-content:center;z-index:120;padding:20px;}
+.modal.open{display:flex;}
+.modal-box{background:var(--navy-deep);border:1px solid var(--gold);border-radius:18px;padding:26px 26px 22px;width:100%;max-width:420px;text-align:center;}
+.modal-box h3{font-family:'Noto Serif JP',serif;font-weight:500;font-size:20px;margin-bottom:8px;}
+.modal-box p{font-size:13px;color:var(--muted);line-height:1.8;margin-bottom:14px;}
+.qr-wrap{display:inline-block;background:#fff;padding:12px;border-radius:12px;margin:6px 0 10px;}
+.url{font-size:11px;color:var(--muted);word-break:break-all;margin-bottom:14px;}
+.gis{display:flex;justify-content:center;min-height:44px;margin:8px 0 14px;}
+.link-btn{background:none;border:none;color:var(--muted);font-size:12px;text-decoration:underline;cursor:pointer;margin-top:6px;}
+
+/* ── リモコン画面（?remote） ── */
+.remote{display:none;}
+body.remote-mode{overflow:auto;}
+body.remote-mode .app,body.remote-mode .unlock,body.remote-mode .idle,body.remote-mode .exit-mon{display:none!important;}
+body.remote-mode .remote{display:flex;flex-direction:column;min-height:100vh;min-height:100dvh;padding:max(14px,env(safe-area-inset-top)) 16px max(18px,env(safe-area-inset-bottom));gap:14px;max-width:520px;margin:0 auto;}
+.r-top{display:flex;align-items:center;justify-content:space-between;}
+.r-top svg{height:38px;width:auto;}
+.r-title{font-family:'Bebas Neue',sans-serif;letter-spacing:.35em;color:var(--gold);font-size:18px;}
+.r-conn{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px;}
+.r-card{border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.03);padding:18px 14px 16px;text-align:center;}
+.r-phase{font-family:'Bebas Neue',sans-serif;letter-spacing:.4em;text-indent:.4em;color:var(--gold);font-size:18px;}
+.r-time{font-family:'Bebas Neue',sans-serif;font-size:min(30vw,150px);line-height:1;color:var(--cream);font-variant-numeric:tabular-nums;margin:4px 0;}
+.r-round{font-family:'Bebas Neue',sans-serif;letter-spacing:.25em;color:var(--muted);font-size:16px;}
+.r-card.rest .r-time,.r-card.rest .r-phase{color:var(--rest);}
+.r-card.warn .r-time{color:var(--gold);}
+.r-card.paused .r-time{opacity:.55;}
+.r-main{width:100%;padding:20px;border-radius:16px;border:none;font-size:22px;font-weight:700;letter-spacing:3px;background:linear-gradient(180deg,#d6b77a,#b7955a);color:var(--navy-deep);cursor:pointer;}
+.r-main.running{background:rgba(255,255,255,.08);color:var(--cream);border:1.5px solid var(--gold);}
+.r-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.r-btn{padding:15px 6px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--cream);font-size:16px;cursor:pointer;}
+.r-btn:active,.r-main:active{transform:scale(.97);}
+.r-sec{font-size:11px;color:var(--muted);letter-spacing:2px;margin:4px 2px -4px;}
+.r-modes{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:14px;padding:5px;}
+.r-mode{padding:10px 0;border:none;border-radius:10px;background:none;color:var(--muted);font-family:'Bebas Neue',sans-serif;letter-spacing:2px;font-size:16px;cursor:pointer;}
+.r-mode.active{background:var(--gold);color:var(--navy-deep);}
+.r-presets{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.r-preset{padding:13px 0;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--cream);font-size:16px;cursor:pointer;}
+.r-preset.active{border-color:var(--gold);color:var(--gold);background:rgba(200,167,105,.1);}
+.r-login{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;}
+.r-login h2{font-family:'Noto Serif JP',serif;font-weight:500;font-size:20px;}
+.r-login p{font-size:13px;color:var(--muted);line-height:1.8;}
+.r-foot{margin-top:auto;text-align:center;font-size:11px;color:rgba(244,241,233,.4);}
+.r-disabled{opacity:.4;pointer-events:none;}
+
+/* ── スマホでのタイマー画面（縦長・小さい画面） ── */
+.only-sp{display:none;}
+@media (max-width:820px){
+  .time{font-size:clamp(80px,min(34vw,40vh),640px);}
+  .hint{display:none;}
+  .only-sp{display:flex;}
+  .ctl-row.more{display:none;}
+  body.show-more .ctl-row.more{display:flex;}
+  .ctl-row{gap:8px;}
+  .preset{min-width:56px;padding:9px 10px;}
+  .btn{padding:9px 12px;font-size:13px;}
+  .sep{display:none;}
+}
+@media (max-width:560px){
+  .hdr{flex-wrap:wrap;gap:8px;justify-content:space-between;}
+  .modes{order:3;width:100%;justify-content:space-between;}
+  .mode{flex:1;padding:7px 0;}
+  .clock .d{display:none;}
+  .phase{letter-spacing:.3em;}
+  .bar{width:88vw;}
+  #minus,#plus{display:none;}
+  .btn-main{min-width:0;flex:1;}
+}
+
+@media (max-width:820px){
+  .hdr{padding:10px 14px;} .hdr-logo svg{height:34px;} .mode{padding:7px 12px;font-size:15px;letter-spacing:2px;}
+  .clock .t{font-size:24px;} .ctl{padding:10px 10px 12px;} .btn-main{min-width:140px;padding:12px 26px;}
+}
+</style>
+</head>
+<body class="st-ready">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="ambis-logo" viewBox="0 0 720 720"><g fill="currentColor"><g> <path d="M135.28,599.17v-23.63c0-4.66-.53-5.45-4.21-5.45v-1.35h13.99v1.35c-3.67,0-4.25.79-4.25,5.45v21.35c0,6.95-4.03,10.21-9.03,10.21-3.81,0-7.17-2.33-7.17-5.73,0-1.07.75-1.96,1.81-1.96s1.82.89,1.82,1.96c0,1.63.97,3.64,3.41,3.64,2.3,0,3.63-1.72,3.63-5.83Z"/> <path d="M150.69,596.7v-1.35c3.67,0,4.21-.79,4.21-5.45v-14.36c0-4.66-.53-5.45-4.21-5.45v-1.35h13.99v1.35c-3.67,0-4.25.79-4.25,5.45v14.36c0,4.66.58,5.45,4.25,5.45v1.35h-13.99Z"/> <path d="M189.3,570.08v-1.35h10.85v1.35c-3.67,0-4.21.79-4.21,5.45v10.77c0,7.32-4.83,11.19-10.67,11.19s-10.63-3.87-10.63-11.19v-10.77c0-4.66-.58-5.45-4.25-5.45v-1.35h14.03v1.35c-3.72,0-4.25.79-4.25,5.45v10.26c0,6.01,3.05,8.81,6.86,8.81s6.51-2.8,6.51-8.81v-10.26c0-4.66-.53-5.45-4.25-5.45Z"/> <path d="M207.06,588.73v-3.17h11.24v3.17h-11.24Z"/> <path d="M229.78,599.17v-23.63c0-4.66-.53-5.45-4.21-5.45v-1.35h13.99v1.35c-3.67,0-4.25.79-4.25,5.45v21.35c0,6.95-4.03,10.21-9.03,10.21-3.81,0-7.17-2.33-7.17-5.73,0-1.07.75-1.96,1.81-1.96s1.82.89,1.82,1.96c0,1.63.97,3.64,3.41,3.64,2.3,0,3.63-1.72,3.63-5.83Z"/> <path d="M245.18,596.7v-1.35c3.67,0,4.21-.79,4.21-5.45v-14.36c0-4.66-.53-5.45-4.21-5.45v-1.35h13.99v1.35c-3.67,0-4.25.79-4.25,5.45v14.36c0,4.66.58,5.45,4.25,5.45v1.35h-13.99Z"/> <path d="M291.54,575.3h-1.28l-.22-.93c-.58-2.47-1.06-3.54-5.14-3.54h-4.43v19.07c0,4.66.58,5.45,4.25,5.45v1.35h-13.99v-1.35c3.67,0,4.21-.79,4.21-5.45v-19.07h-4.43c-4.03,0-4.52,1.07-5.09,3.54l-.22.93h-1.33l.4-6.57h26.92l.35,6.57Z"/> <path d="M298.5,597.49h-1.28v-10.26h1.33c.84,4.99,4.52,8.16,8.15,8.16,2.57,0,4.43-1.54,4.43-4.61,0-1.68-1.2-3.59-3.28-4.71l-4.21-2.33c-3.76-2-6.02-4.2-6.02-8.81,0-3.82,3.41-6.99,7.7-6.99,2.61,0,4.07.89,5.4,1.91.53-.47,1.06-1.17,1.28-2.14h1.24v10.26h-1.28c-.31-3.73-1.73-7.97-6.38-7.97-1.81,0-3.59,1.4-3.59,3.73,0,1.4,1.19,3.5,3.54,4.76l4.25,2.28c3.14,1.72,5.71,4.57,5.71,8.25,0,5.08-4.25,8.48-8.81,8.48-3.36,0-5.49-1.86-6.91-2.19-.53.47-1.06,1.17-1.28,2.19Z"/> <path d="M340.51,570.08v-1.35h10.85v1.35c-3.67,0-4.21.79-4.21,5.45v10.77c0,7.32-4.83,11.19-10.67,11.19s-10.63-3.87-10.63-11.19v-10.77c0-4.66-.58-5.45-4.25-5.45v-1.35h14.03v1.35c-3.72,0-4.25.79-4.25,5.45v10.26c0,6.01,3.05,8.81,6.86,8.81s6.51-2.8,6.51-8.81v-10.26c0-4.66-.53-5.45-4.25-5.45Z"/> <path d="M374.03,591.8c-1.02,2.52-.35,3.54,3.32,3.54v1.35h-10.71v-1.35c3.06,0,4.07-.79,5.45-4.1l9.61-23.31h.93l9.65,23.31c1.24,2.98,1.86,4.1,5.4,4.1v1.35h-14.43v-1.35c3.9,0,4.34-1.07,3.32-3.54l-1.86-4.43h-8.85l-1.81,4.43ZM380.32,576.51l-3.59,8.76h7.13l-3.54-8.76Z"/> <path d="M423.67,596.19c-.27-1.12-.58-2.24-1.15-2.66-2.26,2.47-5.14,3.96-8.23,3.96-7.48,0-13.59-6.67-13.59-14.78s6.11-14.78,13.59-14.78c3.1,0,5.98,1.44,8.23,3.96.58-.47.89-1.49,1.15-2.66h1.24v10.26h-1.28c-1.19-6.06-4.78-9.32-9.16-9.32-6.06,0-7.79,6.76-7.79,12.54s1.73,12.54,7.79,12.54c4.38,0,7.97-3.36,9.16-9.32h1.28v10.26h-1.24Z"/> <path d="M436.56,591.8c-1.02,2.52-.35,3.54,3.32,3.54v1.35h-10.71v-1.35c3.05,0,4.07-.79,5.44-4.1l9.61-23.31h.93l9.65,23.31c1.24,2.98,1.86,4.1,5.4,4.1v1.35h-14.43v-1.35c3.9,0,4.34-1.07,3.32-3.54l-1.86-4.43h-8.85l-1.82,4.43ZM442.84,576.51l-3.59,8.76h7.13l-3.54-8.76Z"/> <path d="M462.86,595.35c3.67,0,4.21-.79,4.21-5.45v-14.36c0-4.66-.53-5.45-4.21-5.45v-1.35h14.61c10.27,0,14.74,6.29,14.74,13.98s-4.47,13.98-14.74,13.98h-14.61v-1.35ZM472.6,589.33c0,4.52.58,5.27,4.25,5.27h.75c7.17,0,8.63-6.62,8.63-11.89s-1.46-11.89-8.63-11.89h-5v18.51Z"/> <path d="M498.37,595.35c3.67,0,4.21-.79,4.21-5.45v-14.36c0-4.66-.53-5.45-4.21-5.45v-1.35h22.8l.35,6.57h-1.28l-.22-.93c-.62-2.47-1.06-3.54-5.14-3.54h-6.77v10.02h2.43c4.43,0,5.14-.61,5.14-4.48h1.28v11.05h-1.28c0-3.92-.71-4.48-5.14-4.48h-2.43v6.2c0,4.66.58,5.45,4.25,5.45h3.98c4.07,0,4.56-1.07,5.14-3.54l.22-.93h1.28l-.35,6.57h-24.26v-1.35Z"/> <path d="M535.61,589.89c0,4.66.58,5.45,4.25,5.45v1.35h-10.45v-1.35c3.67,0,4.21-.79,4.21-5.45v-14.36c0-4.66-.53-5.45-4.21-5.45v-1.35h9.25l8.06,20.23,8.06-20.23h8.94v1.35c-3.72,0-4.25.79-4.25,5.45v14.36c0,4.66.53,5.45,4.25,5.45v1.35h-13.72v-1.35c3.67,0,4.25-.79,4.25-5.45v-14.64l-8.81,22.24h-.97l-8.85-22.24v14.64Z"/> <path d="M591.09,574.18l-6.33,10.07v5.64c0,4.66.53,5.45,4.21,5.45v1.35h-13.81v-1.35c3.67,0,4.25-.79,4.25-5.45v-5.5l-6.42-10.21c-2.08-3.31-3.28-4.1-6.42-4.1v-1.35h15.01v1.35c-3.1,0-3.94,1.07-2.35,3.54l4.96,7.88,4.96-7.88c1.59-2.52,1.11-3.54-2.39-3.54v-1.35h10.71v1.35c-3.67,0-4.52,1.07-6.38,4.1Z"/> </g> <g> <path d="M147.39,524.68c-3.42,8.46-1.19,11.91,11.16,11.91v4.54h-36.02v-4.54c10.27,0,13.69-2.66,18.31-13.79l32.29-78.34h3.12l32.44,78.34c4.17,10.03,6.25,13.79,18.16,13.79v4.54h-48.52v-4.54c13.1,0,14.58-3.6,11.16-11.91l-6.25-14.88h-29.76l-6.1,14.88ZM168.53,473.29l-12.05,29.45h23.96l-11.91-29.45Z"/> <path d="M259.61,518.26c0,15.67,1.93,18.33,14.29,18.33v4.54h-35.12v-4.54c12.35,0,14.14-2.66,14.14-18.33v-48.25c0-15.67-1.79-18.33-14.14-18.33v-4.54h31.1l27.09,67.99,27.09-67.99h30.06v4.54c-12.5,0-14.29,2.66-14.29,18.33v48.25c0,15.67,1.79,18.33,14.29,18.33v4.54h-46.14v-4.54c12.35,0,14.29-2.66,14.29-18.33v-49.19l-29.62,74.73h-3.27l-29.76-74.73v49.19Z"/> <path d="M459.04,514.81c0,14.57-11.61,26.32-30.06,26.32h-54.77v-4.54c12.35,0,14.14-2.66,14.14-18.33v-48.25c0-15.67-1.79-18.33-14.14-18.33v-4.54h50.6c16.37,0,26.79,10.5,26.79,23.5,0,8.15-4.02,15.2-11.01,19.43,11.61,3.76,18.45,13.47,18.45,24.75ZM406.95,487.86h8.33c11.16,0,16.37-7.52,16.37-16.76s-5.21-16.92-16.37-16.92h-8.33v33.68ZM439.1,514.5c0-10.65-6.1-19.58-18.9-19.58h-13.24v21.78c0,14.41,1.78,17.23,13.24,17.39,12.8,0,18.9-8.77,18.9-19.58Z"/> <path d="M477.95,541.13v-4.54c12.35,0,14.14-2.66,14.14-18.33v-48.25c0-15.67-1.79-18.33-14.14-18.33v-4.54h47.03v4.54c-12.35,0-14.29,2.66-14.29,18.33v48.25c0,15.67,1.93,18.33,14.29,18.33v4.54h-47.03Z"/> <path d="M573.05,543.8c-8.04,0-13.99-4.86-16.07-4.86-1.64,0-2.23.94-2.23,4.86h-4.32v-22.87h4.32c0,7.05,8.33,16.29,18.01,16.29,4.91,0,7.89-2.51,7.89-6.11s-3.42-6.11-9.52-9.24l-8.33-3.92c-7.74-3.76-11.16-10.18-11.16-15.98,0-11.75,9.97-15.67,17.56-15.67s11.46,2.82,14.59,2.82c1.04,0,1.49-.78,1.49-2.82h4.32v18.17h-4.32c0-6.58-7.44-11.91-13.69-11.91-4.02,0-7.29,2.04-7.29,5.33,0,3.6,2.98,5.17,10.27,8.62l7.14,3.6c7.59,3.6,11.61,9.87,11.61,15.98,0,12.53-10.57,17.7-20.24,17.7Z"/> </g> <g> <path d="M441.63,334.83c-21.47,3.83-43.87,4.78-64.6,5.6-16.17.53-54.43-.34-89.7-6.36l-11.65,30.61c60.85,10.88,135,5.48,171.49,3.02,2.19-.29,4.4-.58,6.62-.89l-.18-.46-11.99-31.51Z"/> <path d="M206.65,338.64c4.77,3.6,10.13,6.8,15.89,9.68l12.01-30.32c-11.33-6.29-18.74-14.23-19.37-24.29-.08-1.26-1.04-2.29-2.3-2.29l-30.32-.07c-1.36,0-2.43,1.11-2.34,2.46.22,2.93.51,8.39.49,15.93-.03,10.49-3.08,19.77-4.88,24.36-.59,1.49.5,3.1,2.1,3.15l27.45.95c.46.02.89.17,1.26.45Z"/> <path d="M364.33,134.85l-8.69,22.84c5.72-.13,11.53-.16,17.36-.08l-8.67-22.77Z"/> <path d="M217.75,243.03c1.7,1.36,3.49,2.63,5.41,3.78,10.7,6.84,22.17,11.22,33.99,14.12,2.05.5,4.12.96,6.19,1.38.24.05.49.09.73.14,6.99-7.57,14.53-15.13,17.05-17.03l.73-.56c7.7-5.91,15.94-10.91,22.29-13.84-1.01-.07-2.92-.13-2.92-.13-.2-.01-.4-.02-.6-.03-1.08-.07-2.16-.16-3.24-.24-1.8-.13-3.6-.28-5.4-.45-1.15-.11-2.3-.23-3.45-.36-1.74-.19-3.47-.4-5.2-.63-1.15-.15-2.3-.31-3.44-.48-1.02-.15-2.03-.33-3.05-.5v.03c-.74-.12-1.47-.26-2.19-.39-1.09-.19-2.18-.38-3.27-.59-.28-.05-.56-.1-.84-.15-1.6-.32-3.19-.7-4.78-1.06-.93-.21-1.86-.4-2.78-.63-2.77-.68-5.53-1.43-8.26-2.26-2.52-.81-4.65-1.8-6.61-2.88-10.9-5.99-13.47-15.86-11.21-27.94,3.82-15.04,22.19-21.78,37.63-26,5.09-1.46,12.61-2.91,21.73-4.2l14.15-35.72c-14.49.81-29.08,2.39-44.1,5.59-18.87,4.11-40.67,12.09-54.44,28.5-20.77,23.39-18.4,63.11,5.87,82.53Z"/> <path d="M486.82,197.64c.14,1.19,1.07,2.12,2.27,2.12h25.01c1.43,0,2.53-1.23,2.31-2.65-.75-4.91-2.27-15.7-2.52-24.43-.34-11.62.6-22.72,1.09-27.49.14-1.34-.89-2.48-2.24-2.53l-35.98-1.33c-.32-.01-.64-.1-.93-.25-17.87-9.28-37.34-12.71-57.36-14.1l14.2,35.86c29.62,5.62,51.95,16.29,54.15,34.79Z"/> <path d="M272.97,388.65c-.3-.08-.64-.18-.99-.29-2.44-.79-5.66-2.43-5.96-5.62-.56-6.06.6-11.31,1.67-14.7l1.5-3.94.24-.62,11.63-30.55,12.24-32.16c-9.26,5.55-24.11,12.24-49.95,17.25l-2.23.43-.95,2.39-11.93,30.14-2.84,7.16s-8.2,15.59-12.72,20.98c-5.54,6.59-13.45,8.8-18.11,9.53-.67.11-1.27.18-1.78.23-.6.06-1.12.35-1.49.77-.37.42-.59.97-.59,1.58v4.62c0,.33.07.64.19.92.36.85,1.2,1.44,2.18,1.44h79.28c.65,0,1.24-.26,1.67-.69.43-.43.69-1.02.69-1.67v-4.91c0-1.07-.71-2-1.75-2.28Z"/> <path d="M535.89,388.88c-.52-.05-1.12-.13-1.78-.23-4.66-.73-12.57-2.94-18.11-9.53-4.53-5.39-12.72-20.97-12.73-20.98l-1.14-2.88-14.09-35.58-1.4-3.53-3-.21c-19.02-1.31-34.39-8-48.56-15.93l12.79,33.62,11.6,30.47.67,1.77.82,2.16c1.07,3.38,2.23,8.63,1.67,14.7-.13,1.37-.79,2.45-1.7,3.3-.61.57-1.32,1.04-2.06,1.42-.37.19-.74.36-1.11.51-.74.3-1.46.52-2.07.68-.26.07-.42.28-.63.42-.64.43-1.12,1.05-1.12,1.86v4.91c0,.33.07.64.19.92.36.85,1.2,1.44,2.18,1.44h79.28c.65,0,1.24-.26,1.67-.69.43-.43.69-1.02.69-1.67v-4.62c0-1.21-.88-2.22-2.07-2.34Z"/> <path d="M317.3,126.07l-13.92,35.14-24.17,61.02c7.26,1.14,14.52,1.91,21.65,2.37,4.97-9.14,17.63-17.62,29.17-20.36l17.65-46.38,12.27-32.24,4.38-11.52,4.39,11.53,12.23,32.12,18.09,47.52c9.54,3.32,16.85,10.56,21.66,19.46,11.23.15,20.89.55,30.24,1.23l-25.5-64.39-13.86-35-10.47-26.44c-1.07-4.06-1.56-7.45-1.61-10.27-.05-2.82.34-5.08,1.05-6.87,1.41-3.59,4.08-5.32,6.96-6.01,1.01-.24,1.67-1.22,1.67-2.25v-5.48c0-.65-.26-1.24-.69-1.67-.43-.43-1.02-.69-1.67-.69h-18.88c-3.05,0-6.44,0-9.97,0h-.79c-4.14,0-8.48,0-12.83,0-4.35,0-8.7,0-12.84,0h-.79c-3.53,0-6.92,0-9.97,0h-18.88c-.98,0-1.82.6-2.18,1.44-.12.28-.19.59-.19.92v5.48c0,.52.16,1.02.46,1.43.29.4.71.71,1.21.83.72.17,1.43.41,2.1.73,4.74,2.21,8.03,8.22,4.3,22.43l-10.26,25.92Z"/> <path d="M453.51,232.49c-.56-.06-1.11-.11-1.67-.17-6.75-.51-13.43-.82-20.06-1.03-2.25-.07-4.48-.1-6.72-.14-.47,0-.95-.01-1.42-.02,1.17,3.08,2.05,6.28,2.67,9.52,12.13,5.23,26.93,12.81,39.42,22.69,3.77,2.98,7.32,6.17,10.53,9.57.18.19.37.36.54.55.79.16,1.59.28,2.38.45,9.37,2.22,17.78,6.32,21.99,10.84,1.77,1.81,2.76,3.62,3.43,5.53.56,1.59.9,3.24,1.2,5.07,1,8.04-1.91,13.85-8.72,19.01-1.16.77-2.36,1.46-3.55,2.19l14.31,36.14c11.25-5.52,21.35-13.2,29.22-24.23,14.31-20.12,11.79-50.45-5.06-68.06-1.44-1.51-2.95-2.95-4.6-4.26-21.3-16.46-43.33-20.36-66.87-22.91-2.33-.25-4.67-.49-7.03-.73Z"/> <path d="M431.55,290.74c3.52,2.09,7.07,4.15,10.7,6.07,6.22,3.29,12.67,6.24,19.57,8.5,2.3.75,4.65,1.43,7.05,2.02,4.81,1.18,9.86,2,15.2,2.37l-.09-.23h0s-11.24-30.39-11.24-30.39l-.47-1.28c-.41-.45-.91-.86-1.34-1.3-1.63-1.69-3.29-3.37-5.12-4.97-2.32-2.03-4.79-4-7.38-5.89-7.74-5.67-16.52-10.71-25.42-15.04-1.93-.94-3.85-1.78-5.78-2.65.53,7.38.23,14-.84,19.92,0,0,0,0,0,0-.36,2-.79,3.95-1.34,5.79-.04.13-.06.29-.1.42-.89,2.9-2.01,5.6-3.37,8.09-.35.65-.83,1.2-1.21,1.82.83.5,1.66,1.01,2.48,1.51,2.89,1.76,5.79,3.52,8.7,5.25Z"/> <path d="M396.16,295.21c6.26-2.23,11.18-5.4,15.05-9.42,1.46-1.52,2.76-3.17,3.89-4.97,1.33-2.11,2.46-4.39,3.35-6.9,0-.03.02-.05.03-.08.68-1.94,1.21-4.02,1.64-6.2,0,0,0,0,0-.01.31-1.59.57-3.24.74-4.98.47-4.63.55-9.67.09-15.34-.06-.73-.17-1.47-.26-2.2-.31-2.49-.81-4.96-1.48-7.39-.64-2.29-1.43-4.53-2.39-6.68,0-.02-.02-.05-.03-.07-.97-2.2-2.11-4.3-3.4-6.28-2.93-4.5-6.68-8.29-11.15-10.97-2.45-1.46-5.09-2.61-7.97-3.31-2.23-.54-4.59-.84-7.08-.84-6.66,0-13.75,1.83-18.75,3.84,4.44,3.14,8.06,6.97,10.85,11.44,1.22,1.97,2.27,4.07,3.17,6.29,2.25,5.54,3.47,11.85,3.65,18.91.02.83.07,1.63.07,2.48-.02,2.18-.18,4.27-.43,6.29h0c-.32,2.57-.88,4.98-1.55,7.31h0c-.13.45-.26.89-.4,1.33,0,.01,0,.03-.01.04-.5,1.56-1.08,3.05-1.72,4.5-.27.59-.5,1.22-.79,1.79-3.98,7.9-10.13,14.01-17.51,18.45,8.77,4.11,23.23,6.23,32.39,2.96Z"/> <path d="M329.64,295.03c8.39-.11,17.29-1.7,25.24-5.15,7.8-3.39,14.65-8.61,19.21-16,.71-1.15,1.36-2.35,1.95-3.6.42-.88.84-1.75,1.2-2.69,0,0,0-.02,0-.02.09-.23.14-.48.22-.72-1.64-.9-3.64-2.2-5.83-3.69-.8-.54-1.55-1.04-2.43-1.65-7.96,1.07-15.72,3.39-22.97,6.37-.01,0-.03,0-.04.02-.37.15-.74.31-1.11.47-4.14,1.75-8.12,3.7-11.85,5.72-8.42,4.56-15.66,9.48-21.04,13.35,4.07,4.34,9.61,7.6,17.11,7.6.11,0,.22,0,.33,0Z"/> <path d="M320.56,227.18c.22.04.45.13.67.18.09.02.18.05.26.07.04,0,.09,0,.14,0,2.02.2,3.96.6,5.89,1.02,3.37.74,6.59,1.78,9.67,3.06.03.01.07.03.1.04,3.2,1.33,6.23,2.87,9.08,4.56,8.26,4.88,15.1,10.77,20.09,15.13,2.13,1.86,3.88,3.39,5.23,4.36,1.67,1.17,3.26,2.28,4.71,3.24,1,.66,1.86,1.19,2.7,1.7.27-1.5.47-3.06.6-4.67.09-1.12.21-2.21.22-3.38.08-8.36-1.53-15.42-4.53-21.39h0c-1.13-2.26-2.48-4.34-4.04-6.25-3.17-3.86-7.22-7.03-12.16-9.47-5.6-2.77-12.2-4.74-20.06-5.68-1.39-.16-2.9-.13-4.48.06-2.37.28-4.9,1.01-7.44,1.95-6.82,2.5-13.65,6.96-17.97,11.96-.38.44-1.32,1.43-1.72,2.07,4.41.36,10.2.92,13.05,1.46Z"/> <path d="M285.67,249.84l-.76.58c-1.83,1.38-7.52,7.02-13.48,13.33-1.72,1.83-3.44,3.68-5.12,5.54-2.16,2.38-4.24,4.74-6,6.85l-12.67,34.6c29.13-6.3,42.17-14.7,49.51-20.05.68-.49,1.32-.97,1.91-1.41l4.34-3.19.39-.28c.6-.44,1.39-1.01,2.07-1.52.2-.14.39-.28.59-.43.65-.48,1.22-.9,1.94-1.41,3.54-2.55,7.92-5.55,12.89-8.64,3.26-2.03,6.82-4.05,10.57-6.03,0,0,0,0,0,0,3.98-2.1,8.13-4.12,12.55-5.91,5.6-2.27,11.52-4.17,17.61-5.47.23-.05.44-.13.67-.17-.1-.09-.21-.18-.31-.27-4.39-3.83-10.26-8.95-17.25-13.34-5.88-3.69-12.59-6.76-19.85-8.21-1.4-.28-2.79-.6-4.24-.75-.13-.01-.3,0-.44-.01-.54-.04-1.1-.06-1.72-.04-4.19.13-10.39,1.75-19.15,6.76-4.11,2.35-8.72,5.38-14.03,9.46Z"/> </g></g></symbol></svg>
+<div class="app">
+  <div class="hdr">
+    <div class="hdr-logo"><svg viewBox="0 0 720 720" style="color:#C8A769;" role="img" aria-label="AMBIs"><use href="#ambis-logo"/></svg></div>
+    <div class="modes">
+      <button class="mode active" data-mode="sparring">SPARRING</button>
+      <button class="mode" data-mode="circuit">CIRCUIT</button>
+      <button class="mode" data-mode="class">CLASS</button>
+    </div>
+    <div class="clock"><div class="d" id="clk-d"></div><div class="t" id="clk-t"></div></div>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="phase" id="phase">SPARRING</div>
+    <div class="time" id="time">05:00</div>
+    <div class="round" id="round">ROUND <b>1</b> / 6</div>
+    <div class="bar"><i id="bar"></i></div>
+    <div class="next-up" id="nextup"></div>
+  </div>
+
+  <div class="ctl">
+    <div class="ctl-row">
+      <span class="lbl">PRESET</span>
+      <div id="presets" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+      <div class="sep"></div>
+      <button class="btn" id="minus" title="1分減らす">−1:00</button>
+      <button class="btn" id="reset" title="リセット (R)">↺ リセット</button>
+      <button class="btn btn-main" id="start">▶ START</button>
+      <button class="btn" id="plus" title="1分足す">+1:00</button>
+      <button class="btn only-sp" id="more-btn">⚙ 設定</button>
+    </div>
+    <div class="ctl-row more">
+      <span class="lbl" id="work-lbl">時間</span>
+      <div class="num"><input type="number" id="in-wm" min="0" max="120"><span>分</span><input type="number" id="in-ws" min="0" max="59"><span>秒</span></div>
+      <div class="sep"></div>
+      <span class="lbl">休憩</span>
+      <div class="num"><input type="number" id="in-rs" min="0" max="600"><span>秒</span></div>
+      <div class="sep"></div>
+      <span class="lbl">ラウンド</span>
+      <div class="num"><input type="number" id="in-rd" min="1" max="99"><span>回</span></div>
+      <label class="toggle"><input type="checkbox" id="in-free">FREE（無制限）</label>
+      <div class="sep"></div>
+      <span class="lbl">ブザー</span>
+      <select id="in-sound">
+        <option value="buzzer">ブザー（ビィッ！ビィー）</option>
+        <option value="clear">B クリア</option>
+        <option value="balanced">A バランス</option>
+        <option value="high">C 高め</option>
+        <option value="arena">D 太め</option>
+      </select>
+      <button class="btn" id="test-start">♪ 開始音</button>
+      <button class="btn" id="test-warn">♪ 予告音</button>
+      <button class="btn" id="test-end">♪ 終了音</button>
+      <label class="toggle"><input type="checkbox" id="in-warn" checked>残り<select id="in-warnsec" style="padding:4px 6px;margin:0 2px;"><option value="10">10</option><option value="30">30</option></select>秒で予告</label>
+      <div class="sep"></div>
+      <button class="btn" id="monitor">▣ モニター表示</button>
+      <button class="btn" id="idle-btn">☰ スケジュール画面</button>
+      <button class="btn" id="sync-btn">📱 スマホ連携<span class="dot" id="sync-dot"></span></button>
+    </div>
+    <div class="hint">SPACE：スタート／一時停止　R：リセット　1〜4：プリセット　F：モニター表示　I：スケジュール画面　ESC：戻る</div>
+  </div>
+</div>
+<button class="exit-mon" id="exit-mon">ESC 設定に戻る</button>
+
+<div class="idle" id="idle">
+  <div class="idle-left">
+    <div class="idle-logo"><svg viewBox="0 0 720 720" style="color:#C8A769;" role="img" aria-label="AMBIs"><use href="#ambis-logo"/></svg></div>
+    <div class="idle-rule"></div>
+    <div class="idle-tag">LIFE WITH JIU-JITSU</div>
+    <div class="idle-clock" id="idle-clock"></div>
+    <div class="idle-date" id="idle-date"></div>
+  </div>
+  <div class="idle-right">
+    <div class="sch-head"><span class="k" id="sch-k">TODAY</span><span class="d" id="sch-d"></span></div>
+    <div class="sch-list" id="sch-list"></div>
+    <div class="sch-week" id="sch-week"></div>
+  </div>
+  <div class="idle-tap">タップでタイマーに戻る</div>
+</div>
+
+<div class="modal" id="sync-modal">
+  <div class="modal-box">
+    <h3>スマホで操作する</h3>
+    <div id="sync-out">
+      <p>道場アカウントでログインすると、<br>スマホからこのタイマーを操作できます。</p>
+      <div class="gis" id="gis-display"></div>
+    </div>
+    <div id="sync-in" style="display:none;">
+      <p>スマホでこのQRを読み取ってください。<br>同じ道場アカウントでログインすると、リモコンになります。</p>
+      <div class="qr-wrap" id="sync-qr"></div>
+      <div class="url" id="sync-url"></div>
+      <button class="link-btn" id="sync-logout">このモニターの連携を解除（ログアウト）</button>
+    </div>
+    <div style="margin-top:12px;"><button class="btn" id="sync-close" style="margin:0 auto;">閉じる</button></div>
+  </div>
+</div>
+
+<div class="remote" id="remote">
+  <div class="r-top"><div><svg viewBox="0 0 720 720" style="color:#C8A769;" role="img" aria-label="AMBIs"><use href="#ambis-logo"/></svg></div><div class="r-title">REMOTE</div><div class="r-conn"><span class="dot" id="r-dot"></span><span id="r-conn">未接続</span></div></div>
+  <div class="r-login" id="r-login">
+    <h2>AMBIs タイマー リモコン</h2>
+    <p>道場アカウントでログインしてください。<br>モニターのタイマーを、このスマホから操作できます。</p>
+    <div class="gis" id="gis-remote"></div>
+    <p id="r-login-msg" style="color:#e8a0a0;"></p>
+  </div>
+  <div id="r-ui" style="display:none;flex-direction:column;gap:14px;">
+    <div class="r-card" id="r-card">
+      <div class="r-phase" id="r-phase">—</div>
+      <div class="r-time" id="r-time">--:--</div>
+      <div class="r-round" id="r-round"></div>
+    </div>
+    <button class="r-main" id="r-start">▶ START</button>
+    <div class="r-row"><button class="r-btn" data-a="minus">−1:00</button><button class="r-btn" data-a="reset">↺ リセット</button><button class="r-btn" data-a="plus">+1:00</button></div>
+    <div class="r-sec">MODE</div>
+    <div class="r-modes" id="r-modes"><button class="r-mode" data-m="sparring">SPARRING</button><button class="r-mode" data-m="circuit">CIRCUIT</button><button class="r-mode" data-m="class">CLASS</button></div>
+    <div class="r-sec">PRESET</div>
+    <div class="r-presets" id="r-presets"></div>
+    <button class="r-btn" id="r-idle">☰ モニターをスケジュール画面にする</button>
+    <div class="r-foot"><span id="r-user"></span>　<button class="link-btn" id="r-logout">ログアウト</button></div>
+  </div>
+</div>
+
+<div class="unlock" id="unlock">
+  <div class="unlock-box">
+    <div><svg viewBox="0 0 720 720" style="color:#C8A769;height:70px;width:auto;" role="img" aria-label="AMBIs"><use href="#ambis-logo"/></svg></div>
+    <div class="t">タップしてタイマーを開始</div>
+    <div class="s">ブザー音を鳴らすために、最初に一度タップしてください</div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+
+// ── プリセット ──
+const PRESETS={
+  sparring:[{label:'3分',work:180,rest:30,rounds:5},{label:'5分',work:300,rest:30,rounds:6},{label:'6分',work:360,rest:30,rounds:5},{label:'8分',work:480,rest:30,rounds:4}],
+  circuit:[{label:'30/15',work:30,rest:15,rounds:8},{label:'40/20',work:40,rest:20,rounds:8},{label:'60/30',work:60,rest:30,rounds:6}],
+  class:[{label:'60分',work:3600,rest:0,rounds:1},{label:'75分',work:4500,rest:0,rounds:1},{label:'90分',work:5400,rest:0,rounds:1}],
+};
+const MODE_LABEL={sparring:'SPARRING',circuit:'CIRCUIT',class:'CLASS'};
+window.AMBIS_PRESETS=PRESETS;window.AMBIS_MODE_LABEL=MODE_LABEL;
+// ?remote で開いたら「スマホのリモコン画面」。タイマー本体は動かさない
+if(new URLSearchParams(location.search).has('remote')){document.body.classList.add('remote-mode');return;}
+function notify(){try{window.dispatchEvent(new Event('ambis-timer-change'));}catch(e){}}
+
+// ── 道場のスケジュール（待機画面の「次のクラス」用） ──
+// dow: 0=日 … 6=土
+const SCHEDULE=[
+  {dow:6,s:'09:30',e:'10:30',n:'初心者クラス'},{dow:6,s:'11:00',e:'12:00',n:'オールレベル'},
+  {dow:6,s:'17:30',e:'18:30',n:'初心者クラス'},{dow:6,s:'19:00',e:'20:00',n:'オールレベル'},{dow:6,s:'20:00',e:'21:00',n:'フリーマット'},
+  {dow:0,s:'09:30',e:'10:30',n:'初心者クラス'},{dow:0,s:'11:00',e:'12:00',n:'オールレベル'},{dow:0,s:'15:00',e:'16:00',n:'初心者クラス'},
+  {dow:1,s:'10:00',e:'11:30',n:'フリーマット'},{dow:4,s:'10:00',e:'11:30',n:'フリーマット'},{dow:5,s:'10:00',e:'11:30',n:'フリーマット'},
+];
+
+// ── 状態 ──
+const S={mode:'sparring',preset:1,work:300,rest:30,rounds:6,free:false,
+  phase:'ready',   // ready | work | rest | done
+  running:false,round:1,remain:300,endAt:0,warned:false,lastTick:-1};
+
+// ── 設定の保存 ──
+function saveSettings(){try{localStorage.setItem('ambis_timer_settings',JSON.stringify({mode:S.mode,preset:S.preset,work:S.work,rest:S.rest,rounds:S.rounds,free:S.free,sound:$('in-sound').value,soundV:2,warn:$('in-warn').checked,warnSec:$('in-warnsec').value}));}catch(e){}}
+function loadSettings(){try{return JSON.parse(localStorage.getItem('ambis_timer_settings')||'null');}catch(e){return null;}}
+
+// ── 音（Web Audio） ──
+let AC=null;
+function ac(){if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();return AC;}
+const VOICES={
+  buzzer:{buzz:true,v:[880,887,1760],l:[.3,.28,.12],t:['square','sawtooth','square'],am:60,lp:5200,m:.78},
+  clear:{v:[520,1040,1560,2080],l:[.13,.2,.1,.035],t:['triangle','square','square','sine'],m:.7},
+  balanced:{v:[440,875,888,1760],l:[.17,.16,.14,.045],t:['triangle','square','square','sawtooth'],m:.66},
+  high:{v:[740,1480,2220],l:[.1,.22,.055],t:['sine','square','sine'],m:.64},
+  arena:{v:[330,660,990,1320],l:[.2,.18,.1,.045],t:['triangle','square','square','sawtooth'],m:.7},
+};
+function out(){const c=ac();const comp=c.createDynamicsCompressor();comp.threshold.value=-18;comp.knee.value=10;comp.ratio.value=5;comp.attack.value=.002;comp.release.value=.22;const g=c.createGain();g.connect(comp).connect(c.destination);return {c,g};}
+function tone(spec,at,dur,gainMul){
+  if(spec.buzz) return buzz(spec,at,dur,gainMul);
+  const {c,g}=out();g.gain.value=spec.m*(gainMul||1);
+  const t0=c.currentTime+at;
+  spec.v.forEach((f,i)=>{const o=c.createOscillator(),a=c.createGain();o.type=spec.t[i];o.frequency.setValueAtTime(f,t0);
+    a.gain.setValueAtTime(1e-4,t0);a.gain.exponentialRampToValueAtTime(spec.l[i],t0+.012);a.gain.setValueAtTime(spec.l[i],t0+dur-.05);a.gain.exponentialRampToValueAtTime(1e-4,t0+dur);
+    o.connect(a).connect(g);o.start(t0);o.stop(t0+dur+.02);});
+}
+// ブザー音（試合用ブザーのような「ビィー」）：ノコギリ波＋矩形波を少しずらして重ね、
+// 低い周期で音量を揺らしてザラつきを出し、高すぎる成分はフィルターで丸める
+function buzz(spec,at,dur,gainMul){
+  const {c,g}=out();g.gain.value=spec.m*(gainMul||1);
+  const t0=c.currentTime+at;
+  const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=spec.lp||3200;lp.Q.value=.7;lp.connect(g);
+  const env=c.createGain();env.connect(lp);
+  env.gain.setValueAtTime(1e-4,t0);env.gain.exponentialRampToValueAtTime(1,t0+.008);env.gain.setValueAtTime(1,t0+dur-.03);env.gain.exponentialRampToValueAtTime(1e-4,t0+dur);
+  const am=c.createGain();am.gain.value=.65;am.connect(env);
+  const lfo=c.createOscillator(),lg=c.createGain();lfo.type='square';lfo.frequency.value=spec.am;lg.gain.value=.35;lfo.connect(lg).connect(am.gain);
+  lfo.start(t0);lfo.stop(t0+dur+.02);
+  spec.v.forEach((f,i)=>{const o=c.createOscillator(),a=c.createGain();o.type=spec.t[i];o.frequency.setValueAtTime(f,t0);a.gain.value=spec.l[i];o.connect(a).connect(am);o.start(t0);o.stop(t0+dur+.02);});
+}
+function snd(kind){
+  const spec=VOICES[$('in-sound').value]||VOICES.buzzer;
+  if(kind==='start'){tone(spec,0,.6);}                         // 開始：長め1回
+  else if(kind==='end'){tone(spec,0,.2);tone(spec,.215,.6);} // 終了：ビィッ！ビィー（間はごく短く）
+  else if(kind==='warn'){const soft={v:[880,1760],l:[.16,.05],t:['sine','sine'],m:.55};tone(soft,0,.12);tone(soft,.18,.12);} // 予告：控えめな2音
+  else if(kind==='tick'){const soft={v:[1046],l:[.14],t:['sine'],m:.5};tone(soft,0,.08);}     // 休憩明けカウント
+}
+
+// ── 表示 ──
+function fmt(sec){sec=Math.max(0,Math.ceil(sec));const m=Math.floor(sec/60),s=sec%60;return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');}
+function curTotal(){return S.phase==='rest'?S.rest:S.work;}
+function render(){
+  $('time').textContent=fmt(S.remain);
+  let ph=MODE_LABEL[S.mode];
+  if(S.phase==='rest') ph='REST';
+  if(S.phase==='done') ph='SESSION COMPLETE';
+  if(S.phase==='ready'&&!S.running) ph=MODE_LABEL[S.mode];
+  $('phase').textContent=ph;
+  $('round').innerHTML=S.mode==='class'?'CLASS TIME':`ROUND <b>${S.round}</b> / ${S.free?'FREE':S.rounds}`;
+  const tot=curTotal()||1;$('bar').style.width=Math.max(0,Math.min(100,S.remain/tot*100))+'%';
+  // 次の予定
+  let nx='';
+  if(S.phase==='work'&&S.rest>0&&(S.free||S.round<S.rounds)) nx=`次は休憩 ${S.rest}秒`;
+  else if(S.phase==='rest') nx=`次は ROUND ${S.round+1}`;
+  else if(S.phase==='ready') nx=S.mode==='class'?'':`${fmt(S.work)} × ${S.free?'∞':S.rounds}　休憩 ${S.rest}秒`;
+  $('nextup').textContent=nx;
+  const warnSec=+$('in-warnsec').value;
+  document.body.classList.toggle('st-rest',S.phase==='rest');
+  document.body.classList.toggle('st-warn',S.running&&S.phase==='work'&&S.remain<=warnSec&&S.remain>0);
+  document.body.classList.toggle('st-done',S.phase==='done');
+  document.body.classList.toggle('st-paused',!S.running&&(S.phase==='work'||S.phase==='rest'));
+  const b=$('start');b.textContent=S.running?'❚❚ PAUSE':(S.phase==='done'?'↻ もう一度':'▶ START');b.classList.toggle('running',S.running);
+}
+function syncInputs(){
+  $('in-wm').value=Math.floor(S.work/60);$('in-ws').value=S.work%60;$('in-rs').value=S.rest;$('in-rd').value=S.rounds;$('in-free').checked=S.free;
+  $('work-lbl').textContent=S.mode==='class'?'クラス時間':'1ラウンド';
+  document.querySelectorAll('.mode').forEach(b=>b.classList.toggle('active',b.dataset.mode===S.mode));
+  const box=$('presets');box.innerHTML='';
+  PRESETS[S.mode].forEach((p,i)=>{const b=document.createElement('button');b.className='preset'+(i===S.preset?' active':'');b.textContent=p.label;b.title=`キーボードの ${i+1} でも選べます`;b.onclick=()=>applyPreset(i);box.appendChild(b);});
+}
+
+// ── 操作 ──
+function stopClock(){S.running=false;releaseWake();}
+function resetTimer(){stopClock();S.phase='ready';S.round=1;S.remain=S.work;S.warned=false;S.lastTick=-1;render();}
+function applyPreset(i){const p=PRESETS[S.mode][i];if(!p)return;S.preset=i;S.work=p.work;S.rest=p.rest;S.rounds=p.rounds;S.free=false;syncInputs();resetTimer();saveSettings();}
+function setMode(m){S.mode=m;applyPreset(m==='sparring'?1:0);}
+function readInputs(){
+  const wm=Math.max(0,+$('in-wm').value||0),ws=Math.min(59,Math.max(0,+$('in-ws').value||0));
+  S.work=Math.max(5,wm*60+ws);S.rest=Math.max(0,+$('in-rs').value||0);S.rounds=Math.max(1,+$('in-rd').value||1);S.free=$('in-free').checked;
+  S.preset=-1;syncInputs();if(!S.running)resetTimer();saveSettings();
+}
+function startPause(){
+  ac();
+  if(S.running){S.remain=Math.max(0,(S.endAt-performance.now())/1000);stopClock();render();return;}
+  if(S.phase==='done'){S.round=1;S.phase='ready';S.remain=S.work;}
+  if(S.phase==='ready'){S.phase='work';S.remain=S.work;S.warned=false;snd('start');}
+  S.endAt=performance.now()+S.remain*1000;S.running=true;requestWake();render();
+}
+function adjust(sec){
+  if(S.running){S.endAt=Math.max(performance.now()+1000,S.endAt+sec*1000);S.remain=(S.endAt-performance.now())/1000;}
+  else{S.remain=Math.max(1,S.remain+sec);if(S.phase==='ready'){S.work=Math.max(5,S.work+sec);syncInputs();saveSettings();}}
+  S.warned=S.remain<=+$('in-warnsec').value;render();
+}
+function phaseEnd(){
+  if(S.phase==='work'){
+    const last=!S.free&&S.round>=S.rounds;
+    snd('end');
+    if(last||S.mode==='class'){S.phase='done';S.remain=0;stopClock();render();return;}
+    if(S.rest>0){S.phase='rest';S.remain=S.rest;S.endAt=performance.now()+S.rest*1000;S.lastTick=-1;render();return;}
+    S.round++;S.phase='work';S.remain=S.work;S.warned=false;S.endAt=performance.now()+S.work*1000;setTimeout(()=>snd('start'),900);render();return;
+  }
+  if(S.phase==='rest'){S.round++;S.phase='work';S.remain=S.work;S.warned=false;S.endAt=performance.now()+S.work*1000;snd('start');render();}
+}
+function loop(){
+  if(S.running){
+    S.remain=(S.endAt-performance.now())/1000;
+    const warnSec=+$('in-warnsec').value;
+    if(S.phase==='work'&&$('in-warn').checked&&!S.warned&&S.remain<=warnSec&&S.work>warnSec+5){S.warned=true;snd('warn');}
+    if(S.phase==='rest'){const c=Math.ceil(S.remain);if(c<=3&&c>=1&&c!==S.lastTick){S.lastTick=c;snd('tick');}}
+    if(S.remain<=0) phaseEnd();
+    render();
+  }
+  requestAnimationFrame(loop);
+}
+
+// ── スリープ防止 ──
+let wake=null;
+async function requestWake(){try{if('wakeLock' in navigator&&!wake){wake=await navigator.wakeLock.request('screen');wake.addEventListener('release',()=>{wake=null;});}}catch(e){}}
+function releaseWake(){if(document.body.classList.contains('monitor'))return;try{if(wake){wake.release();wake=null;}}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&(S.running||document.body.classList.contains('monitor')))requestWake();});
+
+// ── モニター表示 ──
+function monitorOn(){document.body.classList.add('monitor');requestWake();try{document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen().catch(()=>{});}catch(e){}}
+function monitorOff(){document.body.classList.remove('monitor');try{if(document.fullscreenElement)document.exitFullscreen();}catch(e){}if(!S.running)releaseWake();}
+
+// ── 待機画面（止まったまま2分で自動表示） ──
+let lastAct=Date.now();
+function activity(){lastAct=Date.now();if(document.body.classList.contains('idle-on'))document.body.classList.remove('idle-on');}
+const WD=['日','月','火','水','木','金','土'];
+function toMin(t){const [h,m]=t.split(':').map(Number);return h*60+m;}
+function dayList(dow){return SCHEDULE.filter(c=>c.dow===dow).sort((a,b)=>a.s.localeCompare(b.s));}
+function renderIdle(){
+  const now=new Date();const nowMin=now.getHours()*60+now.getMinutes();
+  // 今日まだ残っているクラスがあれば「今日」、なければ次にクラスがある日を表示
+  let off=0,list=dayList(now.getDay());
+  if(!list.some(c=>toMin(c.e)>nowMin)){for(let d=1;d<8;d++){const dt=new Date(now.getFullYear(),now.getMonth(),now.getDate()+d);const l=dayList(dt.getDay());if(l.length){off=d;list=l;break;}}}
+  const day=new Date(now.getFullYear(),now.getMonth(),now.getDate()+off);
+  $('sch-k').textContent=off===0?'TODAY':(off===1?'TOMORROW':'NEXT');
+  $('sch-d').textContent=`${day.getMonth()+1}月${day.getDate()}日（${WD[day.getDay()]}）`;
+  let nextMarked=false;
+  $('sch-list').innerHTML=list.length?list.map(c=>{
+    let cls='',bd='';
+    if(off===0&&toMin(c.e)<=nowMin){cls='past';bd='DONE';}
+    else if(off===0&&toMin(c.s)<=nowMin){cls='now';bd='NOW';}
+    else if(!nextMarked){cls='next';bd='NEXT';nextMarked=true;}
+    return `<div class="sch-row ${cls}"><div class="tm">${c.s}–${c.e}</div><div class="nm">${c.n}</div><div class="bd">${bd}</div></div>`;
+  }).join(''):'<div class="sch-empty">本日のクラスはありません</div>';
+  // 1週間のクラス数
+  let wk='';for(let i=0;i<7;i++){const dt=new Date(now.getFullYear(),now.getMonth(),now.getDate()+i);const n=dayList(dt.getDay()).length;
+    wk+=`<div class="wk ${i===0?'today':''} ${n?'':'off'}"><div class="w">${i===0?'今日':WD[dt.getDay()]}</div><div class="c">${n||'—'}</div><div class="u">${n?'クラス':'休み'}</div></div>`;}
+  $('sch-week').innerHTML=wk;
+  $('idle-date').textContent=`${now.getFullYear()}.${now.getMonth()+1}.${now.getDate()}（${WD[now.getDay()]}）`;
+}
+function idleOn(){if(S.running)return;renderIdle();document.body.classList.add('idle-on');}
+setInterval(()=>{
+  const now=new Date();const wd=['日','月','火','水','木','金','土'][now.getDay()];
+  $('clk-d').textContent=`${now.getMonth()+1}月${now.getDate()}日（${wd}）`;
+  const t=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  $('clk-t').textContent=t;$('idle-clock').textContent=t;
+  if(!S.running&&Date.now()-lastAct>120000&&!document.body.classList.contains('idle-on')){idleOn();}
+  if(document.body.classList.contains('idle-on'))renderIdle();
+},1000);
+
+// ── 変更をスマホ連携に知らせる ──
+{const f=startPause;startPause=function(){f();notify();};}
+{const f=resetTimer;resetTimer=function(){f();notify();};}
+{const f=adjust;adjust=function(x){f(x);notify();};}
+{const f=phaseEnd;phaseEnd=function(){f();notify();};}
+{const f=readInputs;readInputs=function(){f();notify();};}
+{const f=idleOn;idleOn=function(){f();notify();};}
+{const f=activity;activity=function(){const w=document.body.classList.contains('idle-on');f();if(w)notify();};}
+// ── スマホ（リモコン）からの操作を受ける窓口 ──
+window.AMBIS_TIMER={
+  exec(a,arg){
+    lastAct=Date.now();try{ac();}catch(e){}
+    if(a==='toggle')startPause();
+    else if(a==='reset')resetTimer();
+    else if(a==='plus')adjust(60);
+    else if(a==='minus')adjust(-60);
+    else if(a==='preset')applyPreset(+arg);
+    else if(a==='mode'&&PRESETS[arg])setMode(arg);
+    else if(a==='idle'){if(arg)idleOn();else activity();}
+  },
+  state(){return{mode:S.mode,phase:S.phase,running:S.running,
+    remain:S.running?Math.max(0,(S.endAt-performance.now())/1000):S.remain,
+    round:S.round,rounds:S.rounds,free:S.free,work:S.work,rest:S.rest,preset:S.preset,
+    idle:document.body.classList.contains('idle-on'),warnSec:+$('in-warnsec').value};}
+};
+
+// ── イベント ──
+document.querySelectorAll('.mode').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
+$('start').onclick=startPause;$('reset').onclick=resetTimer;
+$('minus').onclick=()=>adjust(-60);$('plus').onclick=()=>adjust(60);
+['in-wm','in-ws','in-rs','in-rd'].forEach(id=>$(id).addEventListener('change',readInputs));
+$('in-free').addEventListener('change',readInputs);
+['in-sound','in-warn','in-warnsec'].forEach(id=>$(id).addEventListener('change',()=>{saveSettings();render();}));
+$('test-start').onclick=()=>snd('start');$('test-warn').onclick=()=>snd('warn');$('test-end').onclick=()=>snd('end');
+$('more-btn').onclick=()=>document.body.classList.toggle('show-more');
+$('monitor').onclick=monitorOn;$('idle-btn').onclick=e=>{e.stopPropagation();setTimeout(idleOn,0);};$('exit-mon').onclick=monitorOff;
+$('idle').onclick=e=>{e.stopPropagation();activity();};
+$('unlock').onclick=()=>{ac();$('unlock').remove();activity();};
+['pointerdown','keydown','touchstart'].forEach(ev=>document.addEventListener(ev,activity,{passive:true}));
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT')return;
+  if(e.code==='Space'){e.preventDefault();startPause();}
+  else if(e.key==='r'||e.key==='R')resetTimer();
+  else if(e.key==='f'||e.key==='F')monitorOn();
+  else if(e.key==='i'||e.key==='I')setTimeout(idleOn,0);
+  else if(e.key==='Escape')monitorOff();
+  else if(['1','2','3','4'].includes(e.key))applyPreset(+e.key-1);
+});
+document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&document.body.classList.contains('monitor')){/* 全画面だけ抜けた場合は表示はそのまま */}});
+
+// ── 起動 ──
+const saved=loadSettings();
+if(saved){
+  S.mode=saved.mode||'sparring';S.preset=saved.preset??1;S.work=saved.work||300;S.rest=saved.rest??30;S.rounds=saved.rounds||6;S.free=!!saved.free;
+  if(saved.sound&&saved.soundV===2)$('in-sound').value=saved.sound;if(saved.warn===false)$('in-warn').checked=false;if(saved.warnSec)$('in-warnsec').value=saved.warnSec;
+}
+syncInputs();resetTimer();
+requestAnimationFrame(loop);
+})();
+</script>
+
+<script type="module">
+/* ══ スマホ連携（Firebase：timer/command ← スマホ、timer/state ← モニター） ══ */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js";
+import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInWithCredential, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBA3sfUh7i2gldOXaHILJYlS4cu3YmnIyg",
+  authDomain: "ambis-jiu-jitsu.firebaseapp.com",
+  projectId: "ambis-jiu-jitsu",
+  storageBucket: "ambis-jiu-jitsu.firebasestorage.app",
+  messagingSenderId: "950081158370",
+  appId: "1:950081158370:web:8e33879ed3b429a99272bb"
+};
+const GIS_CLIENT_ID = "950081158370-hqu69kt33t4na39re896fv09t607b6uv.apps.googleusercontent.com";
+const ALLOWED = ['ambis.bjj@gmail.com']; // 操作できるアカウント（スタッフを増やすときはこことFirestoreルールに追加）
+
+const app = initializeApp(firebaseConfig);
+try{ initializeAppCheck(app,{provider:new ReCaptchaV3Provider('6LcZgYItAAAAADKzEtB6ccNQbYe5AV_3d9pknKOK'),isTokenAutoRefreshEnabled:true}); }catch(e){}
+const db = getFirestore(app); const auth = getAuth(app);
+const $ = id => document.getElementById(id);
+const REMOTE = new URLSearchParams(location.search).has('remote');
+const cmdRef = doc(db,'timer','command'), stateRef = doc(db,'timer','state');
+const remoteURL = location.origin + location.pathname + '?remote';
+
+// ── Googleログイン（チェックインアプリと同じ方式） ──
+async function onGis(res){ try{ await signInWithCredential(auth, GoogleAuthProvider.credential(res.credential)); }catch(e){ console.error(e); } }
+function renderGis(boxId){
+  const box=$(boxId); if(!box) return;
+  if(!(window.google&&google.accounts&&google.accounts.id)){ setTimeout(()=>renderGis(boxId),300); return; }
+  try{ google.accounts.id.initialize({client_id:GIS_CLIENT_ID,callback:onGis,auto_select:true,cancel_on_tap_outside:false});
+       box.innerHTML=''; google.accounts.id.renderButton(box,{theme:'filled_blue',size:'large',shape:'pill',text:'signin_with',locale:'ja',width:260}); }catch(e){}
+}
+const allowed = u => !!u && ALLOWED.includes((u.email||'').toLowerCase());
+
+/* ───────── モニター側 ───────── */
+function setupDisplay(){
+  let unsub=null, lastId=null, first=true, pubTimer=null, beat=null;
+  const publish=()=>{ if(!allowed(auth.currentUser)||!window.AMBIS_TIMER) return;
+    const st=window.AMBIS_TIMER.state();
+    setDoc(stateRef,{...st,endEpoch:Date.now()+st.remain*1000,updatedAt:Date.now()}).catch(()=>{}); };
+  const schedule=()=>{ clearTimeout(pubTimer); pubTimer=setTimeout(publish,150); };
+  window.addEventListener('ambis-timer-change',schedule);
+
+  $('sync-btn').onclick=()=>{ $('sync-modal').classList.add('open'); if(!allowed(auth.currentUser)) renderGis('gis-display'); };
+  $('sync-close').onclick=()=>$('sync-modal').classList.remove('open');
+  $('sync-logout').onclick=()=>signOut(auth);
+
+  onAuthStateChanged(auth,u=>{
+    const ok=allowed(u);
+    $('sync-dot').classList.toggle('on',ok);
+    $('sync-out').style.display=ok?'none':'block';
+    $('sync-in').style.display=ok?'block':'none';
+    if(unsub){unsub();unsub=null;} clearInterval(beat);
+    if(u&&!ok){ signOut(auth); alert('このアカウントでは連携できません。道場アカウントでログインしてください。'); return; }
+    if(!ok) return;
+    $('sync-url').textContent=remoteURL;
+    const q=$('sync-qr'); q.innerHTML='';
+    try{ new QRCode(q,{text:remoteURL,width:180,height:180,colorDark:'#000000',colorLight:'#ffffff'}); }catch(e){ q.textContent=''; }
+    first=true;
+    unsub=onSnapshot(cmdRef,snap=>{
+      const c=snap.data(); if(!c) { first=false; return; }
+      if(first){ lastId=c.id; first=false; return; }       // 起動前の古い操作は実行しない
+      if(c.id===lastId) return; lastId=c.id;
+      if(Date.now()-(c.at||0)>30000) return;               // 30秒以上前の操作は無視
+      window.AMBIS_TIMER&&window.AMBIS_TIMER.exec(c.action,c.arg);
+      publish();
+    });
+    publish(); beat=setInterval(publish,60000);           // 1分ごとに「モニター生きてます」を送る
+  });
+}
+
+/* ───────── スマホ（リモコン）側 ───────── */
+function setupRemote(){
+  let st=null, unsub=null;
+  const P=window.AMBIS_PRESETS, ML=window.AMBIS_MODE_LABEL;
+  const fmt=sec=>{sec=Math.max(0,Math.ceil(sec));return String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0');};
+  const send=(action,arg=null)=>{ if(!allowed(auth.currentUser)) return;
+    if(navigator.vibrate) navigator.vibrate(15);
+    setDoc(cmdRef,{id:Date.now()+'-'+Math.random().toString(36).slice(2,8),action,arg,at:Date.now(),by:auth.currentUser.email}).catch(e=>alert('送信できませんでした：'+e.message)); };
+  document.querySelectorAll('.r-btn[data-a]').forEach(b=>b.onclick=()=>send(b.dataset.a));
+  $('r-start').onclick=()=>send('toggle');
+  document.querySelectorAll('.r-mode').forEach(b=>b.onclick=()=>send('mode',b.dataset.m));
+  $('r-idle').onclick=()=>send('idle',!(st&&st.idle));
+  $('r-logout').onclick=()=>signOut(auth);
+
+  function draw(){
+    requestAnimationFrame(draw);
+    if(!st) return;
+    const remain=st.running?Math.max(0,(st.endEpoch-Date.now())/1000):st.remain;
+    $('r-time').textContent=fmt(remain);
+    let ph=ML[st.mode]||''; if(st.phase==='rest')ph='REST'; if(st.phase==='done')ph='SESSION COMPLETE';
+    $('r-phase').textContent=st.idle?'SCHEDULE（待機中）':ph;
+    $('r-round').innerHTML=st.mode==='class'?'CLASS TIME':`ROUND ${st.round} / ${st.free?'FREE':st.rounds}`;
+    const card=$('r-card');
+    card.classList.toggle('rest',st.phase==='rest');
+    card.classList.toggle('warn',st.running&&st.phase==='work'&&remain<=(st.warnSec||10)&&remain>0);
+    card.classList.toggle('paused',!st.running&&(st.phase==='work'||st.phase==='rest'));
+    const b=$('r-start'); b.textContent=st.running?'❚❚ PAUSE':(st.phase==='done'?'↻ もう一度':'▶ START'); b.classList.toggle('running',st.running);
+    const alive=Date.now()-(st.updatedAt||0)<90000;
+    $('r-dot').classList.toggle('on',alive); $('r-conn').textContent=alive?'モニター接続中':'モニター応答なし';
+    $('r-idle').textContent=st.idle?'⏱ モニターをタイマー画面に戻す':'☰ モニターをスケジュール画面にする';
+  }
+  function renderStatic(){
+    if(!st) return;
+    document.querySelectorAll('.r-mode').forEach(b=>b.classList.toggle('active',b.dataset.m===st.mode));
+    const box=$('r-presets'); box.innerHTML='';
+    (P[st.mode]||[]).forEach((p,i)=>{const b=document.createElement('button');b.className='r-preset'+(i===st.preset?' active':'');b.textContent=p.label;b.onclick=()=>send('preset',i);box.appendChild(b);});
+    box.style.gridTemplateColumns=`repeat(${(P[st.mode]||[]).length||4},1fr)`;
+  }
+  requestAnimationFrame(draw);
+
+  onAuthStateChanged(auth,u=>{
+    if(unsub){unsub();unsub=null;}
+    const ok=allowed(u);
+    $('r-login').style.display=ok?'none':'flex';
+    $('r-ui').style.display=ok?'flex':'none';
+    if(u&&!ok){ $('r-login-msg').textContent='このアカウントでは操作できません。道場アカウントでログインしてください。'; signOut(auth); return; }
+    if(!ok){ renderGis('gis-remote'); return; }
+    $('r-login-msg').textContent=''; $('r-user').textContent=u.email;
+    unsub=onSnapshot(stateRef,snap=>{ st=snap.data()||null; renderStatic(); },e=>{ $('r-conn').textContent='接続エラー'; });
+  });
+}
+
+if(REMOTE) setupRemote(); else setupDisplay();
+</script>
+</body>
+</html>
