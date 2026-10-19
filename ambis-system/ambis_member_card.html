@@ -7,12 +7,12 @@
 <title>AMBIs Member</title>
 <!-- PWA -->
 <link rel="manifest" href="manifest-member.json">
-<meta name="theme-color" content="#0a1628">
+<meta name="theme-color" content="#122E53">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="AMBIs">
 <link rel="apple-touch-icon" href="icon-192.png">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@300;400;500&family=Noto+Serif+JP:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async></script>
 <script type="module">
@@ -225,13 +225,13 @@ getRedirectResult(auth).catch(e => console.error('Google redirect login error:',
 </script>
 <style>
 :root{
-  --navy:#0a1628; --navy-mid:#1a2a48; --navy-light:#2a3a60;
-  --gold:#c9a96e; --gold-light:#e8cfa0;
-  --white:#fff; --bg:#f0f2f7;
-  --text-primary:#0a1628; --text-secondary:#6a7a9a; --text-muted:#aab0c0;
-  --border:#e8eaf0;
-  --shadow:0 2px 12px rgba(10,22,40,0.08);
-  --shadow-lg:0 8px 32px rgba(10,22,40,0.14);
+  --navy:#122E53; --navy-mid:#1d3d68; --navy-light:#2c4d7a;
+  --gold:#C8A769; --gold-light:#E6D3A8;
+  --white:#fff; --bg:#F4F1E9;
+  --text-primary:#122E53; --text-secondary:#6a7a9a; --text-muted:#aab0c0;
+  --border:#e7e2d6;
+  --shadow:0 2px 12px rgba(18,46,83,0.08);
+  --shadow-lg:0 8px 32px rgba(18,46,83,0.14);
 }
 html{overflow-x:hidden;-webkit-text-size-adjust:100%;} *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding-bottom:80px;overflow-x:hidden;}
@@ -248,7 +248,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);min-height:100vh
 .menu-btn.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
 
 /* ── DRAWER ── */
-.drawer-overlay{display:none;position:fixed;inset:0;background:rgba(10,22,40,0.5);z-index:200;}
+.drawer-overlay{display:none;position:fixed;inset:0;background:rgba(18,46,83,0.5);z-index:200;}
 .drawer-overlay.open{display:block;}
 .drawer{position:fixed;top:0;right:-280px;width:280px;height:100vh;background:var(--navy);z-index:201;transition:right .28s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow-y:auto;}
 .drawer.open{right:0;}
@@ -268,19 +268,19 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);min-height:100vh
 .page{display:none;} .page.active{display:block;}
 
 /* ── MEMBER CARD ── */
-.member-card{background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 4px 24px rgba(10,22,40,0.12);border:1px solid #e8e8e8;margin-bottom:16px;}
-.accent-line{height:3px;background:linear-gradient(90deg,#c9a96e 60%,#0a1628 100%);}
+.member-card{background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 4px 24px rgba(18,46,83,0.12);border:1px solid #e8e8e8;margin-bottom:16px;}
+.accent-line{height:3px;background:linear-gradient(90deg,#C8A769 60%,#122E53 100%);}
 .card-header{background:var(--navy);padding:18px 22px 16px;display:flex;justify-content:space-between;align-items:center;}
 .brand-name{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:4px;color:var(--gold);}
 .brand-sub-sm{font-size:8px;letter-spacing:1.5px;color:#4a5a7a;margin-top:3px;}
 .member-badge{font-size:9px;letter-spacing:2px;color:var(--gold);border:1px solid var(--gold);padding:3px 8px;border-radius:2px;}
 .card-body{padding:20px 22px 14px;display:flex;gap:16px;align-items:center;}
-.avatar{width:72px;height:72px;border-radius:50%;background:#f0f3f8;border:2px solid #e0e6f0;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--navy);flex-shrink:0;overflow:hidden;}
+.avatar{width:72px;height:72px;border-radius:50%;background:#f0f3f8;border:2px solid #e0e6f0;display:flex;align-items:center;justify-content:center;font-family:'Noto Serif JP','Hiragino Mincho ProN',serif;font-size:20px;letter-spacing:1px;color:var(--navy);flex-shrink:0;overflow:hidden;}
 .avatar img{width:100%;height:100%;object-fit:cover;}
 .avatar-wrap{position:relative;flex-shrink:0;cursor:pointer;}
 .avatar-edit-badge{position:absolute;right:-2px;bottom:-2px;width:22px;height:22px;border-radius:50%;background:var(--navy);border:2px solid #fff;display:flex;align-items:center;justify-content:center;}
 /* 利用規約 同意モーダル */
-#consent-modal{display:none;position:fixed;inset:0;background:rgba(10,22,40,0.82);z-index:99999;align-items:flex-end;justify-content:center;}
+#consent-modal{display:none;position:fixed;inset:0;background:rgba(18,46,83,0.82);z-index:99999;align-items:flex-end;justify-content:center;}
 #consent-modal.show{display:flex;}
 .consent-sheet{background:#fff;border-radius:18px 18px 0 0;padding:28px 24px 40px;width:100%;max-width:480px;animation:consentSlideUp 0.3s ease;}
 @keyframes consentSlideUp{from{transform:translateY(60px);opacity:0;}to{transform:translateY(0);opacity:1;}}
@@ -318,7 +318,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);min-height:100vh
 .qr-box canvas,.qr-box img{width:100%!important;height:100%!important;}
 
 /* ── SECTION CARD ── */
-.sec-card{background:#fff;border-radius:14px;border:1px solid #e8e8e8;box-shadow:0 2px 10px rgba(10,22,40,0.06);overflow:hidden;margin-bottom:16px;}
+.sec-card{background:#fff;border-radius:14px;border:1px solid #e8e8e8;box-shadow:0 2px 10px rgba(18,46,83,0.06);overflow:hidden;margin-bottom:16px;}
 .sec-head{background:var(--navy);padding:13px 20px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2px;color:var(--gold);}
 
 /* ── BELT HISTORY ── */
@@ -416,18 +416,40 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);min-height:100vh
 .belt-grade-row:last-child{border-bottom:none;}
 .belt-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 9px;border-radius:3px;min-width:60px;}
 
-/* ── QR MODAL ── */
-.qr-overlay{display:none;position:fixed;inset:0;background:rgba(10,22,40,0.6);z-index:300;align-items:center;justify-content:center;padding:20px;}
+/* ── ONBOARDING（初回のみ） ── */
+.ob-overlay{display:none;position:fixed;inset:0;z-index:400;background:linear-gradient(170deg,#122E53 0%,#0c2140 100%);color:#F4F1E9;flex-direction:column;padding:max(28px,env(safe-area-inset-top)) 28px max(28px,env(safe-area-inset-bottom));}
+.ob-overlay.open{display:flex;}
+.ob-skip{align-self:flex-end;background:none;border:none;color:rgba(244,241,233,.6);font-size:12px;letter-spacing:1px;cursor:pointer;padding:6px;}
+.ob-slides{flex:1;display:flex;align-items:center;justify-content:center;}
+.ob-slide{display:none;text-align:center;max-width:340px;animation:obIn .45s ease;}
+.ob-slide.active{display:block;}
+@keyframes obIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+.ob-icon{width:76px;height:76px;margin:0 auto 26px;border-radius:50%;border:1.5px solid #C8A769;display:flex;align-items:center;justify-content:center;color:#C8A769;}
+.ob-label{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:5px;color:#C8A769;margin-bottom:10px;}
+.ob-title{font-family:'Noto Serif JP','Hiragino Mincho ProN','Yu Mincho',serif;font-size:23px;line-height:1.6;letter-spacing:1px;margin-bottom:14px;}
+.ob-text{font-size:13px;line-height:1.95;color:rgba(244,241,233,.75);}
+.ob-dots{display:flex;justify-content:center;gap:8px;margin-bottom:20px;}
+.ob-dot{width:6px;height:6px;border-radius:3px;background:rgba(244,241,233,.25);transition:all .3s;}
+.ob-dot.active{width:22px;background:#C8A769;}
+.ob-next{width:100%;max-width:340px;align-self:center;padding:14px;border-radius:26px;border:none;background:#C8A769;color:#122E53;font-size:15px;font-weight:500;font-family:'Noto Sans JP',sans-serif;letter-spacing:1px;cursor:pointer;}
+
+/* ── QR MODAL（全画面・明るい白・読み取り優先） ── */
+.qr-overlay{display:none;position:fixed;inset:0;background:#ffffff;z-index:300;flex-direction:column;align-items:center;justify-content:center;padding:24px;padding-top:max(24px,env(safe-area-inset-top));padding-bottom:max(24px,env(safe-area-inset-bottom));}
 .qr-overlay.open{display:flex;}
-.qr-modal{background:#fff;border-radius:16px;padding:28px 24px;width:100%;max-width:300px;text-align:center;box-shadow:0 8px 32px rgba(10,22,40,0.2);}
-.qm-name{font-size:16px;font-weight:500;margin-bottom:4px;}
-.qm-id{font-size:11px;color:var(--text-muted);margin-bottom:16px;}
-.qm-canvas{display:flex;justify-content:center;margin-bottom:12px;}
-.qm-note{font-size:10px;color:var(--text-muted);line-height:1.7;margin-bottom:16px;}
-.qm-close{background:var(--navy);color:var(--gold);border:none;border-radius:8px;padding:10px 24px;font-size:13px;font-family:'Noto Sans JP',sans-serif;cursor:pointer;width:100%;}
+.qr-modal{width:100%;max-width:420px;text-align:center;}
+.qm-brand{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:4px;color:var(--navy);margin-bottom:2px;}
+.qm-name{font-size:18px;font-weight:500;color:var(--navy);margin-bottom:2px;}
+.qm-id{font-size:12px;color:var(--text-muted);letter-spacing:1px;margin-bottom:20px;}
+.qm-canvas{display:flex;justify-content:center;margin:0 auto 18px;padding:14px;background:#fff;border:2px solid var(--gold);border-radius:18px;width:fit-content;}
+.qm-canvas canvas,.qm-canvas img{display:block;width:min(72vw,62vh,340px)!important;height:min(72vw,62vh,340px)!important;image-rendering:pixelated;}
+.qm-note{font-size:13px;color:var(--text-secondary);line-height:1.8;margin-bottom:22px;}
+.qm-close{background:var(--navy);color:var(--gold);border:none;border-radius:24px;padding:13px 24px;font-size:14px;font-family:'Noto Sans JP',sans-serif;cursor:pointer;width:100%;max-width:300px;}
+.qr-open-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin:12px 0 4px;padding:13px;border-radius:12px;border:1.5px solid var(--gold);background:var(--navy);color:var(--gold);font-size:14px;font-family:'Noto Sans JP',sans-serif;letter-spacing:1px;cursor:pointer;}
+.qr-open-btn:active{transform:scale(0.98);}
+.qr-tap-hint{font-size:9px;color:var(--text-muted);text-align:center;margin-top:3px;letter-spacing:0.5px;}
 
 /* ── TOURNAMENT ADD MODAL ── */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(10,22,40,0.5);z-index:300;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(18,46,83,0.5);z-index:300;align-items:center;justify-content:center;padding:20px;}
 .modal-overlay.open{display:flex;}
 .modal{background:#fff;border-radius:14px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg);}
 .modal-head{padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
@@ -451,6 +473,15 @@ input:focus,select:focus{border-color:var(--navy-light);}
 .not-found .icon{font-size:48px;margin-bottom:16px;}
 .not-found p{font-size:14px;line-height:2;}
 .empty-msg{text-align:center;padding:32px 16px;color:var(--text-muted);font-size:12px;}
+/* 「始まり」の空状態 */
+.start-state{text-align:center;padding:34px 22px 30px;}
+.start-state .ss-line{width:32px;height:2px;background:var(--gold);margin:0 auto 16px;}
+.start-state .ss-title{font-family:'Noto Serif JP','Hiragino Mincho ProN','Yu Mincho',serif;font-size:17px;color:var(--navy);letter-spacing:1px;line-height:1.7;margin-bottom:8px;}
+.start-state .ss-sub{font-size:12px;color:var(--text-secondary);line-height:1.9;}
+.start-strip{display:flex;gap:12px;align-items:center;background:var(--navy);border-radius:12px;padding:14px 16px;margin:12px 0;}
+.start-strip .sst-mark{flex-shrink:0;width:34px;height:34px;border-radius:50%;border:1.5px solid var(--gold);display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:14px;}
+.start-strip .sst-title{font-family:'Noto Serif JP','Hiragino Mincho ProN','Yu Mincho',serif;font-size:14px;color:#F4F1E9;letter-spacing:.5px;}
+.start-strip .sst-sub{font-size:11px;color:rgba(244,241,233,.65);margin-top:2px;line-height:1.6;}
 
 /* ── MILESTONE ── */
 .milestone-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 16px;}
@@ -552,7 +583,7 @@ input:focus,select:focus{border-color:var(--navy-light);}
 .record-edit-btn{background:none;border:none;font-size:11px;color:var(--text-muted);cursor:pointer;padding:2px 6px;}
 
 /* RECORD MODAL */
-.rm-overlay{display:none;position:fixed;inset:0;background:rgba(10,22,40,0.5);z-index:300;align-items:center;justify-content:center;padding:20px;}
+.rm-overlay{display:none;position:fixed;inset:0;background:rgba(18,46,83,0.5);z-index:300;align-items:center;justify-content:center;padding:20px;}
 .rm-overlay.open{display:flex;}
 .rm-modal{background:#fff;border-radius:14px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;}
 .rm-head{padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
@@ -614,7 +645,7 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
   <div style="color:#8a9ab8;font-size:13px;letter-spacing:1px;">ログイン中…</div>
 </div>
 <style>
-.member-spinner{width:34px;height:34px;border:3px solid rgba(201,169,110,0.25);border-top-color:#c9a96e;border-radius:50%;animation:member-spin .8s linear infinite;}
+.member-spinner{width:34px;height:34px;border:3px solid rgba(201,169,110,0.25);border-top-color:#C8A769;border-radius:50%;animation:member-spin .8s linear infinite;}
 @keyframes member-spin{to{transform:rotate(360deg);}}
 </style>
 
@@ -674,7 +705,7 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
   <div class="page" id="page-news">
     <div class="sec-card">
       <div class="sec-head">道場ニュース</div>
-      <div id="news-body-member"><div class="empty-msg">ニュースはありません</div></div>
+      <div id="news-body-member"><div class="start-state"><div class="ss-line"></div><div class="ss-title">道場からのお知らせは、ここに届きます。</div><div class="ss-sub">クラスの変更やイベントの情報を、いちばん早くお届けします。</div></div></div>
     </div>
   </div>
 
@@ -1008,14 +1039,42 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
 
 </div><!-- /content -->
 
+<!-- ONBOARDING -->
+<div class="ob-overlay" id="ob-overlay">
+  <button class="ob-skip" onclick="finishOnboarding()">スキップ</button>
+  <div class="ob-slides">
+    <div class="ob-slide active">
+      <div class="ob-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8" cy="12" r="2.5"/><path d="M13 10h5M13 14h3"/></svg></div>
+      <div class="ob-label">WELCOME</div>
+      <div class="ob-title">ようこそ、AMBIsへ。</div>
+      <div class="ob-text">このアプリが、あなたの会員証です。<br>白帯からの物語を、ここに残していきましょう。</div>
+    </div>
+    <div class="ob-slide">
+      <div class="ob-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/></svg></div>
+      <div class="ob-label">CHECK-IN</div>
+      <div class="ob-title">受付では、<br>QRをかざすだけ。</div>
+      <div class="ob-text">「チェックイン用QRを表示」をタップして、<br>受付のタブレットにかざしてください。<br>ホーム画面に追加しておくと、すぐ開けます。</div>
+    </div>
+    <div class="ob-slide">
+      <div class="ob-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M4.2 7.5l2.6 1.5M17.2 15l2.6 1.5M4.2 16.5l2.6-1.5M17.2 9l2.6-1.5"/><circle cx="12" cy="12" r="3"/></svg></div>
+      <div class="ob-label">YOUR RECORD</div>
+      <div class="ob-title">続けた分だけ、<br>記録が増えていく。</div>
+      <div class="ob-text">出席、マイルストーン、帯の歩み。<br>強さよりも、続けることの美しさを。</div>
+    </div>
+  </div>
+  <div class="ob-dots"><span class="ob-dot active"></span><span class="ob-dot"></span><span class="ob-dot"></span></div>
+  <button class="ob-next" id="ob-next" onclick="nextOnboarding()">次へ</button>
+</div>
+
 <!-- QR MODAL -->
-<div class="qr-overlay" id="qr-overlay">
+<div class="qr-overlay" id="qr-overlay" onclick="if(event.target===this)closeQRModal()">
   <div class="qr-modal">
+    <div class="qm-brand">AMBIs CHECK-IN</div>
     <div class="qm-name" id="qm-name"></div>
     <div class="qm-id" id="qm-id"></div>
     <div class="qm-canvas" id="qm-canvas"></div>
-    <div class="qm-note">道場入口でこのQRをスキャンして出席登録</div>
-    <button class="qm-close" onclick="document.getElementById('qr-overlay').classList.remove('open')">閉じる</button>
+    <div class="qm-note">受付のタブレットにかざしてください<br><span style="font-size:11px;color:var(--text-muted);">読み取りにくいときは、スマホの画面を明るくしてください</span></div>
+    <button class="qm-close" onclick="closeQRModal()">閉じる</button>
   </div>
 </div>
 
@@ -1207,17 +1266,50 @@ function switchMonth(key,el){
   if(cal) cal.classList.add('show');
 }
 
+// ── 初回ログイン時の案内（端末ごとに1回だけ） ──
+let obIndex=0;
+function maybeShowOnboarding(){try{if(localStorage.getItem('ambis_onboarded')==='1')return;}catch(e){return;}obIndex=0;updateOnboarding();document.getElementById('ob-overlay').classList.add('open');}
+function updateOnboarding(){document.querySelectorAll('.ob-slide').forEach((el,i)=>el.classList.toggle('active',i===obIndex));document.querySelectorAll('.ob-dot').forEach((el,i)=>el.classList.toggle('active',i===obIndex));document.getElementById('ob-next').textContent=obIndex===2?'はじめる':'次へ';}
+function nextOnboarding(){if(obIndex<2){obIndex++;updateOnboarding();}else finishOnboarding();}
+function finishOnboarding(){try{localStorage.setItem('ambis_onboarded','1');}catch(e){}document.getElementById('ob-overlay').classList.remove('open');}
+let qrWakeLock=null;
+async function requestQRWakeLock(){try{if('wakeLock' in navigator){qrWakeLock=await navigator.wakeLock.request('screen');}}catch(e){}}
+function releaseQRWakeLock(){try{if(qrWakeLock){qrWakeLock.release();qrWakeLock=null;}}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&document.getElementById('qr-overlay')?.classList.contains('open'))requestQRWakeLock();});
 function showQRModal(id,name){
   document.getElementById('qm-name').textContent=name;
   document.getElementById('qm-id').textContent=id;
   const canvas=document.getElementById('qm-canvas');
   canvas.innerHTML='';
   const url=`${location.origin}${location.pathname}?id=${id}`;
-  new QRCode(canvas,{text:url,width:200,height:200,colorDark:'#0a1628',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.H});
+  // 大きく・高コントラスト・誤り訂正は中程度（セルが大きくなり読み取りやすい）
+  new QRCode(canvas,{text:url,width:512,height:512,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
   document.getElementById('qr-overlay').classList.add('open');
+  requestQRWakeLock();
+}
+function closeQRModal(){
+  document.getElementById('qr-overlay').classList.remove('open');
+  releaseQRWakeLock();
 }
 
-function getNextClassInfo(){const now=new Date();for(let i=0;i<21;i++){const d=new Date(now.getFullYear(),now.getMonth(),now.getDate()+i);const ds=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;const classes=getClassesForDate(ds).slice().sort((a,b)=>a.start.localeCompare(b.start));for(const c of classes){if(i===0){const p=c.start.split(':').map(Number);const hh=p[0],mm=p[1];const classStart=new Date(d.getFullYear(),d.getMonth(),d.getDate(),hh,mm,0,0);if(classStart<=now){continue;}}return {date:ds,cls:c};}}return null;}function nextClassBannerHTML(){const next=getNextClassInfo();if(!next){return '';}const dp=next.date.split('-').map(Number);const y=dp[0],m=dp[1],dd=dp[2];const d=new Date(y,m-1,dd);const dowLabel=['日','月','火','水','木','金','土'][d.getDay()];const today=new Date();const todayStr=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;const tmr=new Date(today.getFullYear(),today.getMonth(),today.getDate()+1);const tmrStr=`${tmr.getFullYear()}-${String(tmr.getMonth()+1).padStart(2,'0')}-${String(tmr.getDate()).padStart(2,'0')}`;const dateLabel=next.date===todayStr?'本日':(next.date===tmrStr?'明日':`${m}月${dd}日(${dowLabel})`);const badge=next.cls.status==='change'?'<span style="font-size:11px;color:#c9a96e;margin-left:4px;">（時間変更）</span>':(next.cls.status==='extra'?'<span style="font-size:11px;color:#c9a96e;margin-left:4px;">（臨時開催）</span>':'');return `<div class="sec-card" style="margin-bottom:12px;"><div class="sec-head">NEXT CLASS</div><div style="padding:16px 20px;text-align:center;"><div style="font-size:19px;font-weight:700;color:var(--navy);">${dateLabel}</div><div style="font-size:13px;color:var(--text-secondary);margin-top:2px;">${next.cls.start}〜${next.cls.end}</div><div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1.5px;color:var(--gold);margin-top:6px;">${next.cls.name}</div>${badge}</div></div>`;}function initCard(){
+function getNextClassInfo(){const now=new Date();for(let i=0;i<21;i++){const d=new Date(now.getFullYear(),now.getMonth(),now.getDate()+i);const ds=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;const classes=getClassesForDate(ds).slice().sort((a,b)=>a.start.localeCompare(b.start));for(const c of classes){if(i===0){const p=c.start.split(':').map(Number);const hh=p[0],mm=p[1];const classStart=new Date(d.getFullYear(),d.getMonth(),d.getDate(),hh,mm,0,0);if(classStart<=now){continue;}}return {date:ds,cls:c};}}return null;}function nextClassBannerHTML(){const next=getNextClassInfo();if(!next){return '';}const dp=next.date.split('-').map(Number);const y=dp[0],m=dp[1],dd=dp[2];const d=new Date(y,m-1,dd);const dowLabel=['日','月','火','水','木','金','土'][d.getDay()];const today=new Date();const todayStr=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;const tmr=new Date(today.getFullYear(),today.getMonth(),today.getDate()+1);const tmrStr=`${tmr.getFullYear()}-${String(tmr.getMonth()+1).padStart(2,'0')}-${String(tmr.getDate()).padStart(2,'0')}`;const dateLabel=next.date===todayStr?'本日':(next.date===tmrStr?'明日':`${m}月${dd}日(${dowLabel})`);const badge=next.cls.status==='change'?'<span style="font-size:11px;color:#C8A769;margin-left:4px;">（時間変更）</span>':(next.cls.status==='extra'?'<span style="font-size:11px;color:#C8A769;margin-left:4px;">（臨時開催）</span>':'');return `<div class="sec-card" style="margin-bottom:12px;"><div class="sec-head">NEXT CLASS</div><div style="padding:16px 20px;text-align:center;"><div style="font-size:19px;font-weight:700;color:var(--navy);">${dateLabel}</div><div style="font-size:13px;color:var(--text-secondary);margin-top:2px;">${next.cls.start}〜${next.cls.end}</div><div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1.5px;color:var(--gold);margin-top:6px;">${next.cls.name}</div>${badge}</div></div>`;}// 週単位の継続（月曜はじまり）。今週まだ来ていなくても、先週まで続いていれば継続中とみなす
+function weekKey(d){const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());const day=(x.getDay()+6)%7;x.setDate(x.getDate()-day);return `${x.getFullYear()}-${x.getMonth()+1}-${x.getDate()}`;}
+function weeklyStreak(myAtt){
+  const weeks=new Set(myAtt.filter(a=>a.date).map(a=>{const p=a.date.split('-').map(Number);return weekKey(new Date(p[0],p[1]-1,p[2]));}));
+  if(!weeks.size) return {streak:0,thisWeek:false};
+  const cur=new Date();const thisWeek=weeks.has(weekKey(cur));
+  const d=new Date(cur.getFullYear(),cur.getMonth(),cur.getDate());
+  if(!thisWeek) d.setDate(d.getDate()-7);
+  let n=0; while(weeks.has(weekKey(d))){n++;d.setDate(d.getDate()-7);}
+  return {streak:n,thisWeek};
+}
+function streakStripHTML(myAtt){
+  const r=weeklyStreak(myAtt);
+  if(r.streak<1) return '';
+  const sub=r.thisWeek?'今週も来ました。この調子で、あなたのペースで。':'今週も来られたら、記録がつながります。';
+  return `<div class="start-strip streak-strip"><div class="sst-mark" style="font-family:'Bebas Neue',sans-serif;font-size:18px;">${r.streak}</div><div><div class="sst-title">${r.streak}週連続で、通っています。</div><div class="sst-sub">${sub}</div></div></div>`;
+}
+function initCard(){
   const content=document.getElementById('card-content');
   // ログイン済みの場合はloggedInMemberIdを優先
   const resolvedId = window.loggedInMemberId || memberId;
@@ -1264,9 +1356,10 @@ function getNextClassInfo(){const now=new Date();for(let i=0;i<21;i++){const d=n
         <span class="fid">${member.id}</span>
         <div style="margin-top:5px;"><span class="fl">入会日　</span><span class="fdv">${member.joindate?member.joindate.replace(/-/g,'.'):'―'}</span></div>
       </div>
-      <div class="qr-box" onclick="showQRModal('${member.id}','${member.name}')" id="mini-qr"></div>
+      <div><div class="qr-box" onclick="showQRModal('${member.id}','${member.name}')" id="mini-qr"></div><div class="qr-tap-hint">タップで拡大</div></div>
     </div>
-  </div>`;
+  </div>
+  <button class="qr-open-btn" onclick="showQRModal('${member.id}','${member.name}')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/></svg>チェックイン用QRを表示</button>`;
 
   const myBH=[...JSON.parse(localStorage.getItem('ambis_belt_history')||'[]')].filter(h=>h.memberId===member.id).sort((a,b)=>b.date.localeCompare(a.date));
   let beltHTML='';
@@ -1281,12 +1374,14 @@ function getNextClassInfo(){const now=new Date();for(let i=0;i<21;i++){const d=n
     beltHTML=`<div class="sec-card"><div class="sec-head">BELT HISTORY</div>${rows}</div>`;
   }
 
-  content.innerHTML=nextClassBannerHTML()+cardHTML+beltHTML+buildCalendar(member.id,myAtt);
+  const startStrip=myAtt.length?streakStripHTML(myAtt):myAtt.length===0?`<div class="start-strip"><div class="sst-mark">✦</div><div><div class="sst-title">最初の一歩は、ここから。</div><div class="sst-sub">はじめての練習から、あなたの記録が始まります。</div></div></div>`:'';
+  content.innerHTML=nextClassBannerHTML()+cardHTML+startStrip+beltHTML+buildCalendar(member.id,myAtt);
+  setTimeout(maybeShowOnboarding,400);
   setTimeout(()=>{
     const mini=document.getElementById('mini-qr');
     if(mini){
       const url=`${location.origin}${location.pathname}?id=${member.id}`;
-      new QRCode(mini,{text:url,width:54,height:54,colorDark:'#0a1628',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});
+      new QRCode(mini,{text:url,width:54,height:54,colorDark:'#122E53',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});
     }
   },150);
 }
@@ -1330,7 +1425,7 @@ function renderTournaments(){
     if(!el) return;
     const now=new Date().toISOString().slice(0,10);
     const list=tournaments.filter(t=>t.league===league&&t.date>=now).sort((a,b)=>a.date.localeCompare(b.date));
-    if(!list.length){el.innerHTML=`<div class="empty-msg" style="padding:12px 0 8px;">登録された大会はありません</div>`;return;}
+    if(!list.length){el.innerHTML=startStateHTML('おすすめの大会は、ここでお知らせします。','初めての方に合う大会が決まったら、道場長がここに載せます。');return;}
     el.innerHTML=list.map(t=>`
       <div class="tournament-item">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;">
@@ -1404,7 +1499,7 @@ function renderNewsMember(){
   const body=document.getElementById('news-body-member');
   if(!body) return;
   const sorted=[...news].sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
-  if(!sorted.length){body.innerHTML='<div class="empty-msg">まだニュースはありません</div>';return;}
+  if(!sorted.length){body.innerHTML=startStateHTML('道場からのお知らせは、ここに届きます。','クラスの変更やイベントの情報を、いちばん早くお届けします。');return;}
   const catCls={info:'news-cat-info',result:'news-cat-result',event:'news-cat-event',schedule:'news-cat-schedule',other:'news-cat-other'};
   const catLabel={info:'お知らせ',result:'試合結果',event:'イベント',schedule:'スケジュール変更',other:'その他'};
   body.innerHTML=sorted.map(n=>`
@@ -1420,6 +1515,7 @@ function renderNewsMember(){
 }
 
 // ── MILESTONE ──
+function startStateHTML(title,sub){return `<div class="start-state"><div class="ss-line"></div><div class="ss-title">${title}</div><div class="ss-sub">${sub}</div></div>`;}
 function renderMilestone(){
   const grid=document.getElementById('milestone-grid');
   const progress=document.getElementById('milestone-progress');
@@ -1469,6 +1565,8 @@ function renderMilestone(){
         <div class="mp-val">${b.progress}/${b.max}</div>
       </div>`;
     }).join('');
+  } else if(!badges.some(b=>b.earned)){
+    progress.innerHTML=startStateHTML('最初のマイルストーンは、<br>はじめての練習のあとに。','通うたびに、ここに"続けた証"が増えていきます。<br>あなたのペースで、ひとつずつ。');
   } else {
     progress.innerHTML='';
   }
@@ -1527,7 +1625,7 @@ function getClassesForDate(ds){
   });
   return classes;
 }
-const typeColors={beginner:'#3a5fc8',all:'#27ae60',free:'#c9a96e',other:'#6a7a9a'};
+const typeColors={beginner:'#3a5fc8',all:'#27ae60',free:'#C8A769',other:'#6a7a9a'};
 const typeColorsCancelled={beginner:'#a0aec0',all:'#a0aec0',free:'#a0aec0',other:'#a0aec0'};
 function getSchTypeFromName(name){
   if(name==='初心者クラス') return 'beginner';
@@ -1549,7 +1647,7 @@ function renderSchedule(){
     if(upcoming.length){
       const excTypeLabel={cancel:'休講',change:'時間変更',extra:'臨時開催'};
       excEl.innerHTML=`<div style="margin:8px 16px 0;">${upcoming.map(e=>`
-        <div style="background:#fff8e6;border-left:3px solid #c9a96e;border-radius:4px;padding:8px 12px;margin-bottom:6px;font-size:12px;">
+        <div style="background:#fff8e6;border-left:3px solid #C8A769;border-radius:4px;padding:8px 12px;margin-bottom:6px;font-size:12px;">
           <span style="font-weight:500;">${e.date}</span>
           <span style="margin-left:8px;">${excTypeLabel[e.type]||e.type}</span>
           ${e.targetClass?`<span style="color:var(--text-muted);margin-left:6px;">（${e.targetClass}）</span>`:''}
@@ -1599,7 +1697,7 @@ function renderSchedule(){
       const allCancelled=baseHasClass&&!hasClass;
       const dayDots=dayClasses.map(c=>{
         const type=c.type||getSchTypeFromName(c.name);
-        const clr=c.status==='cancel'?'#a0aec0':typeColors[type]||'#c9a96e';
+        const clr=c.status==='cancel'?'#a0aec0':typeColors[type]||'#C8A769';
         const bdr=c.status==='change'?`border:1.5px solid ${clr};background:transparent;`:`background:${clr};`;
         return `<div class="sch-dot" style="${bdr}"></div>`;
       }).join('');
@@ -1679,7 +1777,7 @@ function renderRecord(){
     <div class="rs-item"><div class="rs-val">🥉${bronze}</div><div class="rs-lbl">3位</div></div>`;
 
   if(!records.length){
-    listEl.innerHTML=`<div class="empty-msg">まだ戦歴がありません。<br>初めての試合を記録してみましょう。</div>`;
+    listEl.innerHTML=startStateHTML('試合は、出たいと思ったときに。','出場したら、ここに結果を残せます。<br>勝ち負けより、挑戦したことが記録になります。');
     return;
   }
   listEl.innerHTML=records.map(r=>`
