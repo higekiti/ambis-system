@@ -459,6 +459,7 @@ function startPause(){
   if(S.running){S.remain=Math.max(0,(S.endAt-performance.now())/1000);stopClock();render();return;}
   if(S.phase==='done'){S.round=1;S.phase='ready';S.remain=S.work;}
   if(S.phase==='ready'){S.phase='work';S.remain=S.work;S.warned=false;snd('start');}
+  else if(S.phase==='work'){snd('start');}   // 途中で止めてから再開するときも開始音を鳴らす
   S.endAt=performance.now()+S.remain*1000;S.running=true;requestWake();render();
 }
 function adjust(sec){
@@ -474,14 +475,13 @@ function phaseEnd(){
     if(S.rest>0){S.phase='rest';S.remain=S.rest;S.endAt=performance.now()+S.rest*1000;S.lastTick=-1;render();return;}
     S.round++;S.phase='work';S.remain=S.work;S.warned=false;S.endAt=performance.now()+S.work*1000;setTimeout(()=>snd('start'),900);render();return;
   }
-  if(S.phase==='rest'){S.round++;S.phase='work';S.remain=S.work;S.warned=false;S.endAt=performance.now()+S.work*1000;snd('start');render();}
+  if(S.phase==='rest'){S.round++;S.phase='work';S.remain=S.work;S.warned=false;S.endAt=performance.now()+S.work*1000;render();} // 休憩明けは音なし
 }
 function loop(){
   if(S.running){
     S.remain=(S.endAt-performance.now())/1000;
     const warnSec=+$('in-warnsec').value;
     if(S.phase==='work'&&$('in-warn').checked&&!S.warned&&S.remain<=warnSec&&S.work>warnSec+5){S.warned=true;snd('warn');}
-    if(S.phase==='rest'){const c=Math.ceil(S.remain);if(c<=3&&c>=1&&c!==S.lastTick){S.lastTick=c;snd('tick');}}
     if(S.remain<=0) phaseEnd();
     render();
   }
