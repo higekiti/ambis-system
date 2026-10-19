@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>AMBIs チェックイン</title>
+<link rel="manifest" href="manifest-checkin.json">
+<meta name="theme-color" content="#0a1628">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="AMBIs受付">
+<link rel="icon" href="icon-checkin-192.png">
+<link rel="apple-touch-icon" href="icon-checkin-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js";
+import { getFirestore, collection, doc, getDocs, addDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"; import { getAuth, signInWithCredential, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBA3sfUh7i2gldOXaHILJYlS4cu3YmnIyg",
+  authDomain: "ambis-jiu-jitsu.firebaseapp.com",
+  projectId: "ambis-jiu-jitsu",
+  storageBucket: "ambis-jiu-jitsu.firebasestorage.app",
+  messagingSenderId: "950081158370",
+  appId: "1:950081158370:web:8e33879ed3b429a99272bb"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+/* App Check（監視モードで導入：正規アプリからのアクセスを識別。現時点では何もブロックしません） */
+const appCheck = initializeAppCheck(fbApp, { provider: new ReCaptchaV3Provider('6LcZgYItAAAAADKzEtB6ccNQbYe5AV_3d9pknKOK'), isTokenAutoRefreshEnabled: true });
+const db = getFirestore(fbApp); const auth = getAuth(fbApp);
+
+window.fbDb = db;
+window.fbCollection = collection;
+window.fbDoc = doc;
+window.fbGetDocs = getDocs;
+window.fbAddDoc = addDoc;
+window.fbUpdateDoc = updateDoc;
+
+// ── 認証：道場専用Googleアカウントでログイン（Google Identity Services方式） ──
+// 匿名認証を廃止。タブレットは道場アカウントで1回ログインすれば以後セッションが保持される。
+// これにより「正規の読み手(roster_readers)」として名簿(roster)を読める＝部外者は読めない。
+const CI_GIS_CLIENT_ID = "950081158370-hqu69kt33t4na39re896fv09t607b6uv.apps.googleusercontent.com";
+async function ci_handleGisCredential(response){
+  try {
+    const cred = GoogleAuthProvider.credential(response.credential);
+    await signInWithCredential(auth, cred);
+  } catch(e){ console.error('GIS login error:', e); }
+}
+function ci_initGis(){
+  const box = document.getElementById('ci-gis-button');
+  if(!box){ setTimeout(ci_initGis, 300); return; }
+  if(!(window.google && google.accounts && google.accounts.id)){ setTimeout(ci_initGis, 300); return; }
+  try {
+    google.accounts.id.initialize({ client_id: CI_GIS_CLIENT_ID, callback: ci_handleGisCredential, auto_select: true, cancel_on_tap_outside: false });
+    box.innerHTML=''; google.accounts.id.renderButton(box, { theme:'filled_blue', size:'large', shape:'pill', text:'signin_with', locale:'ja', width:260 });
+  } catch(e){ console.error('GIS init error:', e); }
+}
+// 起動時にroster（非PII名簿）と出席データを取得
+async function ci_loadAndStart(){
+  try {
+    const [mSnap, aSnap] = await Promise.all([
+      getDocs(collection(db, 'roster')),
+      getDocs(collection(db, 'attendance')),
+    ]);
+    const fbMembers = mSnap.docs.map(d => d.data());
+    const fbAttendance = aSnap.docs.map(d => d.data());
+    if(fbMembers.length)   { localStorage.setItem('ambis_members', JSON.stringify(fbMembers)); }
+    if(fbAttendance.length){ localStorage.setItem('ambis_attendance', JSON.stringify(fbAttendance)); }
+  } catch(e) {
+    console.warn('Firebase load error:', e.message);
+  }
+  if(typeof initCheckin === 'function') initCheckin();
+}
+onAuthStateChanged(auth, (user) => {
+  const overlay = document.getElementById('ci-login-overlay');
+  if(user){
+    if(overlay) overlay.style.display = 'none';
+    ci_loadAndStart();
+  } else {
+    if(overlay) overlay.style.display = 'flex';
+    ci_initGis();
+  }
+});
+</script>
+<style>
+:root{
+  --navy:#0a1628; --navy-mid:#1a2a48; --navy-light:#2a3a60;
+  --gold:#c9a96e; --gold-light:#e8cfa0;
+  --white:#fff;
+  --bg:#f4f6fa;
+  --card:#ffffff;
+  --text-primary:#0a1628; --text-secondary:#6a7a9a; --text-muted:#aab0c0;
+  --border:#e8eaf0;
+  --success:var(--gold);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{width:100%;height:100%;font-family:'Noto Sans JP',sans-serif;background:var(--bg);overflow:hidden;}
+
+.app{width:100%;height:100vh;display:flex;flex-direction:column;}
+
+/* HEADER */
+.header{
+  background:var(--navy);padding:12px 24px;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+}
+.header-brand{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:4px;color:var(--gold);}
+.header-sub{font-size:8px;letter-spacing:2px;color:#4a5a7a;margin-top:2px;}
+.time-display{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--gold);letter-spacing:2px;}
+.date-display{font-size:10px;color:#4a5a7a;text-align:right;margin-top:2px;}
+
+/* MAIN */
+.main-area{flex:1;display:flex;overflow:hidden;}
+
+/* CAMERA SIDE */
+.camera-side{
+  flex:1;position:relative;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  background:#e8ecf2;overflow:hidden;
+}
+.camera-label{
+  position:absolute;top:16px;left:50%;transform:translateX(-50%);
+  font-size:11px;letter-spacing:1.5px;color:var(--text-secondary);
+  background:rgba(255,255,255,0.9);padding:5px 16px;border-radius:20px;
+  white-space:nowrap;z-index:10;
+  box-shadow:0 2px 8px rgba(10,22,40,0.08);
+}
+#video{width:100%;height:100%;object-fit:cover;}
+#video.mirror{transform:scaleX(-1);}
+.cam-switch{
+  position:absolute;top:12px;right:12px;z-index:12;
+  display:flex;align-items:center;gap:6px;
+  font-size:12px;color:var(--navy);background:rgba(255,255,255,0.92);
+  border:1px solid rgba(10,22,40,0.12);border-radius:20px;padding:7px 14px;
+  box-shadow:0 2px 8px rgba(10,22,40,0.08);cursor:pointer;
+}
+.cam-switch:active{transform:scale(0.96);}
+#canvas{display:none;}
+
+/* SCAN FRAME */
+.scan-frame{
+  position:absolute;width:200px;height:200px;
+  pointer-events:none;z-index:10;
+}
+.scan-corner-tl{position:absolute;top:0;left:0;width:24px;height:24px;border-top:3px solid var(--navy);border-left:3px solid var(--navy);border-radius:4px 0 0 0;}
+.scan-corner-tr{position:absolute;top:0;right:0;width:24px;height:24px;border-top:3px solid var(--navy);border-right:3px solid var(--navy);border-radius:0 4px 0 0;}
+.scan-corner-bl{position:absolute;bottom:0;left:0;width:24px;height:24px;border-bottom:3px solid var(--navy);border-left:3px solid var(--navy);border-radius:0 0 0 4px;}
+.scan-corner-br{position:absolute;bottom:0;right:0;width:24px;height:24px;border-bottom:3px solid var(--navy);border-right:3px solid var(--navy);border-radius:0 0 4px 0;}
+.scan-line{
+  position:absolute;width:calc(100% - 16px);left:8px;height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  animation:scan 2s linear infinite;z-index:11;
+}
+@keyframes scan{0%{top:8px;opacity:1;}90%{opacity:1;}100%{top:calc(100% - 8px);opacity:0;}}
+
+.camera-hint{
+  position:absolute;bottom:20px;left:50%;transform:translateX(-50%);
+  font-size:11px;color:var(--text-muted);white-space:nowrap;z-index:10;
+  background:rgba(255,255,255,0.8);padding:4px 14px;border-radius:20px;
+}
+
+/* SUCCESS FLASH */
+.success-flash{
+  display:none;position:absolute;inset:0;
+  background:rgba(201,169,110,0.14);z-index:20;
+  align-items:center;justify-content:center;flex-direction:column;gap:8px;
+  animation:flash .7s ease-out forwards;
+}
+.success-flash.show{display:flex;}
+@keyframes flash{0%{opacity:1;}100%{opacity:0;}}
+.flash-icon{font-size:72px;color:var(--success);}
+.flash-text{font-family:'Noto Sans JP',sans-serif;font-size:20px;font-weight:500;color:var(--navy);letter-spacing:1px;margin-top:4px;}
+
+.no-camera{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--text-muted);text-align:center;padding:20px;}
+.no-camera .icon{font-size:40px;}
+.no-camera p{font-size:12px;line-height:1.8;}
+
+/* INFO SIDE */
+.info-side{
+  width:320px;background:var(--card);
+  border-left:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;
+  box-shadow:-4px 0 16px rgba(10,22,40,0.06);
+}
+
+/* STATUS PANEL */
+.status-panel{
+  padding:20px 20px 16px;
+  border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.panel-label{font-size:9px;letter-spacing:2px;color:var(--text-muted);margin-bottom:10px;}
+
+.status-idle{text-align:center;padding:16px 0;}
+.status-idle-icon{font-size:36px;margin-bottom:8px;}
+.status-idle-text{font-size:12px;color:var(--text-muted);line-height:1.8;}
+
+/* RESULT CARD */
+.result-card{display:none;}
+.result-card.show{display:block;}
+.result-member{
+  display:flex;align-items:center;gap:12px;
+  background:var(--bg);border-radius:10px;padding:12px 14px;
+  margin-bottom:14px;border:1px solid var(--border);
+}
+.result-avatar{
+  width:48px;height:48px;border-radius:50%;
+  background:#e8ecf2;border:2px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Bebas Neue',sans-serif;font-size:15px;color:var(--navy);
+  flex-shrink:0;overflow:hidden;
+}
+.result-avatar img{width:100%;height:100%;object-fit:cover;}
+.result-name{font-size:15px;font-weight:500;color:var(--text-primary);}
+.result-id{font-size:10px;color:var(--text-muted);margin-top:2px;}
+.result-belt-row{display:flex;align-items:center;gap:6px;margin-top:5px;}
+.belt-bar{display:inline-block;width:28px;height:7px;border-radius:2px;}
+.b-white{background:#ccc;}.b-blue{background:#3a5fc8;}.b-purple{background:#7c3aed;}.b-brown{background:#92400e;}.b-black{background:#111;}
+.belt-lbl{font-size:10px;color:var(--text-secondary);}
+.stripes-mini{display:flex;gap:2px;margin-top:4px;}
+.sm{width:6px;height:6px;background:var(--gold);border-radius:1px;}
+.sm.e{background:#e8eaf0;border:1px solid var(--border);}
+
+.class-select-label{font-size:9px;letter-spacing:2px;color:var(--text-muted);margin-bottom:8px;}
+.class-btns{display:flex;flex-direction:column;gap:6px;}
+.class-btn{
+  display:flex;align-items:center;gap:10px;
+  padding:11px 14px;border-radius:8px;
+  border:1.5px solid var(--border);background:var(--white);
+  cursor:pointer;transition:all .15s;width:100%;
+  font-family:'Noto Sans JP',sans-serif;text-align:left;
+}
+.class-btn:hover{border-color:var(--navy-light);background:#f8f9fc;}
+.class-btn.selected{border-color:var(--navy);background:#f0f3fa;}
+.class-btn-icon{font-size:18px;width:24px;text-align:center;flex-shrink:0;}
+.class-btn-title{font-size:12px;font-weight:500;color:var(--text-primary);}
+.class-btn-sub{font-size:9px;color:var(--text-muted);margin-top:1px;}
+
+.checkin-submit{
+  width:100%;padding:13px;border-radius:8px;
+  background:var(--navy);color:var(--gold);
+  border:none;font-size:14px;font-weight:500;
+  font-family:'Noto Sans JP',sans-serif;
+  cursor:pointer;transition:all .15s;
+  margin-top:12px;letter-spacing:1px;
+}
+.checkin-submit:hover{background:var(--navy-mid);}
+.checkin-submit:disabled{background:#e8eaf0;color:var(--text-muted);cursor:not-allowed;}
+
+/* LOG */
+.log-section{flex:1;overflow-y:auto;padding:16px 20px;}
+.log-label{font-size:9px;letter-spacing:2px;color:var(--text-muted);margin-bottom:10px;}
+.log-item{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 0;border-bottom:1px solid var(--border);
+}
+.log-item:last-child{border-bottom:none;}
+.log-time{font-family:'Bebas Neue',sans-serif;font-size:17px;color:var(--navy);min-width:46px;}
+.log-name{font-size:12px;color:var(--text-primary);flex:1;font-weight:500;}
+.log-class{
+  font-size:9px;padding:2px 7px;border-radius:3px;
+  background:#f0f3fa;color:var(--text-secondary);white-space:nowrap;
+}
+.log-empty{font-size:11px;color:var(--text-muted);text-align:center;padding:24px 0;}
+
+/* TODAY STAT */
+.today-stat{
+  display:flex;gap:0;padding:12px 20px;
+  border-bottom:1px solid var(--border);flex-shrink:0;
+  background:var(--bg);
+}
+.ts-item{flex:1;text-align:center;}
+.ts-item:not(:last-child){border-right:1px solid var(--border);}
+.ts-val{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--navy);line-height:1;}
+.ts-lbl{font-size:8px;color:var(--text-muted);margin-top:3px;letter-spacing:.5px;}
+
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+/* RESPONSIVE — 縦画面（スマホ）対応 */
+@media (max-width:860px){
+  html,body{overflow-y:auto;height:auto;min-height:100vh;}
+  .app{height:auto;min-height:100vh;}
+  .main-area{flex-direction:column;overflow:visible;}
+  .camera-side{width:100%;height:50vh;min-height:320px;flex-shrink:0;}
+  .info-side{width:100%;border-left:none;border-top:1px solid var(--border);box-shadow:none;}
+  .header{padding:10px 16px;}
+  .header-brand{font-size:18px;}
+  .header-sub{font-size:7px;}
+  .time-display{font-size:22px;}
+  .today-stat{flex-wrap:wrap;}
+}
+@media (max-width:480px){
+  .camera-side{height:42vh;min-height:260px;}
+  .scan-frame{width:160px;height:160px;}
+  .status-panel{padding:16px 16px 12px;}
+}
+</style>
+</head>
+<body>
+<script>
+/* セキュリティ: 描画用ヘルパー（XSS多層防御） */
+function safePhotoSrc(p){ return (typeof p==='string' && /^data:image\/(png|jpe?g|webp);base64,[A-Za-z0-9+/=]+$/.test(p)) ? p : ''; }
+function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+</script>
+<div id="ci-login-overlay" style="display:flex;position:fixed;inset:0;background:#0a1628;z-index:9999;flex-direction:column;align-items:center;justify-content:center;gap:20px;">
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:34px;letter-spacing:5px;color:#c9a96e;">AMBIs CHECK-IN</div>
+  <div style="font-size:13px;color:#8a9ab8;letter-spacing:1px;">道場アカウントでログインしてください</div>
+  <div id="ci-gis-button" style="min-height:44px;"></div>
+</div>
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div>
+      <div class="header-brand">AMBIs</div>
+      <div class="header-sub">JIU-JITSU ACADEMY · KUMAMOTO — CHECK IN</div>
+    </div>
+    <div>
+      <div class="time-display" id="time-display">00:00</div>
+      <div class="date-display" id="date-display"></div>
+    </div>
+  </div>
+
+  <div class="main-area">
+
+    <!-- CAMERA -->
+    <div class="camera-side">
+      <div class="camera-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>会員QRコードをカメラにかざしてください</div>
+      <button type="button" class="cam-switch" id="cam-switch" onclick="switchCamera()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7h-3.5L14 4h-4L7.5 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M9 13a3 3 0 0 1 5.5-1.7M15 13a3 3 0 0 1-5.5 1.7"/><polyline points="14.5 9 14.5 11.3 12.3 11.3"/><polyline points="9.5 17 9.5 14.7 11.7 14.7"/></svg><span id="cam-switch-label">外カメラに切替</span></button>
+      <video id="video" autoplay playsinline muted></video>
+      <canvas id="canvas"></canvas>
+      <div class="scan-frame" id="scan-frame">
+        <div class="scan-corner-tl"></div>
+        <div class="scan-corner-tr"></div>
+        <div class="scan-corner-bl"></div>
+        <div class="scan-corner-br"></div>
+        <div class="scan-line"></div>
+      </div>
+      <div class="camera-hint">会員アプリ → 会員証 → QRコードを表示してかざす</div>
+      <div class="success-flash" id="success-flash">
+        <div class="flash-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+        <div class="flash-text">チェックイン完了</div>
+      </div>
+      <div id="no-camera-msg" style="display:none;" class="no-camera">
+        <div class="icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></div>
+        <p>カメラへのアクセスを許可してください。<br>ブラウザの設定からカメラを有効にしてください。</p>
+      </div>
+    </div>
+
+    <!-- INFO -->
+    <div class="info-side">
+
+      <div class="status-panel">
+        <div class="panel-label">SCAN STATUS</div>
+        <div class="status-idle" id="status-idle">
+          <div class="status-idle-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg></div>
+          <div class="status-idle-text">QRコードをカメラに<br>かざしてください</div>
+        </div>
+        <div class="result-card" id="result-card">
+          <div class="result-member">
+            <div class="result-avatar" id="result-avatar"></div>
+            <div>
+              <div class="result-name" id="result-name"></div>
+              <div class="result-id" id="result-id"></div>
+              <div class="result-belt-row">
+                <span class="belt-bar" id="result-belt-bar"></span>
+                <span class="belt-lbl" id="result-belt-lbl"></span>
+              </div>
+              <div class="stripes-mini" id="result-stripes"></div>
+            </div>
+          </div>
+          <div class="class-select-label">クラスを選択</div>
+          <div class="class-btns" id="class-btns"></div>
+          <button class="checkin-submit" id="checkin-submit" onclick="doCheckin()" disabled>チェックイン</button>
+        </div>
+      </div>
+
+      <!-- TODAY STAT -->
+      <div class="today-stat">
+        <div class="ts-item"><div class="ts-val" id="stat-today">0</div><div class="ts-lbl">本日出席</div></div>
+        <div class="ts-item"><div class="ts-val" id="stat-beginner">0</div><div class="ts-lbl">初心者</div></div>
+        <div class="ts-item"><div class="ts-val" id="stat-all">0</div><div class="ts-lbl">オールレベル</div></div>
+        <div class="ts-item"><div class="ts-val" id="stat-free">0</div><div class="ts-lbl">フリーマット</div></div>
+      </div>
+
+      <!-- LOG -->
+      <div class="log-section">
+        <div class="log-label">TODAY'S LOG</div>
+        <div id="log-body"><div class="log-empty">本日の記録はありません</div></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const beltMap={
+  white:{label:'白帯',bar:'b-white'},
+  blue:{label:'青帯',bar:'b-blue'},
+  purple:{label:'紫帯',bar:'b-purple'},
+  brown:{label:'茶帯',bar:'b-brown'},
+  black:{label:'黒帯',bar:'b-black'},
+};
+const classInfo={
+  beginner:{label:'初心者クラス',icon:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>'},
+  all:{label:'オールレベル',icon:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>'},
+  free:{label:'フリーマット',icon:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>'},
+};
+
+let members=[];
+let attendance=[];
+let currentMember=null;
+let selectedClass=null;
+let lastScanned='';
+let lastScannedTime=0;
+
+function loadData(){
+  members=JSON.parse(localStorage.getItem('ambis_members')||'[]');
+  attendance=JSON.parse(localStorage.getItem('ambis_attendance')||'[]');
+}
+function saveData(){
+  localStorage.setItem('ambis_attendance',JSON.stringify(attendance));
+  // Firestoreにも保存（非同期）
+  if(window.fbDb){
+    const newRecords = attendance.filter(a => a.date === getToday());
+    newRecords.forEach(async (record) => {
+      try {
+        const ref = window.fbDoc(window.fbDb, 'attendance', record.id);
+        await window.fbUpdateDoc(ref, record).catch(async () => {
+          // ドキュメントが存在しない場合は新規作成
+          const { setDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+          await setDoc(ref, record);
+        });
+      } catch(e) { console.warn('Firestore save error:', e); showToast('⚠ クラウド同期に失敗しました（この端末には保存済み）','warn'); }
+    });
+  }
+}
+function getToday(){return new Date().toISOString().slice(0,10);}
+function getTime(){const n=new Date();return `${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;}
+
+// CLOCK
+function updateClock(){
+  const now=new Date();
+  document.getElementById('time-display').textContent=
+    `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const days=['日','月','火','水','木','金','土'];
+  document.getElementById('date-display').textContent=
+    `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} (${days[now.getDay()]})`;
+}
+
+// CAMERA
+// 'user'=内カメラ（初期設定） / 'environment'=外カメラ。選択はタブレットに記憶
+let cameraFacing='user';
+try{const saved=localStorage.getItem('ambisCheckinCamera');if(saved==='user'||saved==='environment')cameraFacing=saved;}catch(e){}
+let scanLoopStarted=false;
+function updateCameraUI(){
+  document.getElementById('video').classList.toggle('mirror',cameraFacing==='user');
+  document.getElementById('cam-switch-label').textContent=cameraFacing==='user'?'外カメラに切替':'内カメラに切替';
+}
+async function switchCamera(){
+  cameraFacing=cameraFacing==='user'?'environment':'user';
+  try{localStorage.setItem('ambisCheckinCamera',cameraFacing);}catch(e){}
+  await startCamera();
+}
+async function startCamera(){
+  const video=document.getElementById('video');
+  if(video.srcObject){video.srcObject.getTracks().forEach(t=>t.stop());video.srcObject=null;}
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:{ideal:cameraFacing},width:{ideal:1280},height:{ideal:720}}
+    });
+    video.srcObject=stream;
+    video.style.display='';
+    document.getElementById('scan-frame').style.display='';
+    document.getElementById('no-camera-msg').style.display='none';
+    updateCameraUI();
+    video.onloadedmetadata=()=>{video.play();if(!scanLoopStarted){scanLoopStarted=true;requestAnimationFrame(scanFrame);}};
+  }catch(e){
+    document.getElementById('video').style.display='none';
+    document.getElementById('scan-frame').style.display='none';
+    document.getElementById('no-camera-msg').style.display='flex';
+  }
+}
+
+function playTone(freq,duration,delay,type,vol){try{if(!window.__ambisAudioCtx)window.__ambisAudioCtx=new (window.AudioContext||window.webkitAudioContext)();const ctx=window.__ambisAudioCtx;const osc=ctx.createOscillator();const gain=ctx.createGain();osc.type=type||'sine';osc.frequency.value=freq;const startTime=ctx.currentTime+(delay||0);osc.connect(gain);gain.connect(ctx.destination);gain.gain.setValueAtTime(0.0001,startTime);gain.gain.exponentialRampToValueAtTime(vol||0.2,startTime+0.01);gain.gain.exponentialRampToValueAtTime(0.0001,startTime+duration);osc.start(startTime);osc.stop(startTime+duration+0.05);}catch(e){console.error('sound error:',e);}}/* AMBIs 金のベル音（発表動画と同じ系統） */function playBell(f,dur,delay,vol){[[1,1],[2.01,.45],[2.76,.28],[5.4,.1]].forEach(function(h){playTone(f*h[0],dur*(1/h[0]+.3),delay,'sine',vol*h[1]);});}function playScanSound(){playBell(1319,0.35,0,0.26);playBell(1760,0.6,0.09,0.26);}function playCheckinSound(){playBell(880,1.4,0,0.15);playBell(1109,1.4,0.12,0.14);playBell(1319,1.8,0.24,0.16);}function scanFrame(){
+  const video=document.getElementById('video');
+  const canvas=document.getElementById('canvas');
+  if(video.readyState===video.HAVE_ENOUGH_DATA){
+    canvas.width=video.videoWidth;canvas.height=video.videoHeight;
+    const ctx=canvas.getContext('2d');
+    ctx.drawImage(video,0,0,canvas.width,canvas.height);
+    const imageData=ctx.getImageData(0,0,canvas.width,canvas.height);
+    const code=jsQR(imageData.data,imageData.width,imageData.height,{inversionAttempts:'dontInvert'});
+    if(code){
+      const now=Date.now();
+      if(code.data!==lastScanned||(now-lastScannedTime)>3000){
+        lastScanned=code.data;lastScannedTime=now;
+        handleQR(code.data);
+      }
+    }
+  }
+  requestAnimationFrame(scanFrame);
+}
+
+function handleQR(data){
+  loadData();
+  let memberId=null;
+  try{const url=new URL(data);memberId=url.searchParams.get('id');}
+  catch(e){if(data.startsWith('AMBIs-'))memberId=data;}
+  if(!memberId)return;
+  const member=members.find(m=>m.id===memberId&&m.status==='active');
+  if(!member)return;if(currentMember&&currentMember.id===member.id)return;
+  playScanSound();currentMember=member;selectedClass=null;
+  showMemberPanel(member);
+}
+
+function showMemberPanel(member){
+  const belt=beltMap[member.belt]||beltMap.white;
+  document.getElementById('result-avatar').innerHTML=member.photo?`<img src="${safePhotoSrc(member.photo)}" alt="">`:(member.name||'').slice(0,2);
+  document.getElementById('result-name').textContent=member.name;
+  document.getElementById('result-id').textContent=member.id;
+  document.getElementById('result-belt-bar').className='belt-bar '+belt.bar;
+  document.getElementById('result-belt-lbl').textContent=belt.label;
+  document.getElementById('result-stripes').innerHTML=[0,1,2,3].map(i=>`<div class="sm${i<(member.stripe||0)?'':' e'}"></div>`).join('');
+  const today=getToday();
+  const todayClasses=attendance.filter(a=>a.memberId===member.id&&a.date===today).map(a=>a.class);
+  document.getElementById('class-btns').innerHTML=Object.entries(classInfo).map(([key,cls])=>{
+    const done=todayClasses.includes(key);
+    return `<button class="class-btn${done?' selected':''}" id="cls-${key}" onclick="selectClass('${key}')">
+      <div class="class-btn-icon">${cls.icon}</div>
+      <div>
+        <div class="class-btn-title">${cls.label}${done?' <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><polyline points="20 6 9 17 4 12"/></svg>':''}</div>
+        <div class="class-btn-sub">${done?'本日登録済':'タップして選択'}</div>
+      </div>
+    </button>`;
+  }).join('');
+  document.getElementById('checkin-submit').disabled=true;
+  document.getElementById('status-idle').style.display='none';
+  document.getElementById('result-card').classList.add('show');
+}
+
+function selectClass(cls){
+  selectedClass=cls;
+  document.querySelectorAll('.class-btn').forEach(b=>b.classList.remove('selected'));
+  const btn=document.getElementById('cls-'+cls);
+  if(btn)btn.classList.add('selected');
+  document.getElementById('checkin-submit').disabled=false;
+}
+
+function doCheckin(){
+  if(!currentMember||!selectedClass)return;
+  loadData();
+  const today=getToday();
+  if(attendance.find(a=>a.memberId===currentMember.id&&a.date===today&&a.class===selectedClass)){
+    showToast(`${classInfo[selectedClass].label}は本日登録済みです`,'warn');return;
+  }
+  attendance.push({
+    id:'att-'+Date.now(),memberId:currentMember.id,
+    memberName:currentMember.name,class:selectedClass,date:today,time:getTime(),
+  });
+  saveData();playCheckinSound();
+  const flash=document.getElementById('success-flash');
+  flash.classList.add('show');
+  setTimeout(()=>flash.classList.remove('show'),800);
+  showToast(`${currentMember.name} — ${classInfo[selectedClass].label}`,'success');
+  renderLog();
+  setTimeout(()=>{
+    currentMember=null;selectedClass=null;
+    document.getElementById('result-card').classList.remove('show');
+    document.getElementById('status-idle').style.display='block';
+  },1200);
+}
+
+function renderLog(){
+  loadData();
+  const today=getToday();
+  const todayLog=[...attendance].filter(a=>a.date===today).reverse().slice(0,30);
+  document.getElementById('stat-today').textContent=todayLog.length;
+  document.getElementById('stat-beginner').textContent=todayLog.filter(a=>a.class==='beginner').length;
+  document.getElementById('stat-all').textContent=todayLog.filter(a=>a.class==='all').length;
+  document.getElementById('stat-free').textContent=todayLog.filter(a=>a.class==='free').length;
+  const body=document.getElementById('log-body');
+  if(!todayLog.length){body.innerHTML='<div class="log-empty">本日の記録はありません</div>';return;}
+  body.innerHTML=todayLog.map(a=>`
+    <div class="log-item">
+      <div class="log-time">${a.time||'--:--'}</div>
+      <div class="log-name">${a.memberName}</div>
+      <div class="log-class">${classInfo[a.class]?.label||a.class}</div>
+    </div>`).join('');
+}
+
+function showToast(msg,type='success'){
+  const ex=document.getElementById('ci-toast');if(ex)ex.remove();
+  const el=document.createElement('div');el.id='ci-toast';
+  el.style.cssText=`position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+    background:${type==='success'?'#0a1628':'#e67e22'};color:${type==='success'?'#c9a96e':'#fff'};
+    padding:10px 22px;border-radius:8px;font-size:13px;
+    font-family:'Noto Sans JP',sans-serif;z-index:999;
+    box-shadow:0 4px 16px rgba(10,22,40,0.15);white-space:nowrap;`;
+  el.textContent=msg;document.body.appendChild(el);
+  setTimeout(()=>el.remove(),2500);
+}
+
+function initCheckin(){
+  loadData();updateClock();
+  setInterval(updateClock,1000);
+  setInterval(()=>{loadData();renderLog();},5000);
+  renderLog();startCamera();
+}
+
+window.addEventListener('load',()=>{
+  // Firebase moduleが先にデータを読み込む場合はそちらからinitCheckinが呼ばれる
+  // Firebase未接続の場合のフォールバック
+  setTimeout(()=>{
+    if(typeof window.fbDb === 'undefined') initCheckin();
+  }, 2000);
+});
+</script>
+</body>
+</html>
