@@ -1171,6 +1171,78 @@
                 animation: ambisTaglineFade 0.6s ease 1.0s both;
             }
         }
+
+        /* ===== NEW HERO (2026-10 改善版) ===== */
+        #hero.nh { display:block; height:auto; min-height:0; background: var(--cream); padding: 150px 0 72px; }
+        .nh-inner { max-width: 1180px; margin: 0 auto; padding: 0 48px; display: grid; grid-template-columns: 1.08fr .92fr; gap: 64px; align-items: center; }
+        .nh-eyebrow { font-size: 13px; font-weight: 700; color: var(--gold); letter-spacing: .08em; display:flex; align-items:center; gap:12px; margin-bottom: 18px; }
+        .nh-eyebrow::before { content:''; width:28px; height:1px; background: var(--gold); }
+        .nh-title { font-size: clamp(30px, 4.2vw, 50px); font-weight: 800; line-height: 1.35; color: var(--navy); letter-spacing: .02em; margin-bottom: 18px; }
+        .nh-lead { font-size: 16px; line-height: 1.95; color: #3d4350; margin-bottom: 30px; }
+        .nh-cta { display:flex; align-items:center; gap: 18px; }
+        .nh-line { display:inline-flex; flex-direction:column; align-items:center; justify-content:center; background:#06C755; color:#fff !important; text-decoration:none; border-radius: 12px; padding: 16px 28px 14px; box-shadow: 0 8px 22px rgba(6,199,85,.28); transition: var(--transition); min-width: 340px; }
+        .nh-line:hover { background:#05b34c; transform: translateY(-2px); }
+        .nh-line-main { display:flex; align-items:center; gap:10px; font-size: 18px; font-weight: 800; letter-spacing: .04em; }
+        .nh-line-sub { font-size: 12.5px; margin-top: 5px; opacity: .96; }
+        .nh-line-sub s { opacity: .8; }
+        .nh-line-sm { min-width: 0; padding: 15px 34px; }
+        .nh-qr { display:flex; flex-direction:column; align-items:center; gap:4px; }
+        .nh-qr img { width: 92px; height: 92px; background:#fff; padding:6px; border-radius:8px; border:1px solid #e3dccb; }
+        .nh-qr span { font-size: 10.5px; color: var(--text-muted); letter-spacing:.04em; }
+        .nh-micro { font-size: 12px; color: var(--text-muted); margin-top: 10px; }
+        .nh-ghost { display:inline-block; margin-top: 18px; font-size: 14px; font-weight: 700; color: var(--navy); border-bottom: 1px solid var(--navy); padding-bottom: 2px; text-decoration:none; }
+        .nh-chips { list-style:none; display:flex; flex-wrap:wrap; gap:8px; margin: 22px 0 0; padding:0; }
+        .nh-chips li { background:#fff; border:1px solid #e3dccb; border-radius:999px; padding:7px 14px; font-size:12.5px; font-weight:700; color: var(--navy); }
+        .nh-chips li::before { content:'✓ '; color: var(--gold); }
+        .nh-brand { margin-top: 28px; font-size: 11px; letter-spacing: .3em; color: var(--gold); }
+        .nh-brand span { display:block; margin-top: 6px; letter-spacing: .08em; font-size: 13px; color: var(--navy); }
+        .nh-photo { position: relative; }
+        .nh-photo img { width:100%; height:auto; aspect-ratio: 4/5; object-fit: cover; object-position: center 10%; border-radius: 16px; display:block; }
+        .nh-badge { position:absolute; top:16px; right:16px; background: var(--navy); color:#fff; border-radius: 10px; padding: 10px 14px; text-align:center; font-size: 10px; letter-spacing: .14em; line-height:1.3; }
+        .nh-badge strong { display:block; font-size: 26px; color: var(--gold); letter-spacing: .02em; line-height:1.15; }
+        .nh-cap { position:absolute; left:16px; bottom:16px; background: rgba(255,255,255,.95); border-radius: 10px; padding: 10px 14px; font-size: 13px; line-height: 1.55; color: var(--navy); box-shadow: 0 4px 16px rgba(0,0,0,.12); }
+        .nh-cap b { display:block; font-size: 14px; }
+        .nh-photo-sp { display:none; }
+        .pc-br { display:inline; }
+        /* steps */
+        #steps { background:#fff; padding: 76px 0 80px; }
+        .nh-sec-label { text-align:center; font-size: 11px; letter-spacing: .24em; color: var(--gold); font-weight:700; }
+        .nh-sec-title { text-align:center; font-size: clamp(22px, 2.6vw, 28px); font-weight: 800; color: var(--navy); margin: 8px 0 36px; }
+        .nh-steps { list-style:none; padding:0; margin: 0 auto; max-width: 980px; display:grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+        .nh-steps li { background: var(--cream); border-radius: 14px; padding: 26px 22px; display:flex; gap: 14px; align-items:flex-start; }
+        .nh-num { flex: 0 0 40px; height: 40px; border-radius: 50%; background: var(--navy); color: var(--gold); display:flex; align-items:center; justify-content:center; font-weight: 800; font-size: 17px; }
+        .nh-steps h3 { font-size: 16px; color: var(--navy); margin-bottom: 6px; font-weight: 800; }
+        .nh-steps p { font-size: 13px; line-height: 1.8; color: #4b5160; margin:0; }
+        .nh-steps-cta { text-align:center; margin-top: 32px; }
+        /* concept: logo animation */
+        .concept-logo { display:flex; align-items:center; justify-content:center; min-height: 420px; }
+        .concept-logo .ambis-hero-logo .logo-area { width: clamp(200px, 26vw, 320px); }
+        /* nav: solid navy on light hero */
+        #navbar { background: var(--navy); }
+        /* nav: avoid wrapping on mid widths */
+        .nav-links a { white-space: nowrap; }
+        @media (max-width: 1140px) {
+            .nav-links { display: none; }
+            .nav-hamburger { display: flex; }
+        }
+        @media (max-width: 960px) {
+            .nh-inner { grid-template-columns: 1fr; gap: 0; padding: 0 22px; }
+            .nh-photo-pc { display:none; }
+            .nh-photo-sp { display:block; margin: 4px 0 22px; }
+            .nh-photo-sp img { aspect-ratio: 1/1; object-position: center 12%; }
+            #hero.nh { padding: 112px 0 48px; }
+            .nh-qr { display:none !important; }
+            .nh-cta { display:block; }
+            .nh-line { display:flex; width:100%; min-width:0; padding: 15px 12px 13px; }
+            .nh-line-main { font-size: 17px; }
+            .nh-micro { text-align:center; }
+            .nh-ghost { display:block; text-align:center; border:1.5px solid var(--navy); border-radius: 12px; padding: 12px; margin-top: 14px; }
+            .nh-brand { text-align:center; }
+            .pc-br { display:none; }
+            .nh-steps { grid-template-columns: 1fr; gap: 12px; }
+            #steps { padding: 56px 0 60px; }
+            .concept-logo { min-height: 0; padding: 20px 0; }
+        }
     </style>
 
 </head>
@@ -1179,7 +1251,7 @@
 <!-- ===== OPENING SOON BAR ===== -->
 <div id="cd-bar">
     <span class="cd-soon">OPENING SOON · <em class="cd-autumn">2026.11.22</em></span>
-    <a href="#trial" class="cd-cta">先行登録 →</a>
+    <a href="https://lin.ee/67nT6Qw2" target="_blank" rel="noopener" class="cd-cta" data-ga-event="line_click" data-ga-location="cd_bar" data-ga-text="体験予約">体験予約 →</a>
 </div>
 
 <!-- ===== NAVBAR ===== -->
@@ -1192,14 +1264,12 @@
         </a>
         <ul class="nav-links">
             <li><a href="#concept">AMBIsとは</a></li>
-            <li><a href="bjj.html">柔術とは？</a></li>
             <li><a href="#instructor">代表紹介</a></li>
             <li><a href="#class">クラス</a></li>
             <li><a href="#membership">料金・入会</a></li>
             <li><a href="#faq">よくある質問</a></li>
             <li><a href="#access">アクセス</a></li>
-            <li><a href="manners.html">道場マナー</a></li>
-            <li><a href="#trial" class="nav-cta">先行登録・お問い合わせ</a></li>
+            <li><a href="https://lin.ee/67nT6Qw2" target="_blank" rel="noopener" class="nav-cta" data-ga-event="line_click" data-ga-location="nav" data-ga-text="LINEで体験予約">LINEで体験予約</a></li>
         </ul>
         <button class="nav-hamburger" id="hamburger" onclick="toggleNav()" aria-label="メニューを開く" aria-expanded="false">
             <span></span><span></span><span></span>
@@ -1218,71 +1288,57 @@
     <a href="#faq"        onclick="toggleNav()">よくある質問</a>
     <a href="#access"     onclick="toggleNav()">アクセス</a>
     <a href="manners.html" onclick="toggleNav()">道場マナー</a>
-    <a href="#trial"      onclick="toggleNav()" style="color:var(--gold);">先行登録・お問い合わせ →</a>
+    <a href="#trial"      onclick="toggleNav()">お問い合わせ</a>
+    <a href="https://lin.ee/67nT6Qw2" target="_blank" rel="noopener" onclick="toggleNav()" style="color:var(--gold);" data-ga-event="line_click" data-ga-location="mobile_nav" data-ga-text="LINEで体験予約">LINEで体験予約 →</a>
 </div>
 
 <!-- ===== HERO ===== -->
-<section id="hero">
-    <!-- Left: dark navy with display title -->
-    <div class="hero-left">
-        <h1 class="hero-eyebrow">ブラジリアン柔術道場 ／ 熊本市水前寺 — AMBIs Jiu-Jitsu Academy</h1>
-        <p class="hero-display" aria-label="LIFE WITH JIU-JITSU" role="presentation">LIFE<br>WITH<br>JIU-<br>JITSU</p>
-        <p class="hero-desc">
-            週末だけでいい。汗をかいて、笑って、仲間に出会う——<br>
-            それだけで、月曜日の景色が変わり始める。<br>
-            2026年11月22日、熊本市水前寺にグランドオープン。
-        </p>
-        <div class="hero-buttons">
-            <a href="https://lin.ee/67nT6Qw2" target="_blank" rel="noopener" class="btn btn-primary" data-ga-event="line_click" data-ga-location="hero" data-ga-text="LINEで先行登録する">LINEで先行登録する</a>
-            <a href="experience.html" class="btn btn-outline" data-ga-event="cta_click" data-ga-location="hero" data-ga-text="無料体験の流れを見る">無料体験の流れを見る</a>
-        </div>
-        <div style="display:flex;gap:20px;justify-content:center;flex-wrap:wrap;margin-top:16px;">
-            <span style="font-size:12px;color:rgba(255,255,255,0.62);letter-spacing:0.06em;">✓ 先着25名・入会金無料</span>
-            <span style="font-size:12px;color:rgba(255,255,255,0.62);letter-spacing:0.06em;">✓ 土日クラス・週末だけでOK</span>
-            <span style="font-size:12px;color:rgba(255,255,255,0.62);letter-spacing:0.06em;">✓ 大人から、未経験から</span>
-        </div>
-    </div>
+<section id="hero" class="nh">
+    <div class="nh-inner">
+        <div class="nh-text">
+            <p class="nh-eyebrow">熊本・水前寺のブラジリアン柔術道場 AMBIs</p>
+            <h1 class="nh-title">大人から始める、<br>ブラジリアン柔術。</h1>
+            <p class="nh-lead">週末だけでいい。運動が久しぶりの方も、<br class="pc-br">未経験の方も、ここから一緒に。</p>
 
-    <!-- Right: cream with logo -->
-    <div class="hero-right">
-        <div class="ambis-hero-logo" id="ambisHeroLogo">
-            <div class="logo-col">
-                <div class="logo-area">
-          <img src="logo.svg" alt="AMBIs Jiu-Jitsu Academy" class="mobile-logo-png">
-          <svg class="logo-svg" viewBox="363 75 464 603" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <clipPath id="logoClip"><path id="logoClipPath" fill-rule="evenodd"/></clipPath>
-              <linearGradient id="sheenGradient" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stop-color="var(--gold-light)" stop-opacity="0"/>
-                <stop offset="48%" stop-color="var(--gold-light)" stop-opacity="0"/>
-                <stop offset="50%" stop-color="#fff3da" stop-opacity="0.95"/>
-                <stop offset="52%" stop-color="var(--gold-light)" stop-opacity="0"/>
-                <stop offset="100%" stop-color="var(--gold-light)" stop-opacity="0"/>
-              </linearGradient>
-            </defs>
-            <g id="strokeGroup"></g>
-            <path id="fillPath" fill-rule="evenodd"/>
-            <g clip-path="url(#logoClip)">
-              <rect id="sheenRect" class="sheen-rect" x="-700" y="-700" width="2779" height="2152"/>
-            </g>
-          </svg>
-                </div>
-        <div class="tagline" id="tagline">
-          <div class="en">Life With Jiu-Jitsu</div>
-          <div class="jp">人生に、柔術を。</div>
-        </div>
+            <div class="nh-photo nh-photo-sp">
+                <img src="instructor-hero.jpg" alt="代表インストラクター 志水抄太" width="1000" height="1250">
+                <div class="nh-badge"><span>GRAND OPEN</span><strong>11.22</strong><span>SUN</span></div>
+                <div class="nh-cap"><b>代表が、直接教えます。</b>志水 抄太（黒帯）</div>
             </div>
+
+            <div class="nh-cta">
+                <a href="https://lin.ee/67nT6Qw2" target="_blank" rel="noopener" class="nh-line" data-ga-event="line_click" data-ga-location="hero" data-ga-text="LINEで体験予約">
+                    <span class="nh-line-main"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="flex-shrink:0;"><path d="M12 2C6.477 2 2 6.07 2 11.1c0 2.652 1.228 5.025 3.168 6.67l-.52 3.49a.4.4 0 0 0 .574.42l3.893-2.05A11.3 11.3 0 0 0 12 20.2c5.523 0 10-4.07 10-9.1S17.523 2 12 2z"/></svg>LINEで体験を予約する</span>
+                    <span class="nh-line-sub">LINE登録で入会金 <s>¥11,000</s> → 無料｜先着25名・残り<span id="heroRemaining">15</span>名</span>
+                </a>
+                <div class="nh-qr" aria-hidden="true"><img src="https://qr-official.line.me/gs/M_864owaex_GW.png?oat_content=qr" alt="" onerror="this.parentNode.style.display='none'"><span>スマホで読み取り</span></div>
+            </div>
+            <p class="nh-micro">勧誘はしません。LINEのブロックもいつでもOKです。</p>
+            <a href="experience.html" class="nh-ghost" data-ga-event="cta_click" data-ga-location="hero" data-ga-text="無料体験の流れを見る">無料体験の流れを見る →</a>
+            <ul class="nh-chips"><li>土日クラス中心</li><li>手ぶらでOK</li><li>未経験の大人がメイン</li></ul>
+            <p class="nh-brand">LIFE WITH JIU-JITSU<span>人生に、柔術を。</span></p>
         </div>
-        <div class="hero-open-badge">
-            <span class="badge-sub">GRAND OPEN</span>
-            <div class="badge-main">11.22</div>
-            <span class="badge-year">2026</span>
+        <div class="nh-photo nh-photo-pc">
+            <img src="instructor-hero.jpg" alt="代表インストラクター 志水抄太" width="1000" height="1250">
+            <div class="nh-badge"><span>GRAND OPEN</span><strong>11.22</strong><span>SUN</span></div>
+            <div class="nh-cap"><b>代表が、直接教えます。</b>志水 抄太（黒帯）</div>
         </div>
     </div>
+</section>
 
-    <div class="hero-scroll">
-        <div class="hero-scroll-line"></div>
-        <span>SCROLL</span>
+<!-- ===== FOR BEGINNERS: 3 STEPS ===== -->
+<section id="steps">
+    <div class="container">
+        <p class="nh-sec-label">FOR BEGINNERS</p>
+        <h2 class="nh-sec-title">はじめての方へ、3ステップ</h2>
+        <ol class="nh-steps">
+            <li><span class="nh-num">1</span><div><h3>LINEを友だち追加</h3><p>友だち追加だけで先行登録の対象に。入会金（¥11,000）が無料になります。</p></div></li>
+            <li><span class="nh-num">2</span><div><h3>体験の日を予約</h3><p>土日のクラスから、ご都合のよい日をLINEでお知らせください。</p></div></li>
+            <li><span class="nh-num">3</span><div><h3>手ぶらで道場へ</h3><p>体験は道着を無料でお貸しします。タオルも道場で販売しているので、運動できる服があれば大丈夫です。</p></div></li>
+        </ol>
+        <div class="nh-steps-cta">
+            <a href="https://lin.ee/67nT6Qw2" target="_blank" rel="noopener" class="nh-line nh-line-sm" data-ga-event="line_click" data-ga-location="steps" data-ga-text="LINEで体験予約"><span class="nh-line-main"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="flex-shrink:0;"><path d="M12 2C6.477 2 2 6.07 2 11.1c0 2.652 1.228 5.025 3.168 6.67l-.52 3.49a.4.4 0 0 0 .574.42l3.893-2.05A11.3 11.3 0 0 0 12 20.2c5.523 0 10-4.07 10-9.1S17.523 2 12 2z"/></svg>LINEで体験を予約する</span></a>
+        </div>
     </div>
 </section>
 
@@ -1327,7 +1383,7 @@
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0;"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63.349 0 .631.285.631.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.281.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
                 LINEで友だち追加して登録する
             </a>
-            <p class="prereg-note">LINEで友だち追加後、「先行登録希望」とメッセージを送ってください。<br>開業情報・体験申込の優先案内をいち早くお届けします。</p>
+            <p class="prereg-note">LINEで友だち追加後、「先行登録希望」とメッセージを送ってください。<br>体験のご予約も、そのままLINEで受け付けています。</p>
             <p style="margin-top:14px;font-size:12px;color:rgba(255,255,255,0.62);letter-spacing:0.05em;">
                 ✦ &nbsp;LINE登録後すぐに<a href="app.html" style="color:rgba(200,167,105,0.7);text-decoration:underline;text-underline-offset:2px;">会員アプリのデモ版</a>を体験できます
             </p>
@@ -1339,12 +1395,35 @@
 <section id="concept" class="section-padding" style="overflow-x:hidden;">
     <div class="container">
         <div class="concept-grid">
-            <!-- Visual -->
-            <div class="concept-visual fi">
-                <div class="cv-main"></div>
-                <div class="cv-accent">
-                    <span class="num">2026</span>
-                    <span class="lbl">GRAND OPEN · 11.22</span>
+            <!-- Visual: logo animation (moved from hero) -->
+            <div class="concept-logo fi">
+                <div class="ambis-hero-logo" id="ambisHeroLogo">
+                    <div class="logo-col">
+                        <div class="logo-area">
+                            <img src="logo.svg" alt="AMBIs Jiu-Jitsu Academy" class="mobile-logo-png">
+                            <svg class="logo-svg" viewBox="363 75 464 603" xmlns="http://www.w3.org/2000/svg">
+                                <defs>
+                                    <clipPath id="logoClip"><path id="logoClipPath" fill-rule="evenodd"/></clipPath>
+                                    <linearGradient id="sheenGradient" x1="0" y1="0" x2="1" y2="1">
+                                        <stop offset="0%" stop-color="var(--gold-light)" stop-opacity="0"/>
+                                        <stop offset="48%" stop-color="var(--gold-light)" stop-opacity="0"/>
+                                        <stop offset="50%" stop-color="#fff3da" stop-opacity="0.95"/>
+                                        <stop offset="52%" stop-color="var(--gold-light)" stop-opacity="0"/>
+                                        <stop offset="100%" stop-color="var(--gold-light)" stop-opacity="0"/>
+                                    </linearGradient>
+                                </defs>
+                                <g id="strokeGroup"></g>
+                                <path id="fillPath" fill-rule="evenodd"/>
+                                <g clip-path="url(#logoClip)">
+                                    <rect id="sheenRect" class="sheen-rect" x="-700" y="-700" width="2779" height="2152"/>
+                                </g>
+                            </svg>
+                        </div>
+                        <div class="tagline" id="tagline">
+                            <div class="en">Life With Jiu-Jitsu</div>
+                            <div class="jp">人生に、柔術を。</div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -1662,7 +1741,7 @@
             <h2 class="section-title white" style="margin-bottom:16px;">道場ができるまで</h2>
             <div class="section-divider center"></div>
             <p class="section-subtitle white gallery-sub" style="white-space:nowrap;margin:0 auto 0;">
-                80㎡のマットスペース＋更衣室・シャワー完備。シャワールームの工事が進み、内装は11月上旬に完成予定です。
+                80㎡のマットスペース＋更衣室・シャワー完備。シャワールームとトイレが完成し、内装は11月上旬に完成予定です。
             </p>
         </div>
         <div class="gallery-preview-grid fi">
@@ -1963,15 +2042,15 @@
             </a>
         </div>
         <div style="text-align:center;margin-top:40px;" class="fi">
-            <p style="font-size:15px;color:var(--text-muted);margin-bottom:20px;">疑問が解消されたら、次はLINEから先行登録を。</p>
+            <p style="font-size:15px;color:var(--text-muted);margin-bottom:20px;">疑問が解消されたら、LINEから体験のご予約を。</p>
             <a href="https://lin.ee/67nT6Qw2" target="_blank" rel="noopener"
                class="btn btn-navy"
                style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;max-width:360px;box-sizing:border-box;white-space:normal;margin:0 auto;text-align:center;"
-               data-ga-event="line_click" data-ga-location="faq" data-ga-text="LINEで先行登録する">
+               data-ga-event="line_click" data-ga-location="faq" data-ga-text="LINEで体験予約">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0;"><path d="M12 2C6.477 2 2 6.07 2 11.1c0 2.652 1.228 5.025 3.168 6.67l-.52 3.49a.4.4 0 0 0 .574.42l3.893-2.05A11.3 11.3 0 0 0 12 20.2c5.523 0 10-4.07 10-9.1S17.523 2 12 2z"/></svg>
-                LINEで先行登録する
+                LINEで体験を予約する
             </a>
-            <p style="font-size:12px;color:var(--text-muted);margin-top:10px;letter-spacing:0.04em;">先着25名・入会金無料 ／ 入会確約ではありません</p>
+            <p style="font-size:12px;color:var(--text-muted);margin-top:10px;letter-spacing:0.04em;">LINE登録で入会金無料（先着25名）／ 勧誘はしません</p>
         </div>
     </div>
 </section>
@@ -2421,7 +2500,17 @@
         }
     }
 </script>
-<script src="hero-logo-anim.js" defer></script>
+<script>
+// ロゴアニメーション：「AMBIsとは」が画面に入ったときに再生
+(function(){
+    var el = document.getElementById('ambisHeroLogo'); if (!el) return;
+    var loaded = false;
+    function load(){ if (loaded) return; loaded = true; var sc = document.createElement('script'); sc.src = 'hero-logo-anim.js'; document.body.appendChild(sc); }
+    if (!('IntersectionObserver' in window)) { load(); return; }
+    var io = new IntersectionObserver(function(es){ es.forEach(function(e){ if (e.isIntersecting) { load(); io.disconnect(); } }); }, { threshold: 0.35 });
+    io.observe(el);
+})();
+</script>
 <script>
 // 先行登録カウンター
 // LINEで先行登録が入ったら REGISTERED の数字を更新するだけでOK
@@ -2441,6 +2530,7 @@
         var remaining = TOTAL - REGISTERED;
         var pct = Math.round((REGISTERED / TOTAL) * 100);
         if (numEl) numEl.textContent = remaining;
+        var heroRem = document.getElementById('heroRemaining'); if (heroRem) heroRem.textContent = remaining;
         if (barEl) {
             // スクロールしてセクションが見えたらバーをアニメーション
             var observer = new IntersectionObserver(function(entries) {
@@ -2457,9 +2547,9 @@
 
 <!-- ===== LINE STICKY BAR (mobile) ===== -->
 <div id="line-sticky-bar">
-    <a href="https://lin.ee/67nT6Qw2" target="_blank" rel="noopener" class="line-sticky-link" data-ga-event="line_click" data-ga-location="sticky" data-ga-text="LINEで先行登録">
+    <a href="https://lin.ee/67nT6Qw2" target="_blank" rel="noopener" class="line-sticky-link" data-ga-event="line_click" data-ga-location="sticky" data-ga-text="LINEで体験予約">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="white" aria-hidden="true"><path d="M12 2C6.477 2 2 6.07 2 11.1c0 2.652 1.228 5.025 3.168 6.67l-.52 3.49a.4.4 0 0 0 .574.42l3.893-2.05A11.3 11.3 0 0 0 12 20.2c5.523 0 10-4.07 10-9.1S17.523 2 12 2z"/></svg>
-        <span>LINEで先行登録 <em>— 入会金無料</em></span>
+        <span>LINEで体験予約 <em>— 入会金無料</em></span>
     </a>
     <button id="line-sticky-close" aria-label="閉じる">✕</button>
 </div>
