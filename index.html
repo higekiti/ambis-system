@@ -348,7 +348,7 @@
             .nav-logo-sub { display: none; }
         }
         .nav-links {
-            display: flex; align-items: center; gap: 32px;
+            display: flex; align-items: center; gap: 24px;
         }
         .nav-links a {
             font-size: 13px; font-weight: 400;
@@ -1214,6 +1214,22 @@
         .nh-steps h3 { font-size: 16px; color: var(--navy); margin-bottom: 6px; font-weight: 800; }
         .nh-steps p { font-size: 13px; line-height: 1.8; color: #4b5160; margin:0; }
         .nh-steps-cta { text-align:center; margin-top: 32px; }
+        /* about bjj */
+        #about-bjj { background: var(--cream-dark); padding: 72px 0 76px; }
+        .nh-bjj-lead { text-align:center; font-size: 15px; line-height: 1.9; color: #4b5160; margin: -20px auto 32px; max-width: 640px; }
+        .nh-bjj { list-style:none; padding:0; margin: 0 auto; max-width: 980px; display:grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+        .nh-bjj li { background:#fff; border-radius: 14px; padding: 26px 24px; }
+        .nh-bjj h3 { font-size: 16px; color: var(--navy); margin-bottom: 8px; font-weight: 800; }
+        .nh-bjj h3::before { content:''; display:inline-block; width: 18px; height: 2px; background: var(--gold); vertical-align: middle; margin-right: 10px; }
+        .nh-bjj p { font-size: 13px; line-height: 1.8; color: #4b5160; margin:0; }
+        .nh-bjj-more { text-align:center; margin-top: 30px; }
+        .nh-bjj-more a { display:inline-block; font-size: 14px; font-weight: 700; color: var(--navy); border:1.5px solid var(--navy); border-radius: 12px; padding: 12px 28px; text-decoration:none; transition: var(--transition); }
+        .nh-bjj-more a:hover { background: var(--navy); color: #fff; }
+        @media (max-width: 960px) {
+            #about-bjj { padding: 56px 0 60px; }
+            .nh-bjj { grid-template-columns: 1fr; gap: 12px; }
+            .nh-bjj-lead { margin-top: -16px; text-align:left; }
+        }
         /* concept: logo animation */
         .concept-logo { display:flex; align-items:center; justify-content:center; min-height: 420px; }
         .concept-logo .ambis-hero-logo .logo-area { width: clamp(200px, 26vw, 320px); }
@@ -1221,7 +1237,7 @@
         #navbar { background: var(--navy); }
         /* nav: avoid wrapping on mid widths */
         .nav-links a { white-space: nowrap; }
-        @media (max-width: 1140px) {
+        @media (max-width: 1280px) {
             .nav-links { display: none; }
             .nav-hamburger { display: flex; }
         }
@@ -1264,11 +1280,14 @@
         </a>
         <ul class="nav-links">
             <li><a href="#concept">AMBIsとは</a></li>
+            <li><a href="bjj.html">柔術とは？</a></li>
             <li><a href="#instructor">代表紹介</a></li>
             <li><a href="#class">クラス</a></li>
             <li><a href="#membership">料金・入会</a></li>
             <li><a href="#faq">よくある質問</a></li>
             <li><a href="#access">アクセス</a></li>
+            <li><a href="manners.html">道場マナー</a></li>
+            <li><a href="#trial">お問い合わせ</a></li>
             <li><a href="https://lin.ee/67nT6Qw2" target="_blank" rel="noopener" class="nav-cta" data-ga-event="line_click" data-ga-location="nav" data-ga-text="LINEで体験予約">LINEで体験予約</a></li>
         </ul>
         <button class="nav-hamburger" id="hamburger" onclick="toggleNav()" aria-label="メニューを開く" aria-expanded="false">
@@ -1323,6 +1342,21 @@
             <div class="nh-badge"><span>GRAND OPEN</span><strong>11.22</strong><span>SUN</span></div>
             <div class="nh-cap"><b>代表が、直接教えます。</b>志水 抄太（黒帯）</div>
         </div>
+    </div>
+</section>
+
+<!-- ===== ABOUT BJJ ===== -->
+<section id="about-bjj">
+    <div class="container">
+        <p class="nh-sec-label">WHAT IS BJJ?</p>
+        <h2 class="nh-sec-title">ブラジリアン柔術とは？</h2>
+        <p class="nh-bjj-lead">パンチもキックもない、組み技の格闘スポーツです。<br class="pc-br">相手を押さえ込む・関節を極める・締める技術で競います。</p>
+        <ul class="nh-bjj">
+            <li><h3>打撃なしで安心</h3><p>パンチ・キックが一切ないルール。怪我のリスクが低く、仕事に支障なく続けられます。</p></li>
+            <li><h3>体力より技術</h3><p>大切なのは筋力より「頭の使い方」。運動歴ゼロからでも大丈夫。歳を重ねるほど深みが出ます。</p></li>
+            <li><h3>年齢・性別を問わず</h3><p>男女も年代も関係なく、同じマットで練習します。職場や家庭とは違う、フラットな関係が生まれます。</p></li>
+        </ul>
+        <div class="nh-bjj-more"><a href="bjj.html">柔術についてもっと知る →</a></div>
     </div>
 </section>
 
@@ -2319,8 +2353,10 @@
             <div class="f-col">
                 <h4>Info</h4>
                 <ul>
+                    <li><a href="bjj.html">柔術とは？</a></li>
                     <li><a href="experience.html">体験の流れ</a></li>
                     <li><a href="faq.html">よくある質問</a></li>
+                    <li><a href="manners.html">道場マナー</a></li>
                     <li><a href="app.html">会員アプリ</a></li>
                     <li><a href="gallery.html">ギャラリー</a></li>
                     <li><a href="#trial">お問い合わせ</a></li>
