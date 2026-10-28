@@ -2291,6 +2291,68 @@
                 </div>
             </div>
         </div>
+        <!-- ===== ROUTE MOVIE（道順動画） ===== -->
+        <style>
+            .rm { margin-top: 72px; background: var(--navy-dark); border-radius: 20px; padding: 56px 48px; display: grid; grid-template-columns: auto 1fr; gap: 56px; align-items: center; position: relative; overflow: hidden; }
+            .rm::before { content:''; position:absolute; width:520px; height:520px; left:-120px; top:50%; transform:translateY(-50%); background: radial-gradient(circle, rgba(200,167,105,0.07) 0%, transparent 65%); pointer-events:none; }
+            .rm-phone { width: 270px; height: 480px; background:#111827; border-radius: 38px; border: 9px solid #243352; box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 30px 80px rgba(0,0,0,0.55), 0 0 60px rgba(200,167,105,0.06); position: relative; overflow: hidden; transform: perspective(900px) rotateY(-10deg) rotateX(3deg); transition: transform .7s cubic-bezier(.23,1,.32,1); z-index:1; }
+            .rm-phone:hover { transform: perspective(900px) rotateY(-2deg) rotateX(1deg); }
+            .rm-phone::before { content:''; position:absolute; top:0; left:50%; transform:translateX(-50%); width:84px; height:20px; background:#111827; border-radius:0 0 12px 12px; z-index:3; pointer-events:none; }
+            .rm-phone video { width:100%; height:100%; object-fit: cover; display:block; background:#0b1e38; }
+            .rm-body { position: relative; z-index: 1; }
+            .rm-eyebrow { font-size: 11px; letter-spacing: .24em; color: var(--gold); font-weight: 700; display:flex; align-items:center; gap:10px; margin-bottom: 14px; }
+            .rm-eyebrow::before { content:''; width:24px; height:1px; background: var(--gold); }
+            .rm-title { font-size: clamp(22px, 2.6vw, 28px); color: var(--cream); font-weight: 800; line-height: 1.5; margin-bottom: 12px; }
+            .rm-desc { font-size: 13px; line-height: 1.9; color: rgba(245,240,232,0.62); margin-bottom: 28px; }
+            .rm-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 460px; }
+            .rm-tab { text-align:left; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); color: var(--cream); padding: 14px 16px; border-radius: 12px; cursor: pointer; font: inherit; transition: var(--transition); }
+            .rm-tab:hover { border-color: rgba(200,167,105,0.5); }
+            .rm-tab b { display:block; font-size: 14px; font-weight: 700; letter-spacing: .02em; }
+            .rm-tab span { display:block; font-size: 12px; color: rgba(245,240,232,0.55); margin-top: 3px; }
+            .rm-tab.is-active { background: rgba(200,167,105,0.12); border-color: var(--gold); }
+            .rm-tab.is-active span { color: var(--gold); }
+            @media (max-width: 960px) {
+                .rm { grid-template-columns: 1fr; padding: 44px 22px 36px; gap: 32px; justify-items: center; text-align: center; }
+                .rm-phone { width: 234px; height: 416px; transform: none; }
+                .rm-phone:hover { transform: none; }
+                .rm-eyebrow { justify-content: center; }
+                .rm-eyebrow::before { display:none; }
+                .rm-tabs { margin: 0 auto; width: 100%; }
+            }
+        </style>
+        <div class="rm fi" id="route-movie">
+            <div class="rm-phone">
+                <video id="rmVideo" controls playsinline preload="none"
+                       poster="files/access-jr-shinsuizenji.jpg" src="files/access-jr-shinsuizenji.mp4"
+                       aria-label="JR新水前寺駅からAMBIsまでの道順動画"></video>
+            </div>
+            <div class="rm-body">
+                <p class="rm-eyebrow">ROUTE MOVIE</p>
+                <h3 class="rm-title">駅から入口まで、<br>動画でご案内します。</h3>
+                <p class="rm-desc">はじめて来られる方も迷わないように。<br>使う駅・電停・バス停を選んでください。</p>
+                <div class="rm-tabs" role="tablist">
+                    <button type="button" class="rm-tab is-active" data-v="access-jr-shinsuizenji" data-l="JR新水前寺駅"><b>JR新水前寺駅</b><span>徒歩 約3分</span></button>
+                    <button type="button" class="rm-tab" data-v="access-tram" data-l="市電「新水前寺駅前」"><b>市電「新水前寺駅前」</b><span>徒歩 約2分</span></button>
+                    <button type="button" class="rm-tab" data-v="access-bus" data-l="バス「水前寺駅通り」"><b>バス「水前寺駅通り」</b><span>徒歩 約1分</span></button>
+                    <button type="button" class="rm-tab" data-v="access-jr-suizenji" data-l="JR水前寺駅"><b>JR水前寺駅</b><span>徒歩 約5分</span></button>
+                </div>
+            </div>
+        </div>
+        <script>
+        (function(){
+            var v = document.getElementById('rmVideo'); if (!v) return;
+            document.querySelectorAll('#route-movie .rm-tab').forEach(function(b){
+                b.addEventListener('click', function(){
+                    document.querySelectorAll('#route-movie .rm-tab').forEach(function(x){ x.classList.remove('is-active'); });
+                    b.classList.add('is-active');
+                    var n = b.getAttribute('data-v');
+                    v.pause(); v.setAttribute('poster', 'files/' + n + '.jpg'); v.src = 'files/' + n + '.mp4';
+                    v.setAttribute('aria-label', b.getAttribute('data-l') + 'からAMBIsまでの道順動画');
+                    v.load(); v.play().catch(function(){});
+                });
+            });
+        })();
+        </script>
     </div>
 </section>
 
