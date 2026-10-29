@@ -7,6 +7,20 @@
     <meta name="robots" content="index,follow">
     <title>道場ができるまで・設備紹介｜熊本・水前寺のブラジリアン柔術 AMBIs</title>
     <meta name="description" content="AMBIs Jiu-Jitsu Academy（熊本市水前寺）の道場工事の様子と設備紹介。80㎡のマットスペース、更衣室・シャワー完備。2026年11月22日グランドオープン。">
+    <link rel="canonical" href="https://ambis-jj.com/gallery.html">
+    <meta property="og:title" content="道場ができるまで・設備紹介｜熊本・水前寺のブラジリアン柔術 AMBIs">
+    <meta property="og:description" content="AMBIs Jiu-Jitsu Academy（熊本市水前寺）の道場工事の様子と設備紹介。80㎡のマットスペース、更衣室・シャワー完備。2026年11月22日グランドオープン。">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ambis-jj.com/gallery.html">
+    <meta property="og:image" content="https://ambis-jj.com/ogp.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="AMBIs Jiu-Jitsu Academy">
+    <meta property="og:locale" content="ja_JP">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="道場ができるまで・設備紹介｜熊本・水前寺のブラジリアン柔術 AMBIs">
+    <meta name="twitter:description" content="AMBIs Jiu-Jitsu Academy（熊本市水前寺）の道場工事の様子と設備紹介。80㎡のマットスペース、更衣室・シャワー完備。2026年11月22日グランドオープン。">
+    <meta name="twitter:image" content="https://ambis-jj.com/ogp.png">
     <!-- Favicon -->
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -728,5 +742,21 @@
     </div>
 </footer>
 
+<!-- 計測：LINE・電話クリック（GA4） -->
+<script>
+(function(){
+    if (typeof gtag !== 'function') return;
+    var page = location.pathname.replace(/^\/|\.html$/g, '') || 'top';
+    document.addEventListener('click', function(e){
+        var a = e.target.closest ? e.target.closest('a') : null; if (!a) return;
+        var h = a.getAttribute('href') || '';
+        if (h.indexOf('lin.ee') > -1 || h.indexOf('line.me') > -1) {
+            gtag('event', 'line_click', { cta_location: page, cta_text: (a.textContent || '').trim().slice(0, 40), link_destination: h });
+        } else if (h.indexOf('tel:') === 0) {
+            gtag('event', 'phone_click', { cta_location: page });
+        }
+    }, true);
+})();
+</script>
 </body>
 </html>

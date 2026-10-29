@@ -6,6 +6,7 @@
     <meta name="color-scheme" content="light">
     <title>ブラジリアン柔術とは？｜熊本・水前寺の柔術道場 AMBIs Jiu-Jitsu Academy</title>
     <meta name="description" content="ブラジリアン柔術とはどんなスポーツ？特徴・魅力・始め方・道着・ベルトのことまで、初心者にわかりやすく解説します。">
+    <link rel="canonical" href="https://ambis-jj.com/bjj.html">
     <!-- OGP / SNS シェア用 -->
     <meta property="og:title" content="ブラジリアン柔術とは？ | AMBIs Jiu-Jitsu Academy">
     <meta property="og:description" content="「格闘技は怖そう」「体力がない」——そんな不安を持つ方へ。柔術は、あなたが思っているものとは少し違います。">
@@ -263,7 +264,7 @@
         <div class="bjj-faq">
             <div class="bjj-faq-item">
                 <div class="bjj-faq-q">道着（柔術衣）は最初から必要ですか？</div>
-                <div class="bjj-faq-a">AMBIsでは体験・入会初期の方向けに道着レンタル（¥1,000）を用意しています。まずは手ぶらでお越しください。いずれ購入する場合は¥10,000〜¥30,000ほどで柔術専用のものが揃っています。何を選べばいいかは、お気軽にお尋ねください。</div>
+                <div class="bjj-faq-a">AMBIsでは、無料体験のときは道着・帯を無料でお貸ししています。通常のクラスでは道着＋帯のレンタル（¥1,000）もご用意しています。まずは手ぶらでお越しください。いずれ購入する場合は¥10,000〜¥30,000ほどで柔術専用のものが揃っています。何を選べばいいかは、お気軽にお尋ねください。</div>
             </div>
             <div class="bjj-faq-item">
                 <div class="bjj-faq-q">柔道や格闘技の経験がないと難しいですか？</div>
@@ -325,6 +326,22 @@
             }
         });
     });
+</script>
+<!-- 計測：LINE・電話クリック（GA4） -->
+<script>
+(function(){
+    if (typeof gtag !== 'function') return;
+    var page = location.pathname.replace(/^\/|\.html$/g, '') || 'top';
+    document.addEventListener('click', function(e){
+        var a = e.target.closest ? e.target.closest('a') : null; if (!a) return;
+        var h = a.getAttribute('href') || '';
+        if (h.indexOf('lin.ee') > -1 || h.indexOf('line.me') > -1) {
+            gtag('event', 'line_click', { cta_location: page, cta_text: (a.textContent || '').trim().slice(0, 40), link_destination: h });
+        } else if (h.indexOf('tel:') === 0) {
+            gtag('event', 'phone_click', { cta_location: page });
+        }
+    }, true);
+})();
 </script>
 </body>
 </html>

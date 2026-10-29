@@ -2944,5 +2944,19 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<!-- 計測：電話タップ・道順動画（GA4） -->
+<script>
+(function(){
+    if (typeof gtag !== 'function') return;
+    document.querySelectorAll('a[href^="tel:"]').forEach(function(a){
+        a.addEventListener('click', function(){ gtag('event', 'phone_click', { cta_location: 'top' }); });
+    });
+    var v = document.getElementById('rmVideo');
+    if (v) v.addEventListener('play', function(){
+        var t = document.querySelector('#route-movie .rm-tab.is-active');
+        gtag('event', 'route_video_play', { route: t ? t.getAttribute('data-v') : '' });
+    });
+})();
+</script>
 </body>
 </html>

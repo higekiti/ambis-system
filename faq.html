@@ -7,6 +7,20 @@
     <meta name="robots" content="index,follow">
     <title>よくある質問（全23問）｜熊本・水前寺のブラジリアン柔術 AMBIs Jiu-Jitsu Academy</title>
     <meta name="description" content="AMBIs Jiu-Jitsu Academyへのよくある質問。未経験・女性・体力なし・勧誘・道着・退会など、よくある23の疑問にお答えします。">
+    <link rel="canonical" href="https://ambis-jj.com/faq.html">
+    <meta property="og:title" content="よくある質問（全23問）｜熊本・水前寺のブラジリアン柔術 AMBIs Jiu-Jitsu Academy">
+    <meta property="og:description" content="AMBIs Jiu-Jitsu Academyへのよくある質問。未経験・女性・体力なし・勧誘・道着・退会など、よくある23の疑問にお答えします。">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ambis-jj.com/faq.html">
+    <meta property="og:image" content="https://ambis-jj.com/ogp.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="AMBIs Jiu-Jitsu Academy">
+    <meta property="og:locale" content="ja_JP">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="よくある質問（全23問）｜熊本・水前寺のブラジリアン柔術 AMBIs Jiu-Jitsu Academy">
+    <meta name="twitter:description" content="AMBIs Jiu-Jitsu Academyへのよくある質問。未経験・女性・体力なし・勧誘・道着・退会など、よくある23の疑問にお答えします。">
+    <meta name="twitter:image" content="https://ambis-jj.com/ogp.png">
     <!-- Favicon -->
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -418,6 +432,22 @@ function toggleFaq(el) {
     document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
     if (!isOpen) item.classList.add('open');
 }
+</script>
+<!-- 計測：LINE・電話クリック（GA4） -->
+<script>
+(function(){
+    if (typeof gtag !== 'function') return;
+    var page = location.pathname.replace(/^\/|\.html$/g, '') || 'top';
+    document.addEventListener('click', function(e){
+        var a = e.target.closest ? e.target.closest('a') : null; if (!a) return;
+        var h = a.getAttribute('href') || '';
+        if (h.indexOf('lin.ee') > -1 || h.indexOf('line.me') > -1) {
+            gtag('event', 'line_click', { cta_location: page, cta_text: (a.textContent || '').trim().slice(0, 40), link_destination: h });
+        } else if (h.indexOf('tel:') === 0) {
+            gtag('event', 'phone_click', { cta_location: page });
+        }
+    }, true);
+})();
 </script>
 </body>
 </html>

@@ -6,6 +6,7 @@
     <meta name="color-scheme" content="light">
     <title>代表プロフィール｜熊本・水前寺のブラジリアン柔術 AMBIs Jiu-Jitsu Academy</title>
     <meta name="description" content="AMBIs Jiu-Jitsu Academy 代表・志水抄太のプロフィール。柔道経験を経て33歳で柔術を始め、国際大会にも出場。熊本・水前寺に道場を開いた理由。">
+    <link rel="canonical" href="https://ambis-jj.com/instructor.html">
     <meta name="robots" content="index,follow">
     <!-- OGP -->
     <meta property="og:title" content="代表プロフィール | AMBIs Jiu-Jitsu Academy">
@@ -495,5 +496,21 @@
     </div>
 </footer>
 
+<!-- 計測：LINE・電話クリック（GA4） -->
+<script>
+(function(){
+    if (typeof gtag !== 'function') return;
+    var page = location.pathname.replace(/^\/|\.html$/g, '') || 'top';
+    document.addEventListener('click', function(e){
+        var a = e.target.closest ? e.target.closest('a') : null; if (!a) return;
+        var h = a.getAttribute('href') || '';
+        if (h.indexOf('lin.ee') > -1 || h.indexOf('line.me') > -1) {
+            gtag('event', 'line_click', { cta_location: page, cta_text: (a.textContent || '').trim().slice(0, 40), link_destination: h });
+        } else if (h.indexOf('tel:') === 0) {
+            gtag('event', 'phone_click', { cta_location: page });
+        }
+    }, true);
+})();
+</script>
 </body>
 </html>
