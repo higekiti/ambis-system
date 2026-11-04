@@ -1380,6 +1380,17 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
   <div class="modal">
     <div class="modal-header"><div class="modal-title" id="modal-trial-title">体験・ビジター登録</div><button class="modal-close" onclick="closeTrialModal()">×</button></div>
     <div class="modal-body">
+      <div class="form-row" id="tr-paste-wrap" style="background:#f7f8fb;border:1px dashed var(--border);border-radius:8px;padding:10px 12px;">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="toggleTrialPaste()">申込メールから自動入力</button>
+        <span style="font-size:10.5px;color:var(--text-muted);margin-left:6px;">HPの体験・出稽古フォームのメールを貼り付けると、下の欄が自動で埋まります</span>
+        <div id="tr-paste-box" style="display:none;margin-top:8px;">
+          <textarea id="tr-paste" style="min-height:120px;" placeholder="届いた申込メールの本文を、そのまま貼り付けてください"></textarea>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:6px;">
+            <button type="button" class="btn btn-primary btn-sm" onclick="applyTrialPaste()">読み取って入力</button>
+            <span id="tr-paste-msg" style="font-size:11px;color:var(--text-secondary);"></span>
+          </div>
+        </div>
+      </div>
       <div class="form-row"><label>種別 *</label>
         <select id="tr-type" onchange="toggleDojoLabel()">
           <option value="trial">体験</option>
@@ -1390,6 +1401,7 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
         <div><label>氏名 *</label><input type="text" id="tr-name" placeholder="山田 太郎"></div>
         <div><label>電話番号 *</label><input type="tel" id="tr-phone" placeholder="090-0000-0000"></div>
       </div>
+      <div class="form-row"><label>ふりがな</label><input type="text" id="tr-kana" placeholder="やまだ たろう"></div>
       <div class="form-row"><label>メールアドレス</label><input type="email" id="tr-email" placeholder="任意"></div>
       <div class="form-row"><label>来訪日 *</label><input type="date" id="tr-date" onchange="buildTrialClassOptions()"></div>
       <div class="form-row"><label>参加クラス</label>
@@ -1421,12 +1433,7 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
           </select>
         </div>
         <div><label>道着レンタル</label>
-          <select id="tr-gi">
-            <option value="">未定</option>
-            <option value="gi">要（道着＋帯 ¥1,000）</option>
-            <option value="belt">帯のみ（¥500）</option>
-            <option value="no">不要（持参）</option>
-          </select>
+          <select id="tr-gi" onchange="onTrialGiChange()"></select>
         </div>
       </div>
       <div class="form-row" id="tr-dojo-row"><label id="tr-dojo-label">所属道場（ビジターの場合）</label><input type="text" id="tr-dojo" placeholder="例：〇〇柔術アカデミー"></div>
@@ -1465,10 +1472,12 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
           <option value="no">入会しなかった</option>
         </select>
       </div>
+      <div class="form-row"><label>ケガ・持病など配慮すること</label><textarea id="tr-health" style="min-height:56px;" placeholder="例：右膝を以前ケガしている"></textarea></div>
       <div class="form-row"><label>備考</label><textarea id="tr-note" placeholder="印象・フォロー事項など"></textarea></div>
+      <div class="form-row" id="tr-free-row" style="display:none;font-size:12px;color:var(--text-secondary);background:#f3f6fb;border-radius:8px;padding:9px 12px;">体験は<strong>無料</strong>です（道着・帯の貸し出しも無料）。支払いリンクは不要です。</div>
       <div class="form-row" id="tr-fee-row" style="display:none;">
-        <label>体験費（円）</label>
-        <input type="number" id="tr-fee" placeholder="3000">
+        <label>ビジター料金（円）<span style="font-size:10px;color:var(--text-muted);margin-left:6px;">参加費¥3,300＋レンタル料（自動計算）</span></label>
+        <input type="number" id="tr-fee" placeholder="3300">
         <div style="margin-top:8px;">
           <button class="btn btn-ghost btn-sm" type="button" onclick="sendTrialPaymentLink()">支払いリンクを送る（当日現地QR）</button>
         </div>
@@ -2189,9 +2198,10 @@ async function sendGuestPaymentLink(type, docId, amount, description){
 }
 function sendTrialPaymentLink(){
   if(!editingTrialId){ showToast('保存後にお試しください'); return; }
-  const fee=parseInt(document.getElementById('tr-fee').value)||DEFAULT_TRIAL_FEE;
   const t=trialVisitors.find(x=>x.id===editingTrialId);
-  sendGuestPaymentLink('trial', editingTrialId, fee, (t?t.name+' さんの体験費':'体験費'));
+  if(document.getElementById('tr-type').value==='trial'){ showToast('体験は無料のため、支払いリンクは不要です'); return; }
+  const fee=parseInt(document.getElementById('tr-fee').value)||DEFAULT_TRIAL_FEE;
+  sendGuestPaymentLink('trial', editingTrialId, fee, (t?t.name+' さんのビジター料金':'ビジター料金'));
 }
 function toggleRentalPayLinkBtn(){
   const method=document.getElementById('rb-payment-method').value;
@@ -2791,14 +2801,134 @@ function toPosInt(v){ const n=parseInt(v,10); return (isFinite(n)&&n>0)?n:null; 
 const trialGenderLabel={male:'男性',female:'女性',none:'回答しない'};
 const trialExpLabel={none:'未経験',other:'他格闘技経験',bjj:'柔術経験あり'};
 const trialGiLabel={gi:'道着レンタル',belt:'帯のみレンタル',no:'道着持参'};
+const TRIAL_GI_RENT_FEE={gi:1000, belt:500, no:0, '':0};   // ビジターのレンタル料（体験は無料）
+function trialGiText(t){
+  if(!t.giRental) return '';
+  if(t.type==='trial') return t.giRental==='no'?'道着持参':'道着無料レンタル';
+  return trialGiLabel[t.giRental]||'';
+}
+// 種別に合わせて「道着レンタル」の選択肢と料金欄を切り替える
+function updateTrialGiOptions(keep){
+  const type=document.getElementById('tr-type').value;
+  const sel=document.getElementById('tr-gi');
+  if(keep===undefined) keep=sel.value;
+  const opts = type==='trial'
+    ? [['','未定'],['gi','要（体験は無料）'],['no','不要（持参）']]
+    : [['','未定'],['gi','道着＋帯（¥1,000）'],['belt','帯のみ（¥500）'],['no','不要（持参）']];
+  sel.innerHTML=opts.map(o=>`<option value="${o[0]}">${o[1]}</option>`).join('');
+  if(type==='trial' && keep==='belt') keep='gi';
+  sel.value=opts.some(o=>o[0]===keep)?keep:'';
+  updateTrialFeeRow();
+}
+function updateTrialFeeRow(){
+  const type=document.getElementById('tr-type').value;
+  document.getElementById('tr-free-row').style.display = type==='trial' ? 'block' : 'none';
+  document.getElementById('tr-fee-row').style.display = (type==='visitor' && editingTrialId) ? 'block' : 'none';
+}
+function onTrialGiChange(){
+  if(document.getElementById('tr-type').value!=='visitor') return;
+  const g=document.getElementById('tr-gi').value;
+  document.getElementById('tr-fee').value = DEFAULT_TRIAL_FEE + (TRIAL_GI_RENT_FEE[g]||0);
+}
+// ── Googleカレンダーに追加（予定作成画面を開く。保存はGoogle側で確認してから）──
+const DOJO_ADDRESS='熊本県熊本市中央区水前寺1丁目15-2 ダイコー水前寺駅通り5 5階';
+function trialCalendarUrl(t){
+  const ymd=(t.date||'').replace(/-/g,'');
+  let dates;
+  if(t.classStart && /^\d{1,2}:\d{2}$/.test(t.classStart)){
+    const [sh,sm]=t.classStart.split(':').map(Number);
+    let eh,em;
+    if(t.classEnd && /^\d{1,2}:\d{2}$/.test(t.classEnd)){ [eh,em]=t.classEnd.split(':').map(Number); }
+    else { const e=sh*60+sm+60; eh=Math.floor(e/60); em=e%60; }
+    const f=(h,m)=>String(h).padStart(2,'0')+String(m).padStart(2,'0')+'00';
+    dates=`${ymd}T${f(sh,sm)}/${ymd}T${f(eh,em)}`;
+  } else {
+    const p=(t.date||'').split('-').map(Number); const n=new Date(p[0],p[1]-1,p[2]+1);
+    dates=`${ymd}/${localDateStr(n).replace(/-/g,'')}`;
+  }
+  const kind=t.type==='visitor'?'ビジター':'体験';
+  const title=`${kind}：${t.name}${t.classStart||t.className?`（${[t.classStart,t.className].filter(Boolean).join(' ')}）`:''}`;
+  // 電話番号・身長・体重などの個人情報はカレンダーに入れない
+  const det=[`種別：${kind}`];
+  if(t.className) det.push(`クラス：${[t.classStart,t.classEnd?'〜'+t.classEnd:''].join('')} ${t.className}`);
+  if(t.experience) det.push(`経験：${trialExpLabel[t.experience]||''}`);
+  if(t.type==='visitor' && t.dojo) det.push(`所属：${t.dojo}`);
+  if(t.giRental) det.push(`道着：${trialGiText(t)}`);
+  det.push('詳細は管理アプリ「体験・ビジター管理」で確認');
+  const q=new URLSearchParams({action:'TEMPLATE', text:title, dates, ctz:'Asia/Tokyo', details:det.join('\n'), location:DOJO_ADDRESS});
+  return 'https://calendar.google.com/calendar/render?'+q.toString();
+}
+function addTrialToCalendar(id){
+  const t=trialVisitors.find(x=>x.id===id); if(!t) return;
+  if(!t.date){ showToast('来訪日が入っていません'); return; }
+  window.open(trialCalendarUrl(t),'_blank','noopener');
+  const idx=trialVisitors.findIndex(x=>x.id===id);
+  if(idx!==-1 && !trialVisitors[idx].calAddedAt){ trialVisitors[idx]={...trialVisitors[idx], calAddedAt:localDateStr()}; saveAll(); }
+  renderUpcomingVisitors(); renderTrialList();
+}
+function calBtnHtml(t){
+  const done=!!t.calAddedAt;
+  return `<button class="btn btn-ghost btn-sm" title="${done?'追加済み（もう一度開けます）':'Googleカレンダーに追加'}" onclick="addTrialToCalendar('${escapeHtml(t.id)}')" style="${done?'color:var(--text-muted);':''}">${done?'カレンダー済':'カレンダーに追加'}</button>`;
+}
+// ── HPの申込メールから自動入力 ──
+function toggleTrialPaste(){ const b=document.getElementById('tr-paste-box'); b.style.display=b.style.display==='none'?'block':'none'; }
+function parseTrialMail(text){
+  const r={}; text=String(text||'').replace(/\r/g,'');
+  const re=/【([^】]+)】([^\n【]*)/g; let m;
+  while((m=re.exec(text))){ const k=m[1].trim(), v=m[2].trim(); if(!(k in r)) r[k]=v; }
+  const mi=text.indexOf('【メッセージ】');
+  if(mi>=0){ let rest=text.slice(mi+7); const end=rest.indexOf('【送信元ページ】'); if(end>=0) rest=rest.slice(0,end); r['メッセージ']=rest.trim(); }
+  return r;
+}
+function applyTrialPaste(){
+  const raw=document.getElementById('tr-paste').value;
+  const r=parseTrialMail(raw);
+  const msg=document.getElementById('tr-paste-msg');
+  if(!r['お名前']){ msg.textContent='読み取れませんでした。メール本文の【お名前】などの部分を含めて貼り付けてください。'; msg.style.color='#c0392b'; return; }
+  const set=(id,v)=>{ if(v!==undefined && v!==null && v!=='') document.getElementById(id).value=v; };
+  // 貼り付けをやり直した場合に前の内容が残らないよう、読み取る欄をいったん空にする
+  ['tr-kana','tr-email','tr-phone','tr-dojo','tr-age','tr-height','tr-weight','tr-health','tr-referrer','tr-exp','tr-belt','tr-gender'].forEach(id=>{ document.getElementById(id).value=''; });
+  const type=/出稽古/.test(r['種別']||'')?'visitor':'trial';
+  document.getElementById('tr-type').value=type; toggleDojoLabel();
+  set('tr-name',r['お名前']); set('tr-kana',r['ふりがな']); set('tr-email',r['メール']); set('tr-phone',r['電話番号']);
+  set('tr-dojo',r['所属道場']);
+  const dm=/(\d{4}-\d{2}-\d{2})/.exec(r['希望日']||''); if(dm) document.getElementById('tr-date').value=dm[1];
+  buildTrialClassOptions('');
+  const cls=r['希望クラス']||''; const cm=/(\d{1,2}:\d{2})(?:\s*[〜~\-]\s*(\d{1,2}:\d{2}))?\s*(.*)/.exec(cls);
+  const sel=document.getElementById('tr-class');
+  if(cm){
+    const found=[...sel.options].find(o=>o.dataset.start===cm[1] && !o.disabled);
+    if(found) sel.value=found.value;
+    else { const o=document.createElement('option'); o.value='mail|'+cm[1]; o.dataset.start=cm[1]; o.dataset.end=cm[2]||''; o.dataset.name=(cm[3]||'').trim(); o.textContent=`${cm[1]}${cm[2]?'〜'+cm[2]:''}　${(cm[3]||'').trim()}（申込メールの内容）`; sel.appendChild(o); sel.value=o.value; }
+  }
+  const exp=r['柔術経験']||(type==='visitor'?'柔術':''); set('tr-exp', /未経験/.test(exp)?'none':/他の格闘技/.test(exp)?'other':/柔術/.test(exp)?'bjj':'');
+  const belt=r['帯']||''; const bm={'白':'white','青':'blue','紫':'purple','茶':'brown','黒':'black'}; const bk=Object.keys(bm).find(k=>belt.indexOf(k)===0); if(bk) set('tr-belt',bm[bk]);
+  const g=r['性別']||''; set('tr-gender', g==='男性'?'male':g==='女性'?'female':g?'none':'');
+  set('tr-age',(/(\d+)/.exec(r['年齢']||'')||[])[1]); set('tr-height',(/(\d+)/.exec(r['身長']||'')||[])[1]); set('tr-weight',(/(\d+)/.exec(r['体重']||'')||[])[1]);
+  const gi=r['道着']||''; updateTrialGiOptions(/持参/.test(gi)?'no':/帯のみ/.test(gi)?'belt':/レンタル/.test(gi)?'gi':'');
+  if(type==='visitor') onTrialGiChange();
+  set('tr-health',r['配慮してほしいこと']);
+  const src=r['きっかけ']||''; const sm={'SNS':'SNS','友人':'friend','既存会員':'member','通りすがり':'walkin','検索':'search','その他':'other'};
+  const sk=Object.keys(sm).find(k=>src.indexOf(k)===0); if(sk){ set('tr-source-type',sm[sk]); toggleReferrerRow(); }
+  set('tr-referrer',r['紹介者']);
+  const notes=[];
+  if(/\d本/.test(belt)) notes.push('帯：'+belt);
+  if(/相談/.test(cls)) notes.push('希望クラス：日程を相談したい');
+  if(r['メッセージ']) notes.push('【申込時のメッセージ】\n'+r['メッセージ']);
+  if(notes.length){ const cur=document.getElementById('tr-note').value.trim(); document.getElementById('tr-note').value=(cur?cur+'\n':'')+notes.join('\n'); }
+  msg.style.color='var(--text-secondary)';
+  msg.textContent='入力しました。内容を確認して「保存する」を押してください。';
+}
+
 function trialProfileText(t){
   const a=[];
+
   if(t.gender&&t.gender!=='none') a.push(trialGenderLabel[t.gender]);
   if(t.age) a.push(t.age+'歳');
   if(t.height) a.push(t.height+'cm');
   if(t.weight) a.push(t.weight+'kg');
   if(t.experience) a.push(trialExpLabel[t.experience]||'');
-  if(t.giRental) a.push(trialGiLabel[t.giRental]||'');
+  if(t.giRental) a.push(trialGiText(t));
   return a.filter(Boolean).join('・');
 }
 // 来訪日の曜日に合わせて「参加クラス」の選択肢を作る（臨時の休講・時間変更・臨時開催も反映）
@@ -2861,7 +2991,7 @@ function renderUpcomingVisitors(){
       <div style="min-width:86px;">${isToday?'<span style="display:inline-block;background:var(--gold);color:#fff;font-size:10px;font-weight:500;padding:1px 7px;border-radius:9px;margin-right:4px;">本日</span>':''}<span style="font-size:12px;font-weight:500;color:var(--navy);">${dLabel}</span></div>
       <div style="min-width:150px;">${cls}</div>
       <div style="flex:1;min-width:140px;"><span class="type-pill type-${escapeHtml(t.type)}" style="margin-right:6px;"><span class="type-dot"></span>${trialTypeLabel[t.type]||''}</span><span style="font-size:13px;font-weight:500;">${escapeHtml(t.name)}</span>${prof?`<div style="font-size:10.5px;color:var(--text-secondary);margin-top:2px;">${escapeHtml(prof)}</div>`:''}</div>
-      <button class="btn btn-ghost btn-sm" onclick="openTrialModal('edit','${escapeHtml(t.id)}')">詳細</button>
+      <div style="display:flex;gap:6px;">${calBtnHtml(t)}<button class="btn btn-ghost btn-sm" onclick="openTrialModal('edit','${escapeHtml(t.id)}')">詳細</button></div>
     </div>`;
   }).join('');
 }
@@ -2891,6 +3021,7 @@ function renderTrialList(){
         <td style="font-size:12px;color:var(--text-secondary);">${t.source||'―'}${t.referrer?`<br><span style="color:var(--gold);">→ ${t.referrer}</span>`:''}${t.sourceOther?`<br><span style="color:var(--text-muted);">${t.sourceOther}</span>`:''}</td>
         <td><span class="status-pill ${convCls}">${convLabel}</span></td>
         <td><div class="action-btns">
+          ${t.date&&t.date>=localDateStr()?calBtnHtml(t):''}
           <button class="btn btn-ghost btn-sm" onclick="openTrialModal('edit','${t.id}')">編集</button>
           <button class="btn btn-ghost btn-sm" onclick="openTrialDeleteModal('${t.id}')">削除</button>
         </div></td>
@@ -2942,6 +3073,7 @@ function toggleDojoLabel(){
   const type=document.getElementById('tr-type').value;
   document.getElementById('tr-dojo-label').textContent=type==='visitor'?'所属道場 *':'所属道場（任意）';
   document.getElementById('tr-dojo').placeholder=type==='visitor'?'例：〇〇柔術アカデミー':'';
+  updateTrialGiOptions();
 }
 function toggleReferrerRow(){
   const v=document.getElementById('tr-source-type').value;
@@ -2952,8 +3084,12 @@ function toggleReferrerRow(){
 function openTrialModal(mode,id){
   editingTrialId=null;
   document.getElementById('tr-type').value='trial';
-  ['tr-name','tr-phone','tr-email','tr-dojo','tr-referrer','tr-source-other','tr-note','tr-age','tr-height','tr-weight'].forEach(x=>document.getElementById(x).value='');
-  ['tr-gender','tr-exp','tr-gi'].forEach(x=>document.getElementById(x).value='');
+  ['tr-name','tr-kana','tr-phone','tr-email','tr-dojo','tr-referrer','tr-source-other','tr-note','tr-health','tr-age','tr-height','tr-weight','tr-paste'].forEach(x=>document.getElementById(x).value='');
+  ['tr-gender','tr-exp'].forEach(x=>document.getElementById(x).value='');
+  document.getElementById('tr-gi').innerHTML=''; 
+  document.getElementById('tr-paste-box').style.display='none';
+  document.getElementById('tr-paste-msg').textContent='';
+  document.getElementById('tr-fee').value=DEFAULT_TRIAL_FEE;
   document.getElementById('tr-date').value=localDateStr();
   buildTrialClassOptions('');
   document.getElementById('tr-belt').value='';
@@ -2969,6 +3105,8 @@ function openTrialModal(mode,id){
     document.getElementById('modal-trial-title').textContent='記録を編集';
     document.getElementById('tr-type').value=t.type||'trial';
     document.getElementById('tr-name').value=t.name||'';
+    document.getElementById('tr-kana').value=t.kana||'';
+    document.getElementById('tr-health').value=t.health||'';
     document.getElementById('tr-phone').value=t.phone||'';
     document.getElementById('tr-email').value=t.email||'';
     document.getElementById('tr-date').value=t.date||'';
@@ -2984,16 +3122,17 @@ function openTrialModal(mode,id){
     document.getElementById('tr-height').value=t.height||'';
     document.getElementById('tr-weight').value=t.weight||'';
     document.getElementById('tr-exp').value=t.experience||'';
-    document.getElementById('tr-gi').value=t.giRental||'';
     buildTrialClassOptions(t.classKey||'');
-    document.getElementById('tr-fee').value=t.fee||DEFAULT_TRIAL_FEE;
-    document.getElementById('tr-fee-row').style.display='block';
+    document.getElementById('tr-fee').value=t.fee||(DEFAULT_TRIAL_FEE+(TRIAL_GI_RENT_FEE[t.giRental||'']||0));
     toggleDojoLabel();
+    updateTrialGiOptions(t.giRental||'');
     toggleReferrerRow();
+    document.getElementById('tr-paste-wrap').style.display='none';
   } else {
-    document.getElementById('tr-fee-row').style.display='none';
+    document.getElementById('tr-paste-wrap').style.display='block';
     document.getElementById('modal-trial-title').textContent='体験・ビジター登録';
   }
+  updateTrialFeeRow();
   document.getElementById('modal-trial').classList.add('open');
 }
 function closeTrialModal(){document.getElementById('modal-trial').classList.remove('open');}
@@ -3018,7 +3157,9 @@ function saveTrial(){
     belt:document.getElementById('tr-belt').value,
     converted:document.getElementById('tr-converted').value,
     note:document.getElementById('tr-note').value.trim(),
-    fee:parseInt(document.getElementById('tr-fee').value)||DEFAULT_TRIAL_FEE,
+    fee: type==='trial' ? 0 : (parseInt(document.getElementById('tr-fee').value)||(DEFAULT_TRIAL_FEE+(TRIAL_GI_RENT_FEE[document.getElementById('tr-gi').value]||0))),
+    kana:document.getElementById('tr-kana').value.trim(),
+    health:document.getElementById('tr-health').value.trim(),
     gender:document.getElementById('tr-gender').value,
     age:toPosInt(document.getElementById('tr-age').value),
     height:toPosInt(document.getElementById('tr-height').value),
