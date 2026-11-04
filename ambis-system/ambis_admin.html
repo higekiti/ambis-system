@@ -530,6 +530,16 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
         <div class="stat-card"><div class="label">THIS MONTH</div><div class="value" id="stat-month">0</div><div class="sub">今月の出席（延べ）</div></div>
         <div class="stat-card"><div class="label">INACTIVE</div><div class="value" id="stat-inactive">0</div><div class="sub">休会・退会</div></div>
       </div>
+      <div class="table-wrap" id="upcoming-widget" style="margin-bottom:20px;border:1px solid var(--navy);">
+        <div class="section-header" style="padding:14px 18px 10px;margin-bottom:0;">
+          <div class="section-title" style="font-size:13px;">体験・ビジター 来訪予定 <span style="font-size:10px;color:var(--text-muted);font-weight:400;">（今日から7日間）</span></div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-ghost btn-sm" onclick="openTrialModal('add')">＋ 登録</button>
+            <button class="btn btn-ghost btn-sm" onclick="showPage('trial', document.querySelector('.nav-item[onclick*=\'trial\']'))">一覧を見る</button>
+          </div>
+        </div>
+        <div id="upcoming-widget-body" style="padding:0 18px 14px;"></div>
+      </div>
       <div class="table-wrap" id="dormant-widget" style="display:none;margin-bottom:20px;border:1px solid var(--gold);">
         <div class="section-header" style="padding:14px 18px 10px;">
           <div class="section-title" style="font-size:13px;">休眠会員アラート</div>
@@ -892,7 +902,7 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
         </div>
       </div>
       <div class="table-wrap">
-        <table><thead><tr><th>種別</th><th>来訪日</th><th>氏名</th><th>連絡先</th><th>入会経路</th><th>入会</th><th></th></tr></thead>
+        <table><thead><tr><th>種別</th><th>来訪日</th><th>クラス</th><th>氏名</th><th>連絡先</th><th>入会経路</th><th>入会</th><th></th></tr></thead>
         <tbody id="trial-tbody"></tbody></table>
         <div class="empty-state" id="empty-trial" style="display:none;"><div class="icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg></div><p>登録がありません</p></div>
       </div>
@@ -976,6 +986,22 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
 </div>
 
 <!-- ══ MODAL: DELETE ══ -->
+<div class="modal-overlay" id="modal-stripe-stop">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-header"><div class="modal-title">月会費の自動引き落としを停止してください</div><button class="modal-close" onclick="document.getElementById('modal-stripe-stop').classList.remove('open')">×</button></div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-secondary);line-height:1.9;"><strong id="stripe-stop-name"></strong> さんは、Stripeで月会費の自動引き落としが登録されています。<br>
+      <strong style="color:var(--danger,#c0392b);">管理アプリで<span id="stripe-stop-kind">退会</span>にしても、Stripeの引き落としは自動では止まりません。</strong><br>
+      Stripeダッシュボードの「サブスクリプション」で、この会員を検索して<strong>キャンセル</strong>（休会の場合は<strong>支払いの一時停止</strong>）をしてください。</p>
+      <div id="stripe-stop-email" style="font-size:12px;color:var(--text-muted);margin-top:8px;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="document.getElementById('modal-stripe-stop').classList.remove('open')">あとで対応する</button>
+      <a class="btn btn-primary" style="text-decoration:none;" href="https://dashboard.stripe.com/subscriptions" target="_blank" rel="noopener" onclick="document.getElementById('modal-stripe-stop').classList.remove('open')">Stripeを開く</a>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-delete">
   <div class="modal" style="max-width:420px;">
     <div class="modal-header"><div class="modal-title">退会処理の確認</div><button class="modal-close" onclick="document.getElementById('modal-delete').classList.remove('open')">×</button></div>
@@ -1365,7 +1391,44 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
         <div><label>電話番号 *</label><input type="tel" id="tr-phone" placeholder="090-0000-0000"></div>
       </div>
       <div class="form-row"><label>メールアドレス</label><input type="email" id="tr-email" placeholder="任意"></div>
-      <div class="form-row"><label>来訪日 *</label><input type="date" id="tr-date"></div>
+      <div class="form-row"><label>来訪日 *</label><input type="date" id="tr-date" onchange="buildTrialClassOptions()"></div>
+      <div class="form-row"><label>参加クラス</label>
+        <select id="tr-class"><option value="">未定</option></select>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">来訪日の曜日のクラスが表示されます（練習カレンダー管理の設定より）</div>
+      </div>
+      <div class="form-row-2">
+        <div><label>性別</label>
+          <select id="tr-gender">
+            <option value="">未選択</option>
+            <option value="male">男性</option>
+            <option value="female">女性</option>
+            <option value="none">回答しない</option>
+          </select>
+        </div>
+        <div><label>年齢</label><input type="number" id="tr-age" min="3" max="99" inputmode="numeric" placeholder="例：35"></div>
+      </div>
+      <div class="form-row-2">
+        <div><label>身長（cm）</label><input type="number" id="tr-height" min="80" max="230" inputmode="numeric" placeholder="例：170"></div>
+        <div><label>体重（kg）</label><input type="number" id="tr-weight" min="15" max="200" inputmode="numeric" placeholder="例：65"></div>
+      </div>
+      <div class="form-row-2">
+        <div><label>経験</label>
+          <select id="tr-exp">
+            <option value="">未選択</option>
+            <option value="none">未経験</option>
+            <option value="other">他の格闘技経験あり</option>
+            <option value="bjj">柔術経験あり</option>
+          </select>
+        </div>
+        <div><label>道着レンタル</label>
+          <select id="tr-gi">
+            <option value="">未定</option>
+            <option value="gi">要（道着＋帯 ¥1,000）</option>
+            <option value="belt">帯のみ（¥500）</option>
+            <option value="no">不要（持参）</option>
+          </select>
+        </div>
+      </div>
       <div class="form-row" id="tr-dojo-row"><label id="tr-dojo-label">所属道場（ビジターの場合）</label><input type="text" id="tr-dojo" placeholder="例：〇〇柔術アカデミー"></div>
       <div class="form-row"><label>帯（わかれば）</label>
         <select id="tr-belt">
@@ -1596,6 +1659,7 @@ function renderMembers(data) {
   }
   updateMemberStats();
   renderDormantWidget();
+  renderUpcomingVisitors();
 }
 
 function renderDormantWidget(){
@@ -1660,7 +1724,7 @@ function openMemberModal(mode,id){
   document.getElementById('f-stripe').value='0';
   document.getElementById('f-status').value='active';
   document.getElementById('f-contactMethod').value='line';
-  document.getElementById('f-joindate').value=new Date().toISOString().slice(0,10);
+  document.getElementById('f-joindate').value=localDateStr();
   document.getElementById('f-beltdate').value='';
   document.getElementById('f-birthday').value='';
   document.getElementById('f-monthly').value=MONTHLY_FEE;
@@ -1730,6 +1794,22 @@ function previewPhoto(e){
 }
 
 const sourceLabelMap={SNS:'SNS（Instagram等）',friend:'友人・知人の紹介',member:'既存会員の紹介',walkin:'通りすがり・看板',search:'検索・ホームページ',other:'その他'};
+// Stripeの定期支払いが動いている可能性がある会員か
+function hasLiveStripeSub(m){ return !!(m && m.stripeUid && !['canceled','incomplete_expired'].includes(m.billingStatus)); }
+function showStripeStopReminder(m, kind){
+  if(!hasLiveStripeSub(m)) return;
+  document.getElementById('stripe-stop-name').textContent=m.name||'';
+  document.getElementById('stripe-stop-kind').textContent=kind||'退会';
+  document.getElementById('stripe-stop-email').textContent=m.email?('検索用メール：'+m.email):'';
+  document.getElementById('modal-stripe-stop').classList.add('open');
+}
+// 会員IDの採番：過去に使ったID（削除済み会員・出席記録を含む）と重複しない番号にする
+function nextMemberId(){
+  let mx=0;
+  const scan=id=>{ const m=/^AMBIs-(\d+)$/.exec(String(id||'')); if(m){ const n=parseInt(m[1],10); if(n>mx) mx=n; } };
+  members.forEach(x=>scan(x.id)); attendance.forEach(a=>scan(a.memberId)); payments.forEach(p=>scan(p.memberId)); withdrawalReasons.forEach(w=>scan(w.memberId));
+  return 'AMBIs-'+String(mx+1).padStart(4,'0');
+}
 function saveMember(){
   const name=document.getElementById('f-name').value.trim();
   if(!name){alert('氏名を入力してください');return;}
@@ -1754,17 +1834,23 @@ function saveMember(){
     birthday:document.getElementById('f-birthday').value,
     hasWeekdayMatOption:document.getElementById('f-weekday-mat').checked,
   };
+  let __stopTarget=null, __stopKind='';
   if(editingMemberId){
     const idx=members.findIndex(m=>m.id===editingMemberId);
-    if(idx!==-1){members[idx]={...members[idx],...data,photo:photoData||members[idx].photo};}
+    if(idx!==-1){
+      const prevStatus=members[idx].status;
+      members[idx]={...members[idx],...data,photo:photoData||members[idx].photo};
+      if(prevStatus==='active' && (data.status==='inactive'||data.status==='left')){ __stopTarget=members[idx]; __stopKind=data.status==='inactive'?'休会':'退会'; }
+    }
     showToast('会員情報を更新しました');
   } else {
-    const newId='AMBIs-'+String(members.length+1).padStart(4,'0');
+    const newId=nextMemberId();
     members.push({id:newId,...data});
     showToast('会員を登録しました');
   }
   saveAll(); closeMemberModal(); renderMembers(members);
   rebuildSelects();
+  if(__stopTarget) showStripeStopReminder(__stopTarget, __stopKind);
 }
 
 // ══ DELETE ══
@@ -1795,15 +1881,17 @@ function deleteMember(full){
       reasonType,
       reasonLabel:reasonLabelMap[reasonType]||reasonType,
       reasonOther:reasonType==='other'?reasonOther:'',
-      date:new Date().toISOString().slice(0,10),
+      date:localDateStr(),
     });
   }
+  const __stopTarget=(member&&member.status==='active')?{...member}:null;
   if(full){members=members.filter(m=>m.id!==deletingId);showToast('完全削除しました');}
   else{const idx=members.findIndex(m=>m.id===deletingId);if(idx!==-1)members[idx].status='left';showToast('退会処理が完了しました');}
   saveAll();
   document.getElementById('modal-delete').classList.remove('open');
   deletingId=null;
   renderMembers(members); rebuildSelects();
+  if(__stopTarget) showStripeStopReminder(__stopTarget, '退会');
 }
 
 // ══ QR ══
@@ -1851,7 +1939,7 @@ function renderAttendance(){
   if(filterMonth)  data=data.filter(a=>a.date&&a.date.startsWith(filterMonth));
 
   const now=new Date();
-  const today=now.toISOString().slice(0,10);
+  const today=localDateStr(now);
   const ym=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   const thisYear=String(now.getFullYear());
   const todayCount=attendance.filter(a=>a.date===today).length;
@@ -1917,7 +2005,7 @@ function openBeltModal(){
   document.getElementById('bh-from').value='white';
   document.getElementById('bh-to').value='blue';
   document.getElementById('bh-stripe').value='0';
-  document.getElementById('bh-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('bh-date').value=localDateStr();
   document.getElementById('bh-note').value='';
   document.getElementById('modal-belt').classList.add('open');
 }
@@ -2121,7 +2209,7 @@ function openPrivateLessonModal(){
   const activeMembers=members.filter(m=>m.status==='active');
   const sel=document.getElementById('pl-member');
   sel.innerHTML=activeMembers.map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
-  document.getElementById('pl-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('pl-date').value=localDateStr();
   document.getElementById('pl-price').value=PRIVATE_LESSON_FEE;
   document.getElementById('modal-private-lesson').classList.add('open');
 }
@@ -2356,7 +2444,7 @@ function toggleExcClassOther(){
 function openExceptionModal(id){
   editingExceptionId=id||null;
   const delBtn=document.getElementById('exc-delete-btn');
-  document.getElementById('exc-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('exc-date').value=localDateStr();
   document.getElementById('exc-type').value='cancel';
   document.getElementById('exc-class').value='';
   document.getElementById('exc-class-other').value='';
@@ -2499,7 +2587,7 @@ function filterRentalBookings(){
 function openRentalModal(mode,id){
   editingRentalId=null;
   ['rb-name','rb-phone','rb-email','rb-access-code','rb-note'].forEach(x=>document.getElementById(x).value='');
-  document.getElementById('rb-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('rb-date').value=localDateStr();
   document.getElementById('rb-purpose').value='yoga';
   document.getElementById('rb-start').value='10:00';
   document.getElementById('rb-end').value='11:00';
@@ -2625,7 +2713,7 @@ function renderRentalCalendar(){
   label.textContent=`${rentalCalYear}.${String(rentalCalMonth+1).padStart(2,'0')}`;
   const firstDay=new Date(rentalCalYear,rentalCalMonth,1).getDay();
   const days=new Date(rentalCalYear,rentalCalMonth+1,0).getDate();
-  const todayStr=new Date().toISOString().slice(0,10);
+  const todayStr=localDateStr();
   let cells='';
   for(let i=0;i<firstDay;i++) cells+=`<div class="cal-cell empty"></div>`;
   for(let d=1;d<=days;d++){
@@ -2697,6 +2785,87 @@ function filterTrial(type,el){
   renderTrialList();
 }
 
+// ── 日付ヘルパー（端末のローカル時刻＝日本時間で YYYY-MM-DD）──
+function localDateStr(d){ d=d||new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function toPosInt(v){ const n=parseInt(v,10); return (isFinite(n)&&n>0)?n:null; }
+const trialGenderLabel={male:'男性',female:'女性',none:'回答しない'};
+const trialExpLabel={none:'未経験',other:'他格闘技経験',bjj:'柔術経験あり'};
+const trialGiLabel={gi:'道着レンタル',belt:'帯のみレンタル',no:'道着持参'};
+function trialProfileText(t){
+  const a=[];
+  if(t.gender&&t.gender!=='none') a.push(trialGenderLabel[t.gender]);
+  if(t.age) a.push(t.age+'歳');
+  if(t.height) a.push(t.height+'cm');
+  if(t.weight) a.push(t.weight+'kg');
+  if(t.experience) a.push(trialExpLabel[t.experience]||'');
+  if(t.giRental) a.push(trialGiLabel[t.giRental]||'');
+  return a.filter(Boolean).join('・');
+}
+// 来訪日の曜日に合わせて「参加クラス」の選択肢を作る（臨時の休講・時間変更・臨時開催も反映）
+function trialClassesForDate(dateStr){
+  if(!dateStr) return [];
+  const p=dateStr.split('-').map(Number); const dow=new Date(p[0],p[1]-1,p[2]).getDay();
+  const ex=scheduleExceptions.filter(e=>e.date===dateStr);
+  const hit=(e,name)=>!e.targetClass||e.targetClass===name;
+  let list=classSchedule.filter(c=>c.dow===dow).map(c=>{
+    const cancel=ex.find(e=>e.type==='cancel'&&hit(e,c.name));
+    const chg=ex.find(e=>e.type==='change'&&hit(e,c.name));
+    const start=(chg&&chg.newStart)||c.start, end=(chg&&chg.newEnd)||c.end;
+    return {key:c.id+'|'+start, name:c.name, start, end, cancelled:!!cancel};
+  });
+  ex.filter(e=>e.type==='extra').forEach(e=>{
+    list.push({key:'extra|'+e.id, name:e.targetClass||'臨時開催', start:e.newStart||'', end:e.newEnd||'', cancelled:false, extra:true});
+  });
+  return list.sort((a,b)=>(a.start||'').localeCompare(b.start||''));
+}
+function buildTrialClassOptions(keep){
+  const sel=document.getElementById('tr-class'); if(!sel) return;
+  if(keep===undefined) keep=sel.value;
+  const date=document.getElementById('tr-date').value;
+  const list=trialClassesForDate(date);
+  const opts=['<option value="">未定</option>'];
+  list.forEach(c=>{
+    const label=(c.start?c.start+(c.end?'〜'+c.end:'')+'　':'')+c.name+(c.extra?'（臨時開催）':'')+(c.cancelled?'（休講）':'');
+    opts.push(`<option value="${escapeHtml(c.key)}" data-start="${escapeHtml(c.start)}" data-end="${escapeHtml(c.end)}" data-name="${escapeHtml(c.name)}"${c.cancelled?' disabled':''}>${escapeHtml(label)}</option>`);
+  });
+  sel.innerHTML=opts.join('');
+  if(keep && [...sel.options].some(o=>o.value===keep && !o.disabled)) sel.value=keep;
+  else if(keep){
+    // 保存済みのクラスが現在のスケジュールに無い場合も、記録を失わないよう選択肢として残す
+    const t=editingTrialId?trialVisitors.find(x=>x.id===editingTrialId):null;
+    if(t&&t.classKey===keep){
+      const o=document.createElement('option'); o.value=keep; o.dataset.start=t.classStart||''; o.dataset.end=t.classEnd||''; o.dataset.name=t.className||'';
+      o.textContent=(t.classStart?t.classStart+'　':'')+(t.className||'')+'（登録時のクラス）'; sel.appendChild(o); sel.value=keep;
+    }
+  }
+}
+// 会員管理トップ：体験・ビジターの来訪予定（今日〜7日後）
+function renderUpcomingVisitors(){
+  const body=document.getElementById('upcoming-widget-body'); if(!body) return;
+  const today=localDateStr();
+  const lim=new Date(); lim.setDate(lim.getDate()+7); const limStr=localDateStr(lim);
+  const list=trialVisitors.filter(t=>t.date&&t.date>=today&&t.date<=limStr)
+    .sort((a,b)=>(a.date+(a.classStart||'99:99')).localeCompare(b.date+(b.classStart||'99:99')));
+  if(!list.length){
+    body.innerHTML='<div style="font-size:12px;color:var(--text-muted);padding:6px 0 2px;">今後7日間の来訪予定はありません</div>';
+    return;
+  }
+  const dn=['日','月','火','水','木','金','土'];
+  body.innerHTML=list.map((t,i)=>{
+    const p=t.date.split('-').map(Number); const d=new Date(p[0],p[1]-1,p[2]);
+    const isToday=t.date===today;
+    const dLabel=`${p[1]}/${p[2]}（${dn[d.getDay()]}）`;
+    const cls=(t.classStart?`<span style="font-family:'Bebas Neue',sans-serif;font-size:15px;color:var(--navy);letter-spacing:.5px;">${escapeHtml(t.classStart)}</span> `:'')+`<span style="font-size:12px;">${escapeHtml(t.className||'クラス未定')}</span>`;
+    const prof=trialProfileText(t);
+    return `<div style="display:flex;align-items:center;gap:12px;padding:9px 0;${i<list.length-1?'border-bottom:1px solid #f0f0f0;':''}flex-wrap:wrap;">
+      <div style="min-width:86px;">${isToday?'<span style="display:inline-block;background:var(--gold);color:#fff;font-size:10px;font-weight:500;padding:1px 7px;border-radius:9px;margin-right:4px;">本日</span>':''}<span style="font-size:12px;font-weight:500;color:var(--navy);">${dLabel}</span></div>
+      <div style="min-width:150px;">${cls}</div>
+      <div style="flex:1;min-width:140px;"><span class="type-pill type-${escapeHtml(t.type)}" style="margin-right:6px;"><span class="type-dot"></span>${trialTypeLabel[t.type]||''}</span><span style="font-size:13px;font-weight:500;">${escapeHtml(t.name)}</span>${prof?`<div style="font-size:10.5px;color:var(--text-secondary);margin-top:2px;">${escapeHtml(prof)}</div>`:''}</div>
+      <button class="btn btn-ghost btn-sm" onclick="openTrialModal('edit','${escapeHtml(t.id)}')">詳細</button>
+    </div>`;
+  }).join('');
+}
+
 function renderTrialList(){
   const tbody=document.getElementById('trial-tbody');
   const empty=document.getElementById('empty-trial');
@@ -2716,7 +2885,8 @@ function renderTrialList(){
       return `<tr>
         <td><span class="type-pill type-${t.type}"><span class="type-dot"></span>${trialTypeLabel[t.type]||t.type}</span></td>
         <td style="font-family:'Bebas Neue',sans-serif;font-size:15px;color:var(--navy);">${t.date||'―'}</td>
-        <td style="font-weight:500;">${t.name}</td>
+        <td style="font-size:12px;">${t.classStart?`<span style="font-family:'Bebas Neue',sans-serif;font-size:14px;color:var(--navy);">${escapeHtml(t.classStart)}</span> `:''}${escapeHtml(t.className||'―')}</td>
+        <td style="font-weight:500;">${escapeHtml(t.name)}${trialProfileText(t)?`<div style="font-size:10px;color:var(--text-muted);font-weight:400;margin-top:2px;">${escapeHtml(trialProfileText(t))}</div>`:''}</td>
         <td style="font-size:12px;color:var(--text-secondary);">${t.phone||'―'}</td>
         <td style="font-size:12px;color:var(--text-secondary);">${t.source||'―'}${t.referrer?`<br><span style="color:var(--gold);">→ ${t.referrer}</span>`:''}${t.sourceOther?`<br><span style="color:var(--text-muted);">${t.sourceOther}</span>`:''}</td>
         <td><span class="status-pill ${convCls}">${convLabel}</span></td>
@@ -2782,8 +2952,10 @@ function toggleReferrerRow(){
 function openTrialModal(mode,id){
   editingTrialId=null;
   document.getElementById('tr-type').value='trial';
-  ['tr-name','tr-phone','tr-email','tr-dojo','tr-referrer','tr-source-other','tr-note'].forEach(x=>document.getElementById(x).value='');
-  document.getElementById('tr-date').value=new Date().toISOString().slice(0,10);
+  ['tr-name','tr-phone','tr-email','tr-dojo','tr-referrer','tr-source-other','tr-note','tr-age','tr-height','tr-weight'].forEach(x=>document.getElementById(x).value='');
+  ['tr-gender','tr-exp','tr-gi'].forEach(x=>document.getElementById(x).value='');
+  document.getElementById('tr-date').value=localDateStr();
+  buildTrialClassOptions('');
   document.getElementById('tr-belt').value='';
   document.getElementById('tr-converted').value='pending';
   document.getElementById('tr-source-type').value='SNS';
@@ -2807,6 +2979,13 @@ function openTrialModal(mode,id){
     document.getElementById('tr-belt').value=t.belt||'';
     document.getElementById('tr-converted').value=t.converted||'pending';
     document.getElementById('tr-note').value=t.note||'';
+    document.getElementById('tr-gender').value=t.gender||'';
+    document.getElementById('tr-age').value=t.age||'';
+    document.getElementById('tr-height').value=t.height||'';
+    document.getElementById('tr-weight').value=t.weight||'';
+    document.getElementById('tr-exp').value=t.experience||'';
+    document.getElementById('tr-gi').value=t.giRental||'';
+    buildTrialClassOptions(t.classKey||'');
     document.getElementById('tr-fee').value=t.fee||DEFAULT_TRIAL_FEE;
     document.getElementById('tr-fee-row').style.display='block';
     toggleDojoLabel();
@@ -2840,7 +3019,19 @@ function saveTrial(){
     converted:document.getElementById('tr-converted').value,
     note:document.getElementById('tr-note').value.trim(),
     fee:parseInt(document.getElementById('tr-fee').value)||DEFAULT_TRIAL_FEE,
+    gender:document.getElementById('tr-gender').value,
+    age:toPosInt(document.getElementById('tr-age').value),
+    height:toPosInt(document.getElementById('tr-height').value),
+    weight:toPosInt(document.getElementById('tr-weight').value),
+    experience:document.getElementById('tr-exp').value,
+    giRental:document.getElementById('tr-gi').value,
   };
+  const clsSel=document.getElementById('tr-class');
+  const clsOpt=clsSel.options[clsSel.selectedIndex];
+  data.classKey=clsSel.value||'';
+  data.classStart=(clsOpt&&clsOpt.dataset.start)||'';
+  data.classEnd=(clsOpt&&clsOpt.dataset.end)||'';
+  data.className=(clsOpt&&clsOpt.dataset.name)||'';
   if(editingTrialId){
     const idx=trialVisitors.findIndex(t=>t.id===editingTrialId);
     if(idx!==-1) trialVisitors[idx]={...trialVisitors[idx],...data};
@@ -2852,6 +3043,7 @@ function saveTrial(){
   saveAll();
   closeTrialModal();
   renderTrialList();
+  renderUpcomingVisitors();
 }
 
 function openTrialDeleteModal(id){
@@ -2867,6 +3059,7 @@ function deleteTrial(){
   document.getElementById('modal-trial-delete').classList.remove('open');
   deletingTrialId=null;
   renderTrialList();
+  renderUpcomingVisitors();
   showToast('削除しました');
 }
 
@@ -2928,7 +3121,7 @@ function renderTournaments(){
   const tbody=document.getElementById('tournament-tbody');
   const empty=document.getElementById('empty-tournament');
   if(!tbody||!empty) return;
-  const now=new Date().toISOString().slice(0,10);
+  const now=localDateStr();
   let data=[...tournaments].sort((a,b)=>a.date.localeCompare(b.date));
   if(tournamentFilter!=='all') data=data.filter(t=>t.league===tournamentFilter);
   if(!data.length){tbody.innerHTML='';empty.style.display='block';return;}
@@ -2991,12 +3184,12 @@ function deleteTournament(id){
 // ══ ATTENDANCE ANALYTICS ══
 function computeMemberAttendanceStats(){
   const now = new Date();
-  const todayStr = now.toISOString().slice(0,10);
+  const todayStr = localDateStr(now);
   const ymThis = todayStr.slice(0,7);
   const prevMonthDate = new Date(now.getFullYear(), now.getMonth()-1, 1);
   const ymPrev = `${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth()+1).padStart(2,'0')}`;
-  const d3mAgoStr = new Date(now.getFullYear(), now.getMonth()-3, now.getDate()).toISOString().slice(0,10);
-  const d56AgoStr = new Date(now.getTime()-56*24*60*60*1000).toISOString().slice(0,10);
+  const d3mAgoStr = localDateStr(new Date(now.getFullYear(), now.getMonth()-3, now.getDate()));
+  const d56AgoStr = localDateStr(new Date(now.getTime()-56*24*60*60*1000));
   return members.filter(m=>m.status==='active').map(m=>{
     const myAtt = attendance.filter(a=>a.memberId===m.id);
     const thisMonth = myAtt.filter(a=>a.date && a.date.startsWith(ymThis)).length;
@@ -3032,7 +3225,7 @@ function statusBadgeHtml(label){
 
 function renderAnalyticsSummaryCards(){
   const now = new Date();
-  const ymThis = now.toISOString().slice(0,7);
+  const ymThis = localDateStr(now).slice(0,7);
   const monthAtt = attendance.filter(a=>a.date && a.date.startsWith(ymThis));
   const monthTotal = monthAtt.length;
   const uniqueMemberIds = new Set(monthAtt.map(a=>a.memberId));
@@ -3070,7 +3263,7 @@ function renderAnalyticsHeatmap(){
   const el = document.getElementById('an-heatmap');
   if(!el) return;
   const now = new Date();
-  const d90AgoStr = new Date(now.getTime()-90*24*60*60*1000).toISOString().slice(0,10);
+  const d90AgoStr = localDateStr(new Date(now.getTime()-90*24*60*60*1000));
   const recent = attendance.filter(a=>a.date && a.date>=d90AgoStr && a.time);
   const dowLabels = ['日','月','火','水','木','金','土'];
   const hours = [];
@@ -3211,7 +3404,7 @@ function exportAnalyticsExcel(){
   XLSX.utils.book_append_sheet(wb, wsSummary, '会員別サマリー');
   XLSX.utils.book_append_sheet(wb, wsMonthly, '月別推移');
   XLSX.utils.book_append_sheet(wb, wsLog, '出席ログ');
-  const dateStr = now.toISOString().slice(0,10);
+  const dateStr = localDateStr(now);
   XLSX.writeFile(wb, `AMBIs_出席分析_${dateStr}.xlsx`);
   showToast('Excelファイルを出力しました');
 }
@@ -3219,7 +3412,7 @@ function exportAnalyticsExcel(){
 function renderDormant(){
   if(!document.getElementById('dormant-tbody')) return;
   const today=new Date();
-  const todayStr=today.toISOString().slice(0,10);
+  const todayStr=localDateStr(today);
   const activeMembers=members.filter(m=>m.status==='active');
 
   const withLastAtt=activeMembers.map(m=>{
@@ -3323,7 +3516,7 @@ function renderCoachingNotes(){
 }
 
 function openCoachingModal(){
-  document.getElementById('cn-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('cn-date').value=localDateStr();
   document.getElementById('cn-category').value='technique';
   document.getElementById('cn-content').value='';
   document.getElementById('modal-coaching').classList.add('open');
@@ -3441,7 +3634,7 @@ function saveNews(){
     title,body,
     category:document.getElementById('news-category').value,
     lineUrl:document.getElementById('news-line').value.trim(),
-    createdAt:new Date().toISOString().slice(0,10),
+    createdAt:localDateStr(),
   });
   saveAll();
   document.getElementById('modal-news').classList.remove('open');
@@ -3483,26 +3676,139 @@ async function handleLogout(){
 }
 
 // ══ FIRESTORE SAVE ══
-async function saveToFirestore(collectionName, dataArray){
+// ══ FIRESTORE SAVE（差分保存・安全版 2026-11）══
+// ・手元に無いデータを一律に削除する方式をやめ、「この画面で削除したもの」だけを削除する
+//   （管理アプリを開いたままでも、受付タブレット等で後から入った出席などを消さない）
+// ・変更があったドキュメントだけを書き込む（読み書き量の削減・500件制限の回避）
+const __remote = {};   // コレクション名 -> Map(ドキュメントID -> {c:正規化JSON, id:データ上のID, v:データ})：最後に確認したクラウドの状態
+const __live   = {};   // コレクション名 -> true：リアルタイム同期中
+function __canon(v){
+  if(v===undefined) return undefined;
+  if(v===null||typeof v!=='object') return JSON.stringify(v);
+  if(Array.isArray(v)) return '['+v.map(x=>{const c=__canon(x);return c===undefined?'null':c;}).join(',')+']';
+  return '{'+Object.keys(v).sort().filter(k=>v[k]!==undefined).map(k=>JSON.stringify(k)+':'+__canon(v[k])).join(',')+'}';
+}
+function __stripUndef(o){ const c={}; Object.keys(o).forEach(k=>{ if(o[k]!==undefined) c[k]=o[k]; }); return c; }
+function __snapToMap(snap){
+  const m=new Map();
+  snap.docs.forEach(d=>{ const v=d.data()||{}; m.set(d.id,{c:__canon(v), id:(v.id||d.id), v}); });
+  return m;
+}
+async function saveToFirestore(collectionName, dataArray, opts){
   if(!window.db) return;
+  opts=opts||{};
   try {
-    const batch = window.fbWriteBatch(window.db);
-    const currentIds = new Set(dataArray.map(item => item.id));
-    // Firestore上の既存ドキュメントのうち、現在の配列に存在しないもの（＝削除されたもの）を削除する
-    const snap = await window.fbGetDocs(window.fbCollection(window.db, collectionName));
-    snap.docs.forEach(d => {
-      if(!currentIds.has(d.id)){
-        batch.delete(d.ref);
+    const live=!!(__live[collectionName] && __remote[collectionName]);
+    const known=__remote[collectionName];
+    const knownIds=new Set(); if(known) known.forEach(r=>knownIds.add(r.id));
+    let remote;
+    if(live){
+      remote=known;
+    } else {
+      const snap = await window.fbGetDocs(window.fbCollection(window.db, collectionName));
+      remote=__snapToMap(snap);
+    }
+    // データ上のID -> ドキュメントID（通常は同じ）
+    const byData=new Map();
+    remote.forEach((r,docId)=>{ if(!byData.has(r.id)) byData.set(r.id,[]); byData.get(r.id).push(docId); });
+    const localIds=new Set();
+    dataArray.forEach(item=>{
+      if(!item.id) item.id='auto_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+      localIds.add(item.id);
+    });
+    const ops=[];
+    byData.forEach((docIds,dataId)=>{
+      if(localIds.has(dataId)){
+        docIds.slice(1).forEach(d=>ops.push(['del',d]));          // 同じIDの重複ドキュメントを整理
+        return;
+      }
+      if(opts.exact || live || knownIds.has(dataId)){
+        docIds.forEach(d=>ops.push(['del',d]));                   // この画面で削除したもの
+      } else {
+        dataArray.push(remote.get(docIds[0]).v); localIds.add(dataId);   // 他の端末で追加されたもの → 消さずに取り込む
       }
     });
-    dataArray.forEach(item => {
-      const ref = window.fbDoc(window.db, collectionName, item.id || ('auto_'+Date.now()+'_'+Math.random().toString(36).slice(2)));
-      batch.set(ref, item);
+    const newMap=new Map();
+    dataArray.forEach(item=>{
+      const docIds=byData.get(item.id);
+      const target=docIds?docIds[0]:item.id;
+      const c=__canon(item);
+      newMap.set(target,{c, id:item.id, v:item});
+      if(docIds && remote.get(target).c===c) return;            // 変更なし
+      ops.push(['set',target,item]);
     });
-    await batch.commit();
+    for(let i=0;i<ops.length;i+=400){
+      const batch = window.fbWriteBatch(window.db);
+      ops.slice(i,i+400).forEach(op=>{
+        const ref=window.fbDoc(window.db, collectionName, op[1]);
+        if(op[0]==='del') batch.delete(ref);
+        else if(opts.merge) batch.set(ref, __stripUndef(op[2]), {merge:true});
+        else batch.set(ref, __stripUndef(op[2]));
+      });
+      await batch.commit();
+    }
+    if(!__live[collectionName]) __remote[collectionName]=newMap;
   } catch(e) {
-    console.warn('Firestore save error:', collectionName, e.message); const __now = Date.now(); if(__now-(window.__fsErrorToastAt||0)>5000){window.__fsErrorToastAt = __now; showToast('⚠ クラウド同期に失敗しました（この端末には保存済み）');}
+    console.warn('Firestore save error:', collectionName, e.message); const __now = Date.now(); if(__now-(window.__fsErrorToastAt||0)>5000){window.__fsErrorToastAt = __now; showToast('クラウドへの保存に失敗しました。通信状況を確認して、もう一度お試しください。');}
   }
+}
+
+// ══ リアルタイム同期（他の端末・会員アプリ・決済の変更を自動で反映）══
+const __SYNC_DEFS=[
+  ['members',           ()=>members,            v=>{members=v;},            'ambis_members'],
+  ['attendance',        ()=>attendance,         v=>{attendance=v;},         'ambis_attendance'],
+  ['belt_history',      ()=>beltHistory,        v=>{beltHistory=v;},        'ambis_belt_history'],
+  ['payments',          ()=>payments,           v=>{payments=v;},           'ambis_payments'],
+  ['tournaments',       ()=>tournaments,        v=>{tournaments=v;},        'ambis_tournaments'],
+  ['coaching',          ()=>coachingNotes,      v=>{coachingNotes=v;},      'ambis_coaching'],
+  ['news',              ()=>news,               v=>{news=v;},               'ambis_news'],
+  ['schedule',          ()=>classSchedule,      v=>{classSchedule=v;},      'ambis_schedule'],
+  ['schedule_exceptions',()=>scheduleExceptions,v=>{scheduleExceptions=v;}, 'ambis_schedule_exceptions'],
+  ['withdrawal_reasons',()=>withdrawalReasons,  v=>{withdrawalReasons=v;},  'ambis_withdrawal_reasons'],
+  ['rental_bookings',   ()=>rentalBookings,     v=>{rentalBookings=v;},     'ambis_rental_bookings'],
+  ['trial_visitors',    ()=>trialVisitors,      v=>{trialVisitors=v;},      'ambis_trial_visitors'],
+];
+let __liveStarted=false, __rerenderTimer=null, __pendingColls=new Set();
+function startLiveSync(){
+  if(__liveStarted||!window.db||!window.fbOnSnapshot) return;
+  __liveStarted=true;
+  __SYNC_DEFS.forEach(([coll,get,set,lsKey])=>{
+    try{
+      window.fbOnSnapshot(window.fbCollection(window.db, coll), snap=>{
+        const m=__snapToMap(snap);
+        const docs=[]; const seen=new Set();
+        m.forEach(r=>{ if(seen.has(r.id)) return; seen.add(r.id); docs.push(r.v.id?r.v:{...r.v,id:r.id}); });
+        if(coll==='members' && !docs.length && get().length) return;   // 安全策：会員0件では上書きしない
+        __remote[coll]=m; __live[coll]=true;
+        const cur=new Map(); get().forEach(v=>{ if(v&&v.id) cur.set(v.id,__canon(v)); });
+        let same=cur.size===docs.length; if(same){ for(const v of docs){ if(cur.get(v.id)!==__canon(v)){ same=false; break; } } }
+        if(same) return;                                                  // 手元と同じなら再描画しない
+        set(docs);
+        try{ localStorage.setItem(lsKey, JSON.stringify(docs)); }catch(e){}
+        if(coll==='members') syncRoster();   // 会員アプリでの写真変更などを受付タブレットの名簿にも反映
+        __pendingColls.add(coll);
+        clearTimeout(__rerenderTimer); __rerenderTimer=setTimeout(__rerenderActivePage, 350);
+      }, err=>{ console.warn('live sync error:', coll, err&&err.message); __live[coll]=false; });
+    }catch(e){ console.warn('live sync start error:', coll, e.message); }
+  });
+}
+function __rerenderActivePage(){
+  const colls=__pendingColls; __pendingColls=new Set();
+  const modalOpen=!!document.querySelector('.modal-overlay.open');
+  try{
+    const act=document.querySelector('.page.active'); const page=act?act.id.replace('page-',''):'';
+    if(page==='members') filterMembers();
+    else if(page==='attendance'){ renderAttendance(); renderMonthlyChart(); }
+    else if(page==='trial') renderTrialList();
+    else if(page==='belt') renderBeltHistory();
+    else if(page==='dormant') renderDormant();
+    else if(page==='birthday') renderBirthday();
+    else if(page==='news') renderNews();
+    else if(page==='schedule'){ renderSchedule(); renderExceptions(); }
+    else if(page==='tournament') renderTournaments();
+    // 支払い管理・レンタル・分析・コーチングは、入力中の画面を崩さないよう、ページを開き直したときに最新を表示
+    if(colls.has('members') && !modalOpen) rebuildSelects();
+  }catch(e){ console.warn('rerender error:', e.message); }
 }
 
 // ══ FIRESTORE LOAD ══
@@ -3510,7 +3816,10 @@ async function loadFromFirestore(collectionName){
   if(!window.db) return null;
   try {
     const snap = await window.fbGetDocs(window.fbCollection(window.db, collectionName));
-    return snap.docs.map(d => d.data());
+    const list = snap.docs.map(d => d.data());
+    // 読み込んだ時点のクラウドの状態を記録（「この画面で削除したもの」だけを削除する判定に使う）
+    if(!__live[collectionName]) __remote[collectionName]=__snapToMap(snap);
+    return list;
   } catch(e) {
     console.warn('Firestore load error:', collectionName, e.message);
     return null;
@@ -3535,8 +3844,8 @@ function buildRosterReaders(){
 }
 function syncRoster(){
   if(!window.db) return;
-  saveToFirestore('roster', buildRosterArray());
-  saveToFirestore('roster_readers', buildRosterReaders());
+  saveToFirestore('roster', buildRosterArray(), {exact:true});
+  saveToFirestore('roster_readers', buildRosterReaders(), {exact:true});
 }
 
 // ══ SAVE ALL (Firestore + localStorage backup) ══
@@ -3556,7 +3865,7 @@ function saveAll(){
   localStorage.setItem('ambis_trial_visitors',JSON.stringify(trialVisitors));
   // Firestoreにも非同期で保存
   if(window.db){
-    saveToFirestore('members', members);
+    saveToFirestore('members', members, {merge:true});
     syncRoster();
     saveToFirestore('attendance', attendance);
     saveToFirestore('belt_history', beltHistory);
@@ -3589,7 +3898,7 @@ function seedSampleData(){
   members.filter(m=>m.status==='active').forEach(m=>{
     for(let i=0;i<Math.floor(Math.random()*10+3);i++){
       const d=new Date(now.getFullYear(),now.getMonth(),Math.floor(Math.random()*20)+1);
-      const dateStr=d.toISOString().slice(0,10);
+      const dateStr=localDateStr(d);
       attendance.push({id:'att-'+Math.random().toString(36).slice(2),memberId:m.id,memberName:m.name,class:classes[Math.floor(Math.random()*3)],date:dateStr,time:'19:00'});
     }
   });
@@ -3600,14 +3909,14 @@ function seedSampleData(){
   const d1=new Date(now);d1.setDate(d1.getDate()+2);
   const d2=new Date(now);d2.setDate(d2.getDate()+5);
   rentalBookings=[
-    {id:'rb-1',customerName:'鈴木 由美',customerPhone:'090-1111-2222',customerEmail:'',date:d1.toISOString().slice(0,10),startTime:'10:00',endTime:'11:30',purpose:'yoga',price:3000,bookingStatus:'confirmed',paymentStatus:'paid',paymentMethod:'onsite',accessCode:'',accessCodeStatus:'not_issued',notes:'',createdAt:new Date().toISOString()},
-    {id:'rb-2',customerName:'高橋 さくら',customerPhone:'080-3333-4444',customerEmail:'',date:d2.toISOString().slice(0,10),startTime:'14:00',endTime:'15:00',purpose:'pilates',price:3500,bookingStatus:'pending',paymentStatus:'unpaid',paymentMethod:'onsite',accessCode:'',accessCodeStatus:'not_issued',notes:'初回利用',createdAt:new Date().toISOString()},
+    {id:'rb-1',customerName:'鈴木 由美',customerPhone:'090-1111-2222',customerEmail:'',date:localDateStr(d1),startTime:'10:00',endTime:'11:30',purpose:'yoga',price:3000,bookingStatus:'confirmed',paymentStatus:'paid',paymentMethod:'onsite',accessCode:'',accessCodeStatus:'not_issued',notes:'',createdAt:new Date().toISOString()},
+    {id:'rb-2',customerName:'高橋 さくら',customerPhone:'080-3333-4444',customerEmail:'',date:localDateStr(d2),startTime:'14:00',endTime:'15:00',purpose:'pilates',price:3500,bookingStatus:'pending',paymentStatus:'unpaid',paymentMethod:'onsite',accessCode:'',accessCodeStatus:'not_issued',notes:'初回利用',createdAt:new Date().toISOString()},
   ];
   const d3=new Date(now);d3.setDate(d3.getDate()-7);
   const d4=new Date(now);d4.setDate(d4.getDate()-3);
   trialVisitors=[
-    {id:'tr-1',type:'trial',name:'伊藤 直樹',phone:'090-5555-6666',email:'',date:d3.toISOString().slice(0,10),dojo:'',source:'Instagram',belt:'',converted:'yes',note:'初回から積極的だった',createdAt:new Date().toISOString()},
-    {id:'tr-2',type:'visitor',name:'中村 隆',phone:'080-7777-8888',email:'',date:d4.toISOString().slice(0,10),dojo:'福岡柔術クラブ',source:'',belt:'purple',converted:'pending',note:'出張のため一時利用',createdAt:new Date().toISOString()},
+    {id:'tr-1',type:'trial',name:'伊藤 直樹',phone:'090-5555-6666',email:'',date:localDateStr(d3),dojo:'',source:'Instagram',belt:'',converted:'yes',note:'初回から積極的だった',createdAt:new Date().toISOString()},
+    {id:'tr-2',type:'visitor',name:'中村 隆',phone:'080-7777-8888',email:'',date:localDateStr(d4),dojo:'福岡柔術クラブ',source:'',belt:'purple',converted:'pending',note:'出張のため一時利用',createdAt:new Date().toISOString()},
   ];
 }
 
@@ -3685,10 +3994,12 @@ window.initApp = async function(){
   }
 
   // 画面を初期化
-  document.getElementById('att-date-input').value = new Date().toISOString().slice(0,10);
+  document.getElementById('att-date-input').value = localDateStr();
   rebuildSelects();
   renderMembers(members);
   showPage('members', document.getElementById('nav-members'));
+  // 他の端末（受付タブレット・会員アプリ・決済）の変更を自動で反映
+  if(fbMembers !== null) startLiveSync();
   // ローディング完了
   document.getElementById('loading-overlay').classList.remove('show');
 };

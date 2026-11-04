@@ -18,7 +18,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js";
-import { getFirestore, collection, doc, getDocs, addDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"; import { getAuth, signInWithCredential, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, doc, getDocs, addDoc, updateDoc, setDoc, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"; import { getAuth, signInWithCredential, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBA3sfUh7i2gldOXaHILJYlS4cu3YmnIyg",
@@ -40,6 +40,7 @@ window.fbDoc = doc;
 window.fbGetDocs = getDocs;
 window.fbAddDoc = addDoc;
 window.fbUpdateDoc = updateDoc;
+window.fbSetDoc = setDoc;
 
 // ── 認証：道場専用Googleアカウントでログイン（Google Identity Services方式） ──
 // 匿名認証を廃止。タブレットは道場アカウントで1回ログインすれば以後セッションが保持される。
@@ -75,6 +76,35 @@ async function ci_loadAndStart(){
     console.warn('Firebase load error:', e.message);
   }
   if(typeof initCheckin === 'function') initCheckin();
+  ci_startLive();
+}
+// ── リアルタイム更新：名簿（新規登録・休会/退会・写真の変更）と、本日の出席（他の端末・管理アプリでの修正）──
+function ci_localDate(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+let __ciUnsubAtt=null, __ciAttDate='';
+function ci_startLive(){
+  if(window.__ciLiveStarted) return;
+  window.__ciLiveStarted=true;
+  onSnapshot(collection(db,'roster'), snap=>{
+    const list=snap.docs.map(d=>d.data());
+    if(!list.length) return;   // 0件のときは上書きしない（安全策）
+    localStorage.setItem('ambis_members', JSON.stringify(list));
+    if(typeof window.ciOnDataChanged==='function') window.ciOnDataChanged();
+  }, e=>console.warn('roster live error:', e.message));
+  ci_watchTodayAttendance();
+  setInterval(ci_watchTodayAttendance, 60000);   // 日付が変わったら監視対象を切り替え
+}
+function ci_watchTodayAttendance(){
+  const today=ci_localDate();
+  if(today===__ciAttDate) return;
+  __ciAttDate=today;
+  if(__ciUnsubAtt){ try{ __ciUnsubAtt(); }catch(e){} }
+  __ciUnsubAtt=onSnapshot(query(collection(db,'attendance'), where('date','==',today)), snap=>{
+    const todays=snap.docs.map(d=>d.data());
+    let all=[]; try{ all=JSON.parse(localStorage.getItem('ambis_attendance')||'[]'); }catch(e){}
+    const others=all.filter(a=>a.date!==today);
+    localStorage.setItem('ambis_attendance', JSON.stringify(others.concat(todays)));
+    if(typeof window.ciOnDataChanged==='function') window.ciOnDataChanged();
+  }, e=>console.warn('attendance live error:', e.message));
 }
 onAuthStateChanged(auth, (user) => {
   const overlay = document.getElementById('ci-login-overlay');
@@ -322,6 +352,7 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
       <div class="header-brand">AMBIs</div>
       <div class="header-sub">JIU-JITSU ACADEMY · KUMAMOTO — CHECK IN</div>
     </div>
+    <div id="ci-sound-hint" style="display:none;background:rgba(201,169,110,0.18);border:1px solid var(--gold);color:var(--gold);font-size:12px;padding:6px 14px;border-radius:20px;">画面をタップすると、読み取り音が鳴るようになります</div>
     <div>
       <div class="time-display" id="time-display">00:00</div>
       <div class="date-display" id="date-display"></div>
@@ -425,24 +456,16 @@ function loadData(){
   members=JSON.parse(localStorage.getItem('ambis_members')||'[]');
   attendance=JSON.parse(localStorage.getItem('ambis_attendance')||'[]');
 }
-function saveData(){
+function saveData(record){
   localStorage.setItem('ambis_attendance',JSON.stringify(attendance));
-  // Firestoreにも保存（非同期）
-  if(window.fbDb){
-    const newRecords = attendance.filter(a => a.date === getToday());
-    newRecords.forEach(async (record) => {
-      try {
-        const ref = window.fbDoc(window.fbDb, 'attendance', record.id);
-        await window.fbUpdateDoc(ref, record).catch(async () => {
-          // ドキュメントが存在しない場合は新規作成
-          const { setDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
-          await setDoc(ref, record);
-        });
-      } catch(e) { console.warn('Firestore save error:', e); showToast('⚠ クラウド同期に失敗しました（この端末には保存済み）','warn'); }
-    });
+  // Firestoreには「今回の1件」だけを保存（以前は本日分を毎回すべて書き直していた）
+  if(window.fbDb && window.fbSetDoc && record){
+    if(!navigator.onLine) showToast('オフラインです。通信が戻ると自動で送信されます（アプリを閉じないでください）','warn');
+    window.fbSetDoc(window.fbDoc(window.fbDb,'attendance',record.id), record)
+      .catch(e=>{ console.warn('Firestore save error:', e); showToast('⚠ クラウド同期に失敗しました（この端末には保存済み）','warn'); });
   }
 }
-function getToday(){return new Date().toISOString().slice(0,10);}
+function getToday(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function getTime(){const n=new Date();return `${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;}
 
 // CLOCK
@@ -490,7 +513,7 @@ async function startCamera(){
   }
 }
 
-function playTone(freq,duration,delay,type,vol){try{if(!window.__ambisAudioCtx)window.__ambisAudioCtx=new (window.AudioContext||window.webkitAudioContext)();const ctx=window.__ambisAudioCtx;const osc=ctx.createOscillator();const gain=ctx.createGain();osc.type=type||'sine';osc.frequency.value=freq;const startTime=ctx.currentTime+(delay||0);osc.connect(gain);gain.connect(ctx.destination);gain.gain.setValueAtTime(0.0001,startTime);gain.gain.exponentialRampToValueAtTime(vol||0.2,startTime+0.01);gain.gain.exponentialRampToValueAtTime(0.0001,startTime+duration);osc.start(startTime);osc.stop(startTime+duration+0.05);}catch(e){console.error('sound error:',e);}}/* AMBIs 金のベル音（発表動画と同じ系統） */function playBell(f,dur,delay,vol){[[1,1],[2.01,.45],[2.76,.28],[5.4,.1]].forEach(function(h){playTone(f*h[0],dur*(1/h[0]+.3),delay,'sine',vol*h[1]);});}function playScanSound(){playBell(1319,0.35,0,0.26);playBell(1760,0.6,0.09,0.26);}function playCheckinSound(){playBell(880,1.4,0,0.15);playBell(1109,1.4,0.12,0.14);playBell(1319,1.8,0.24,0.16);}/* ── QR読み取り（強化版）──
+function playTone(freq,duration,delay,type,vol){try{if(!window.__ambisAudioCtx)window.__ambisAudioCtx=new (window.AudioContext||window.webkitAudioContext)();const ctx=window.__ambisAudioCtx;if(ctx.state==='suspended'){ctx.resume().catch(()=>{});}const osc=ctx.createOscillator();const gain=ctx.createGain();osc.type=type||'sine';osc.frequency.value=freq;const startTime=ctx.currentTime+(delay||0);osc.connect(gain);gain.connect(ctx.destination);gain.gain.setValueAtTime(0.0001,startTime);gain.gain.exponentialRampToValueAtTime(vol||0.2,startTime+0.01);gain.gain.exponentialRampToValueAtTime(0.0001,startTime+duration);osc.start(startTime);osc.stop(startTime+duration+0.05);}catch(e){console.error('sound error:',e);}}/* AMBIs 金のベル音（発表動画と同じ系統） */function playBell(f,dur,delay,vol){[[1,1],[2.01,.45],[2.76,.28],[5.4,.1]].forEach(function(h){playTone(f*h[0],dur*(1/h[0]+.3),delay,'sine',vol*h[1]);});}function playScanSound(){playBell(1319,0.35,0,0.26);playBell(1760,0.6,0.09,0.26);}function playCheckinSound(){playBell(880,1.4,0,0.15);playBell(1109,1.4,0.12,0.14);playBell(1319,1.8,0.24,0.16);}/* ── QR読み取り（強化版）──
    1) Android Chrome等の標準QR検出(BarcodeDetector)を優先：高速・高精度
    2) 非対応端末はjsQR。縮小＋中央切り出し＋間引きで軽くし、取りこぼしを減らす */
 let qrDetector=null, qrBusy=false, lastScanAt=0, jsqrToggle=0;
@@ -586,11 +609,12 @@ function doCheckin(){
   if(attendance.find(a=>a.memberId===currentMember.id&&a.date===today&&a.class===selectedClass)){
     showToast(`${classInfo[selectedClass].label}は本日登録済みです`,'warn');return;
   }
-  attendance.push({
+  const record={
     id:'att-'+Date.now(),memberId:currentMember.id,
     memberName:currentMember.name,class:selectedClass,date:today,time:getTime(),
-  });
-  saveData();playCheckinSound();
+  };
+  attendance.push(record);
+  saveData(record);playCheckinSound();
   const flash=document.getElementById('success-flash');
   flash.classList.add('show');
   setTimeout(()=>flash.classList.remove('show'),800);
@@ -606,17 +630,18 @@ function doCheckin(){
 function renderLog(){
   loadData();
   const today=getToday();
-  const todayLog=[...attendance].filter(a=>a.date===today).reverse().slice(0,30);
-  document.getElementById('stat-today').textContent=todayLog.length;
-  document.getElementById('stat-beginner').textContent=todayLog.filter(a=>a.class==='beginner').length;
-  document.getElementById('stat-all').textContent=todayLog.filter(a=>a.class==='all').length;
-  document.getElementById('stat-free').textContent=todayLog.filter(a=>a.class==='free').length;
+  const todayAll=[...attendance].filter(a=>a.date===today).sort((a,b)=>String(a.time||'').localeCompare(String(b.time||''))||String(a.id).localeCompare(String(b.id)));
+  const todayLog=todayAll.slice().reverse().slice(0,30);   // 表示は新しい順に30件まで
+  document.getElementById('stat-today').textContent=todayAll.length;   // 人数は全件で数える
+  document.getElementById('stat-beginner').textContent=todayAll.filter(a=>a.class==='beginner').length;
+  document.getElementById('stat-all').textContent=todayAll.filter(a=>a.class==='all').length;
+  document.getElementById('stat-free').textContent=todayAll.filter(a=>a.class==='free').length;
   const body=document.getElementById('log-body');
   if(!todayLog.length){body.innerHTML='<div class="log-empty">本日の記録はありません</div>';return;}
   body.innerHTML=todayLog.map(a=>`
     <div class="log-item">
       <div class="log-time">${a.time||'--:--'}</div>
-      <div class="log-name">${a.memberName}</div>
+      <div class="log-name">${ciEsc(a.memberName)}</div>
       <div class="log-class">${classInfo[a.class]?.label||a.class}</div>
     </div>`).join('');
 }
@@ -633,11 +658,45 @@ function showToast(msg,type='success'){
   setTimeout(()=>el.remove(),2500);
 }
 
+function ciEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+// 名簿・出席がリアルタイム更新されたとき
+window.ciOnDataChanged=function(){
+  loadData(); renderLog();
+  // 表示中の会員が休会・退会になった場合は表示を閉じる
+  if(currentMember){
+    const m=members.find(x=>x.id===currentMember.id);
+    if(!m||m.status!=='active'){
+      currentMember=null;selectedClass=null;
+      document.getElementById('result-card').classList.remove('show');
+      document.getElementById('status-idle').style.display='block';
+    }
+  }
+};
+// 音：ブラウザの制限で音が止まっている場合は、画面に触れたときに再開する
+function ciUnlockAudio(){
+  try{
+    if(!window.__ambisAudioCtx) window.__ambisAudioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    const ctx=window.__ambisAudioCtx;
+    if(ctx.state==='suspended') ctx.resume().then(ciUpdateSoundHint).catch(()=>{});
+    ciUpdateSoundHint();
+  }catch(e){}
+}
+function ciUpdateSoundHint(){
+  const el=document.getElementById('ci-sound-hint'); if(!el) return;
+  const ctx=window.__ambisAudioCtx;
+  el.style.display=(ctx&&ctx.state==='running')?'none':'block';
+}
+document.addEventListener('pointerdown', ciUnlockAudio, {passive:true});
+let __ciInited=false;
 function initCheckin(){
-  loadData();updateClock();
+  loadData();renderLog();
+  if(__ciInited) return;   // ログインし直しても二重に起動しない
+  __ciInited=true;
+  updateClock();
   setInterval(updateClock,1000);
   setInterval(()=>{loadData();renderLog();},5000);
-  renderLog();startCamera();
+  startCamera();
+  ciUnlockAudio();
 }
 
 window.addEventListener('load',()=>{

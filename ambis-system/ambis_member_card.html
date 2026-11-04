@@ -1215,7 +1215,7 @@ function tenure(joindate){
 
 function buildCalendar(memberId,myAtt){
   const now=new Date();
-  const todayStr=now.toISOString().slice(0,10);
+  const todayStr=localDateStr(now);
   const months=[];
   for(let i=2;i>=0;i--){
     const d=new Date(now.getFullYear(),now.getMonth()-i,1);
@@ -1310,11 +1310,15 @@ function streakStripHTML(myAtt){
   const sub=r.thisWeek?'今週も来ました。この調子で、あなたのペースで。':'今週も来られたら、記録がつながります。';
   return `<div class="start-strip streak-strip"><div class="sst-mark" style="font-family:'Bebas Neue',sans-serif;font-size:18px;">${r.streak}</div><div><div class="sst-title">${r.streak}週連続で、通っています。</div><div class="sst-sub">${sub}</div></div></div>`;
 }
+// ログインしている本人の会員データ（他の会員のデータを表示・保存しないため、先頭の会員などで代用しない）
+function myMember(){ const id=window.loggedInMemberId||memberId; return id?members.find(m=>m.id===id):null; }
+// 端末のローカル時刻（日本時間）で YYYY-MM-DD
+function localDateStr(d){ d=d||new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function initCard(){
   const content=document.getElementById('card-content');
   // ログイン済みの場合はloggedInMemberIdを優先
   const resolvedId = window.loggedInMemberId || memberId;
-  let member=resolvedId?members.find(m=>m.id===resolvedId):members.find(m=>m.status==='active');
+  let member=resolvedId?members.find(m=>m.id===resolvedId):null;
   if(!member){
     content.innerHTML=`<div class="not-found"><div class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg></div><p>会員情報が見つかりません。<br>管理者にお問い合わせください。</p></div>`;
     return;
@@ -1425,7 +1429,7 @@ function renderTournaments(){
   ['jbjjf','asjjf'].forEach(league=>{
     const el=document.getElementById(league+'-events');
     if(!el) return;
-    const now=new Date().toISOString().slice(0,10);
+    const now=localDateStr();
     const list=tournaments.filter(t=>t.league===league&&t.date>=now).sort((a,b)=>a.date.localeCompare(b.date));
     if(!list.length){el.innerHTML=startStateHTML('おすすめの大会は、ここでお知らせします。','初めての方に合う大会が決まったら、道場長がここに載せます。');return;}
     el.innerHTML=list.map(t=>`
@@ -1523,7 +1527,7 @@ function renderMilestone(){
   const progress=document.getElementById('milestone-progress');
   if(!grid||!progress) return;
 
-  const member=memberId?members.find(m=>m.id===memberId):members.find(m=>m.status==='active');
+  const member=myMember();
   if(!member){grid.innerHTML='<div class="empty-msg">会員情報がありません</div>';return;}
 
   const myAtt=attendance.filter(a=>a.memberId===member.id);
@@ -1640,9 +1644,9 @@ function renderSchedule(){
   // 直近の臨時変更を上部に表示
   const excEl=document.getElementById('upcoming-exceptions');
   if(excEl){
-    const today=new Date().toISOString().slice(0,10);
+    const today=localDateStr();
     const soon=new Date(); soon.setDate(soon.getDate()+14);
-    const soonStr=soon.toISOString().slice(0,10);
+    const soonStr=localDateStr(soon);
     const upcoming=getExceptions()
       .filter(e=>e.date>=today&&e.date<=soonStr)
       .sort((a,b)=>a.date.localeCompare(b.date));
@@ -1685,7 +1689,7 @@ function renderSchedule(){
   calsEl.innerHTML=months.map((mo,i)=>{
     const firstDay=new Date(mo.y,mo.m,1).getDay();
     const days=new Date(mo.y,mo.m+1,0).getDate();
-    const todayStr=now.toISOString().slice(0,10);
+    const todayStr=localDateStr(now);
     let cells='';
     for(let p=0;p<firstDay;p++) cells+=`<div></div>`;
     for(let d=1;d<=days;d++){
@@ -1750,7 +1754,7 @@ const recordResultCls={gold:'result-gold',silver:'result-silver',bronze:'result-
 const recordLeagueLabel={jbjjf:'JBJJF',asjjf:'ASJJF',other:'その他'};
 
 function getMyRecords(){
-  const member=memberId?members.find(m=>m.id===memberId):members.find(m=>m.status==='active');
+  const member=myMember();
   if(!member) return [];
   const all=JSON.parse(localStorage.getItem('ambis_match_records')||'[]');
   return all.filter(r=>r.memberId===member.id);
@@ -1762,7 +1766,7 @@ function saveMyRecords(updated,memberId){
 }
 
 function renderRecord(){
-  const member=memberId?members.find(m=>m.id===memberId):members.find(m=>m.status==='active');
+  const member=myMember();
   const statsEl=document.getElementById('record-stats');
   const listEl=document.getElementById('record-list');
   if(!statsEl||!listEl||!member) return;
@@ -1819,7 +1823,7 @@ function openRecordModal(id){
   } else {
     document.getElementById('rm-title').textContent='試合結果を記録';
     document.getElementById('r-name').value='';
-    document.getElementById('r-date').value=new Date().toISOString().slice(0,10);
+    document.getElementById('r-date').value=localDateStr();
     document.getElementById('r-league').value='';
     document.getElementById('r-weight').value='';
     document.getElementById('r-format').value='gi';
@@ -1834,7 +1838,7 @@ function closeRecordModal(){
 }
 
 function saveRecord(){
-  const member=memberId?members.find(m=>m.id===memberId):members.find(m=>m.status==='active');
+  const member=myMember();
   if(!member) return;
   const name=document.getElementById('r-name').value.trim();
   const date=document.getElementById('r-date').value;
@@ -1865,7 +1869,7 @@ function saveRecord(){
 }
 
 function deleteRecord(){
-  const member=memberId?members.find(m=>m.id===memberId):members.find(m=>m.status==='active');
+  const member=myMember();
   if(!member||!editingRecordId) return;
   let records=getMyRecords().filter(r=>r.id!==editingRecordId);
   saveMyRecords(records,member.id);
@@ -1883,7 +1887,7 @@ function handleMemberPhotoChange(e){
   const file = e.target.files[0];
   if(!file) return;
   const resolvedId = window.loggedInMemberId || memberId;
-  const member = resolvedId ? members.find(m=>m.id===resolvedId) : members.find(m=>m.status==='active');
+  const member = resolvedId ? members.find(m=>m.id===resolvedId) : null;
   if(!member){ alert('会員情報が見つかりませんでした'); e.target.value=''; return; }
   const reader = new FileReader();
   reader.onload = ev => {
