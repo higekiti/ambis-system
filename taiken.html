@@ -225,6 +225,7 @@
         input[type="email"],
         input[type="tel"],
         input[type="date"],
+        input[type="number"],
         select,
         textarea {
             width: 100%;
@@ -271,6 +272,18 @@
             cursor: pointer;
             accent-color: var(--navy);
         }
+
+        /* 2列入力・補足・チェック */
+        .f-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .f-note { font-size: 11.5px; color: var(--muted); margin-top: 6px; line-height: 1.7; }
+        .f-note.warn { color: #9a5b2a; }
+        .is-hidden { display: none !important; }
+        .radio-group.col { flex-direction: column; gap: 9px; }
+        .check-item { display: flex; align-items: flex-start; gap: 9px; font-size: 13px; line-height: 1.7; cursor: pointer; }
+        .check-item input[type="checkbox"] { width: 17px; height: 17px; margin: 3px 0 0; padding: 0; flex-shrink: 0; accent-color: var(--navy); cursor: pointer; }
+        .agree-box { background: var(--cream); border: 1px solid #E5DCCB; padding: 14px 16px; margin-bottom: 18px; }
+        .form-legal { font-size: 11px; color: var(--muted); text-align: center; margin-top: 12px; line-height: 1.7; }
+        .form-legal a { color: var(--navy); text-decoration: underline; }
 
         /* Common fields (shared across all tabs) */
         .common-fields { margin-bottom: 0; }
@@ -452,13 +465,18 @@
                         <label class="f-label" for="c-name">お名前<span class="req">必須</span></label>
                         <input type="text" id="c-name" placeholder="例：山田 太郎" required>
                     </div>
+                    <div class="f-row" id="row-kana">
+                        <label class="f-label" for="c-kana">ふりがな<span class="req">必須</span></label>
+                        <input type="text" id="c-kana" placeholder="例：やまだ たろう">
+                    </div>
                     <div class="f-row">
                         <label class="f-label" for="c-email">メールアドレス<span class="req">必須</span></label>
                         <input type="email" id="c-email" placeholder="example@email.com" required>
                     </div>
                     <div class="f-row">
-                        <label class="f-label" for="c-tel">電話番号<span class="opt">任意</span></label>
-                        <input type="tel" id="c-tel" placeholder="090-0000-0000">
+                        <label class="f-label" for="c-tel">電話番号<span class="req" id="tel-req">必須</span><span class="opt is-hidden" id="tel-opt">任意</span></label>
+                        <input type="tel" id="c-tel" placeholder="090-0000-0000" autocomplete="tel">
+                        <p class="f-note" id="tel-note">当日、遅れる場合などのご連絡に使います</p>
                     </div>
                 </div>
 
@@ -467,42 +485,169 @@
                 <!-- 体験フィールド -->
                 <div class="field-group active" id="fields-taiken">
                     <div class="f-row">
-                        <label class="f-label" for="t-date">希望体験日<span class="opt">任意・目安</span></label>
-                        <input type="date" id="t-date">
+                        <label class="f-label" for="t-date">希望体験日<span class="req">必須</span></label>
+                        <input type="date" id="t-date" onchange="buildClassOptions('t')">
+                        <p class="f-note">クラスは土・日に開催しています（2026年11月22日オープン）</p>
                     </div>
                     <div class="f-row">
-                        <label class="f-label" for="t-time">希望時間帯<span class="opt">任意・目安</span></label>
-                        <select id="t-time">
+                        <label class="f-label" for="t-class">希望クラス<span class="req">必須</span></label>
+                        <select id="t-class"><option value="">- 先に希望日を選んでください -</option></select>
+                        <p class="f-note warn is-hidden" id="t-class-none">この日はクラスがありません。土曜・日曜の日付を選ぶか、「日程を相談したい」を選んでください。</p>
+                    </div>
+                    <div class="f-row">
+                        <label class="f-label">柔術の経験<span class="req">必須</span></label>
+                        <div class="radio-group col">
+                            <label class="radio-item"><input type="radio" name="t-exp" value="未経験" onchange="toggleBelt('t')"> 未経験</label>
+                            <label class="radio-item"><input type="radio" name="t-exp" value="他の格闘技の経験あり" onchange="toggleBelt('t')"> 他の格闘技の経験あり</label>
+                            <label class="radio-item"><input type="radio" name="t-exp" value="柔術の経験あり" onchange="toggleBelt('t')"> 柔術の経験あり</label>
+                        </div>
+                    </div>
+                    <div class="f-row is-hidden" id="t-belt-row">
+                        <label class="f-label" for="t-belt">帯の色<span class="opt">任意</span></label>
+                        <select id="t-belt">
                             <option value="">- 選択してください -</option>
-                            <option>土曜 09:30〜10:30（初心者クラス）</option>
-                            <option>土曜 11:00〜12:00（オールレベルクラス）</option>
-                            <option>土曜 17:30〜18:30（初心者クラス）</option>
-                            <option>土曜 19:00〜20:00（オールレベルクラス）</option>
-                            <option>日曜 09:30〜10:30（初心者クラス）</option>
-                            <option>日曜 11:00〜12:00（オールレベルクラス）</option>
-                            <option>日曜 15:00〜16:00（初心者クラス）</option>
-                            <option>未定・相談したい</option>
+                            <option>白帯</option><option>青帯</option><option>紫帯</option><option>茶帯</option><option>黒帯</option>
                         </select>
+                    </div>
+                    <div class="f-2col">
+                        <div class="f-row">
+                            <label class="f-label" for="t-gender">性別<span class="opt">任意</span></label>
+                            <select id="t-gender">
+                                <option value="">- 選択 -</option>
+                                <option>男性</option><option>女性</option><option>回答しない</option>
+                            </select>
+                        </div>
+                        <div class="f-row">
+                            <label class="f-label" for="t-age">年齢<span class="opt">任意</span></label>
+                            <input type="number" id="t-age" min="5" max="99" inputmode="numeric" placeholder="例：35" oninput="checkAge('t')">
+                        </div>
+                    </div>
+                    <p class="f-note warn is-hidden" id="t-age-note" style="margin:-10px 0 16px;">18歳未満の方は、保護者の方の同意が必要です。詳しくは、ご予約後にご連絡します。</p>
+                    <div class="f-row">
+                        <label class="f-label">道着・帯<span class="req">必須</span></label>
+                        <div class="radio-group col">
+                            <label class="radio-item"><input type="radio" name="t-gi" value="無料レンタル希望" onchange="toggleSize('t')"> 無料でレンタルしたい（手ぶらでOK）</label>
+                            <label class="radio-item"><input type="radio" name="t-gi" value="持参" onchange="toggleSize('t')"> 自分の道着を持っていく</label>
+                        </div>
+                    </div>
+                    <div class="is-hidden" id="t-size-row">
+                        <div class="f-2col">
+                            <div class="f-row">
+                                <label class="f-label" for="t-height">身長（cm）<span class="opt">任意</span></label>
+                                <input type="number" id="t-height" min="90" max="220" inputmode="numeric" placeholder="例：170">
+                            </div>
+                            <div class="f-row">
+                                <label class="f-label" for="t-weight">体重（kg）<span class="opt">任意</span></label>
+                                <input type="number" id="t-weight" min="15" max="200" inputmode="numeric" placeholder="例：65">
+                            </div>
+                        </div>
+                        <p class="f-note" style="margin:-10px 0 16px;">ぴったりのサイズの道着をご用意するためだけに使います。</p>
+                    </div>
+                    <div class="f-row">
+                        <label class="f-label" for="t-health">ケガ・持病など、配慮してほしいこと<span class="opt">任意</span></label>
+                        <textarea id="t-health" style="min-height:64px;" placeholder="例：右膝を以前ケガしています"></textarea>
+                    </div>
+                    <div class="f-row">
+                        <label class="f-label" for="t-source">AMBIsを知ったきっかけ<span class="opt">任意</span></label>
+                        <select id="t-source" onchange="toggleReferrer('t')">
+                            <option value="">- 選択してください -</option>
+                            <option>SNS（Instagram等）</option>
+                            <option>友人・知人の紹介</option>
+                            <option>既存会員の紹介</option>
+                            <option>通りすがり・看板</option>
+                            <option>検索・ホームページ</option>
+                            <option>その他</option>
+                        </select>
+                    </div>
+                    <div class="f-row is-hidden" id="t-referrer-row">
+                        <label class="f-label" for="t-referrer">ご紹介者のお名前<span class="opt">任意</span></label>
+                        <input type="text" id="t-referrer" placeholder="例：田中 太郎">
                     </div>
                     <div class="f-row">
                         <label class="f-label" for="t-msg">メッセージ・ご質問<span class="opt">任意</span></label>
                         <textarea id="t-msg" placeholder="「初心者で不安」「女性一人でも大丈夫ですか」など、なんでもお気軽にどうぞ。"></textarea>
+                    </div>
+                    <div class="agree-box">
+                        <label class="check-item"><input type="checkbox" id="t-agree"> 当日は体調を整え、手足の爪を短く切り、アクセサリーを外して参加することを確認しました<span class="req" style="margin-left:6px;font-size:10px;font-weight:700;color:#fff;background:var(--navy);padding:1px 7px;white-space:nowrap;">必須</span></label>
                     </div>
                 </div>
 
                 <!-- 出稽古フィールド -->
                 <div class="field-group" id="fields-dejugi">
                     <div class="f-row">
-                        <label class="f-label" for="d-dojo">所属道場<span class="opt">任意</span></label>
+                        <label class="f-label" for="d-dojo">所属道場<span class="req">必須</span></label>
                         <input type="text" id="d-dojo" placeholder="例：〇〇柔術アカデミー">
                     </div>
+                    <div class="f-2col">
+                        <div class="f-row">
+                            <label class="f-label" for="d-belt">帯の色<span class="req">必須</span></label>
+                            <select id="d-belt">
+                                <option value="">- 選択 -</option>
+                                <option>白帯</option><option>青帯</option><option>紫帯</option><option>茶帯</option><option>黒帯</option>
+                            </select>
+                        </div>
+                        <div class="f-row">
+                            <label class="f-label" for="d-stripe">ストライプ<span class="opt">任意</span></label>
+                            <select id="d-stripe">
+                                <option value="">- 選択 -</option>
+                                <option>0本</option><option>1本</option><option>2本</option><option>3本</option><option>4本</option>
+                            </select>
+                        </div>
+                    </div>
                     <div class="f-row">
-                        <label class="f-label" for="d-date">希望日<span class="opt">任意・目安</span></label>
-                        <input type="date" id="d-date">
+                        <label class="f-label" for="d-date">希望日<span class="req">必須</span></label>
+                        <input type="date" id="d-date" onchange="buildClassOptions('d')">
+                    </div>
+                    <div class="f-row">
+                        <label class="f-label" for="d-class">希望クラス<span class="req">必須</span></label>
+                        <select id="d-class"><option value="">- 先に希望日を選んでください -</option></select>
+                        <p class="f-note warn is-hidden" id="d-class-none">この日はクラスがありません。土曜・日曜の日付を選ぶか、「日程を相談したい」を選んでください。</p>
+                    </div>
+                    <div class="f-2col">
+                        <div class="f-row">
+                            <label class="f-label" for="d-gender">性別<span class="opt">任意</span></label>
+                            <select id="d-gender">
+                                <option value="">- 選択 -</option>
+                                <option>男性</option><option>女性</option><option>回答しない</option>
+                            </select>
+                        </div>
+                        <div class="f-row">
+                            <label class="f-label" for="d-age">年齢<span class="opt">任意</span></label>
+                            <input type="number" id="d-age" min="5" max="99" inputmode="numeric" placeholder="例：35" oninput="checkAge('d')">
+                        </div>
+                    </div>
+                    <p class="f-note warn is-hidden" id="d-age-note" style="margin:-10px 0 16px;">18歳未満の方は、保護者の方の同意が必要です。詳しくは、お申込み後にご連絡します。</p>
+                    <div class="f-row">
+                        <label class="f-label">道着・帯<span class="req">必須</span></label>
+                        <div class="radio-group col">
+                            <label class="radio-item"><input type="radio" name="d-gi" value="持参" onchange="toggleSize('d')"> 自分の道着を持っていく</label>
+                            <label class="radio-item"><input type="radio" name="d-gi" value="道着＋帯レンタル（¥1,000）" onchange="toggleSize('d')"> 道着＋帯をレンタル（¥1,000）</label>
+                            <label class="radio-item"><input type="radio" name="d-gi" value="帯のみレンタル（¥500）" onchange="toggleSize('d')"> 帯のみレンタル（¥500）</label>
+                        </div>
+                    </div>
+                    <div class="is-hidden" id="d-size-row">
+                        <div class="f-2col">
+                            <div class="f-row">
+                                <label class="f-label" for="d-height">身長（cm）<span class="opt">任意</span></label>
+                                <input type="number" id="d-height" min="90" max="220" inputmode="numeric" placeholder="例：170">
+                            </div>
+                            <div class="f-row">
+                                <label class="f-label" for="d-weight">体重（kg）<span class="opt">任意</span></label>
+                                <input type="number" id="d-weight" min="15" max="200" inputmode="numeric" placeholder="例：65">
+                            </div>
+                        </div>
+                        <p class="f-note" style="margin:-10px 0 16px;">ぴったりのサイズの道着をご用意するためだけに使います。</p>
+                    </div>
+                    <div class="f-row">
+                        <label class="f-label" for="d-health">ケガ・持病など、配慮してほしいこと<span class="opt">任意</span></label>
+                        <textarea id="d-health" style="min-height:64px;" placeholder="例：首を痛めているので、強度は控えめでお願いします"></textarea>
                     </div>
                     <div class="f-row">
                         <label class="f-label" for="d-msg">メッセージ・ご質問<span class="opt">任意</span></label>
-                        <textarea id="d-msg" placeholder="帯のランク、参加希望クラス、その他ご質問など。"></textarea>
+                        <textarea id="d-msg" placeholder="その他ご質問など、お気軽にどうぞ。"></textarea>
+                    </div>
+                    <div class="agree-box">
+                        <label class="check-item"><input type="checkbox" id="d-agree"> 当日は体調を整え、手足の爪を短く切り、アクセサリーを外して参加することを確認しました<span class="req" style="margin-left:6px;font-size:10px;font-weight:700;color:#fff;background:var(--navy);padding:1px 7px;white-space:nowrap;">必須</span></label>
                     </div>
                 </div>
 
@@ -557,6 +702,7 @@
                 </div>
 
                 <button type="submit" class="submit-btn" id="main-submit">体験を予約する</button>
+                <p class="form-legal">送信をもって<a href="privacy.html">プライバシーポリシー</a>に同意したものとみなします</p>
             </form>
         </div>
 
@@ -597,23 +743,97 @@
             document.getElementById('fields-' + t).classList.toggle('active', t === tab);
         });
 
+        // 体験・出稽古は「ふりがな」「電話番号」が必須（レンタルは任意）
+        const isLesson = tab !== 'rental';
+        document.getElementById('row-kana').classList.toggle('is-hidden', !isLesson);
+        document.getElementById('tel-req').classList.toggle('is-hidden', !isLesson);
+        document.getElementById('tel-opt').classList.toggle('is-hidden', isLesson);
+        document.getElementById('tel-note').classList.toggle('is-hidden', !isLesson);
+
         // Submit button label
         document.getElementById('main-submit').textContent = tabConfig[tab].btn;
     }
 
+    /* ===== クラス時間（HPのスケジュールと同じ） ===== */
+    const CLASS_SCHEDULE = {
+        6: [ ['09:30','10:30','初心者クラス'], ['11:00','12:00','オールレベルクラス'], ['17:30','18:30','初心者クラス'], ['19:00','20:00','オールレベルクラス'] ],
+        0: [ ['09:30','10:30','初心者クラス'], ['11:00','12:00','オールレベルクラス'], ['15:00','16:00','初心者クラス'] ],
+    };
+    const OPEN_DATE = '2026-11-22';
+    const DOW = ['日','月','火','水','木','金','土'];
+    function localDateStr(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+    function parseDate(v){ const p=String(v||'').split('-').map(Number); return (p.length===3&&p[0])?new Date(p[0],p[1]-1,p[2]):null; }
+
+    function buildClassOptions(prefix){
+        const sel=document.getElementById(prefix+'-class');
+        const none=document.getElementById(prefix+'-class-none');
+        const d=parseDate(document.getElementById(prefix+'-date').value);
+        const opts=[];
+        if(!d){
+            opts.push('<option value="">- 先に希望日を選んでください -</option>');
+            none.classList.add('is-hidden');
+        } else {
+            const list=CLASS_SCHEDULE[d.getDay()]||[];
+            opts.push('<option value="">- 選択してください -</option>');
+            list.forEach(c=>{ const v=`${c[0]}〜${c[1]} ${c[2]}`; opts.push(`<option value="${v}">${DOW[d.getDay()]} ${v}</option>`); });
+            opts.push('<option value="日程を相談したい">日程を相談したい</option>');
+            none.classList.toggle('is-hidden', list.length>0);
+        }
+        sel.innerHTML=opts.join('');
+    }
+    function setDateMin(){
+        const today=localDateStr(new Date());
+        const min = today > OPEN_DATE ? today : OPEN_DATE;
+        ['t-date','d-date'].forEach(id=>{ document.getElementById(id).min=min; });
+    }
+    function radioVal(name){ const r=document.querySelector(`input[name="${name}"]:checked`); return r?r.value:''; }
+    function toggleBelt(prefix){ document.getElementById(prefix+'-belt-row').classList.toggle('is-hidden', radioVal(prefix+'-exp')!=='柔術の経験あり'); }
+    function toggleSize(prefix){ const g=radioVal(prefix+'-gi'); document.getElementById(prefix+'-size-row').classList.toggle('is-hidden', !(g==='無料レンタル希望'||g.indexOf('道着＋帯')===0)); }
+    function toggleReferrer(prefix){ const v=document.getElementById(prefix+'-source').value; document.getElementById(prefix+'-referrer-row').classList.toggle('is-hidden', !(v==='友人・知人の紹介'||v==='既存会員の紹介')); }
+    function checkAge(prefix){ const a=parseInt(document.getElementById(prefix+'-age').value,10); document.getElementById(prefix+'-age-note').classList.toggle('is-hidden', !(a>0&&a<18)); }
+
     // Init
     switchTab('taiken');
+    setDateMin();
 
     /* ===== SUBMIT ===== */
     async function submitForm(e) {
         e.preventDefault();
 
         const name  = document.getElementById('c-name').value.trim();
+        const kana  = document.getElementById('c-kana').value.trim();
         const email = document.getElementById('c-email').value.trim();
         const tel   = document.getElementById('c-tel').value.trim();
+        const val   = id => (document.getElementById(id).value||'').trim();
 
-        if (!name || !email) {
-            alert('お名前とメールアドレスは必須です。');
+        // ── 入力チェック ──
+        const missing=[];
+        if (!name)  missing.push('お名前');
+        if (!email) missing.push('メールアドレス');
+        if (currentTab !== 'rental') {
+            if (!kana) missing.push('ふりがな');
+            if (!tel)  missing.push('電話番号');
+        }
+        if (currentTab === 'taiken') {
+            if (!val('t-date'))  missing.push('希望体験日');
+            if (!val('t-class')) missing.push('希望クラス');
+            if (!radioVal('t-exp')) missing.push('柔術の経験');
+            if (!radioVal('t-gi'))  missing.push('道着・帯');
+            if (!document.getElementById('t-agree').checked) missing.push('参加前の確認（チェック）');
+        } else if (currentTab === 'dejugi') {
+            if (!val('d-dojo'))  missing.push('所属道場');
+            if (!val('d-belt'))  missing.push('帯の色');
+            if (!val('d-date'))  missing.push('希望日');
+            if (!val('d-class')) missing.push('希望クラス');
+            if (!radioVal('d-gi')) missing.push('道着・帯');
+            if (!document.getElementById('d-agree').checked) missing.push('参加前の確認（チェック）');
+        }
+        if (missing.length) {
+            alert('次の項目を入力してください：\n・' + missing.join('\n・'));
+            return;
+        }
+        if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            alert('メールアドレスの形式をご確認ください。');
             return;
         }
 
@@ -622,29 +842,42 @@
         btn.textContent = '送信中...';
         btn.disabled = true;
 
+        // ※ 管理アプリの「申込メールから自動入力」が読み取れるよう、【項目名】値 の形式・項目名を変えないこと
+        const dateLabel = v => { const d=parseDate(v); return d ? `${v}（${DOW[d.getDay()]}）` : v; };
         let lines = [
             `【種別】${currentTab === 'taiken' ? '体験レッスン予約' : currentTab === 'dejugi' ? '出稽古申込' : 'レンタルスペース問合せ'}`,
             `【お名前】${name}`,
+            kana ? `【ふりがな】${kana}` : null,
             `【メール】${email}`,
             tel ? `【電話番号】${tel}` : null,
-            `【送信元ページ】https://ambis-jj.com/taiken.html`,
         ];
 
-        if (currentTab === 'taiken') {
-            const date = document.getElementById('t-date').value;
-            const time = document.getElementById('t-time').value;
-            const msg  = document.getElementById('t-msg').value.trim();
-            if (date) lines.push(`【希望体験日】${date}`);
-            if (time) lines.push(`【希望時間帯】${time}`);
-            if (msg)  lines.push(`\n【メッセージ】\n${msg}`);
-
-        } else if (currentTab === 'dejugi') {
-            const dojo = document.getElementById('d-dojo').value.trim();
-            const date = document.getElementById('d-date').value;
-            const msg  = document.getElementById('d-msg').value.trim();
-            if (dojo) lines.push(`【所属道場】${dojo}`);
-            if (date) lines.push(`【希望日】${date}`);
-            if (msg)  lines.push(`\n【メッセージ】\n${msg}`);
+        if (currentTab === 'taiken' || currentTab === 'dejugi') {
+            const p = currentTab === 'taiken' ? 't' : 'd';
+            if (p === 'd') {
+                lines.push(`【所属道場】${val('d-dojo')}`);
+                lines.push(`【帯】${val('d-belt')}${val('d-stripe') ? ' ' + val('d-stripe') : ''}`);
+            }
+            lines.push(`【希望日】${dateLabel(val(p+'-date'))}`);
+            lines.push(`【希望クラス】${val(p+'-class')}`);
+            if (p === 't') {
+                lines.push(`【柔術経験】${radioVal('t-exp')}`);
+                if (radioVal('t-exp') === '柔術の経験あり' && val('t-belt')) lines.push(`【帯】${val('t-belt')}`);
+            }
+            if (val(p+'-gender')) lines.push(`【性別】${val(p+'-gender')}`);
+            if (val(p+'-age'))    lines.push(`【年齢】${val(p+'-age')}歳`);
+            lines.push(`【道着】${radioVal(p+'-gi')}`);
+            if (!document.getElementById(p+'-size-row').classList.contains('is-hidden')) {
+                if (val(p+'-height')) lines.push(`【身長】${val(p+'-height')}cm`);
+                if (val(p+'-weight')) lines.push(`【体重】${val(p+'-weight')}kg`);
+            }
+            if (val(p+'-health')) lines.push(`【配慮してほしいこと】${val(p+'-health').replace(/\n/g,' ')}`);
+            if (p === 't') {
+                if (val('t-source')) lines.push(`【きっかけ】${val('t-source')}`);
+                if (val('t-source') && !document.getElementById('t-referrer-row').classList.contains('is-hidden') && val('t-referrer')) lines.push(`【紹介者】${val('t-referrer')}`);
+            }
+            lines.push(`【参加前の確認】確認済み`);
+            if (val(p+'-msg')) lines.push(`\n【メッセージ】\n${val(p+'-msg')}`);
 
         } else {
             const purpose  = document.getElementById('r-purpose').value;
@@ -658,6 +891,7 @@
             if (duration) lines.push(`【利用時間】${duration.value}`);
             if (msg)      lines.push(`\n【メッセージ】\n${msg}`);
         }
+        lines.push(`\n【送信元ページ】https://ambis-jj.com/taiken.html`);
 
         try {
             const res = await fetch('https://api.web3forms.com/submit', {
