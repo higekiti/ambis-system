@@ -75,6 +75,17 @@ async function ci_loadAndStart(){
   } catch(e) {
     console.warn('Firebase load error:', e.message);
   }
+  // クラス時間（今の時間のクラスを自動で選ぶため）。読めなくても受付は動く
+  try {
+    const [sSnap, xSnap] = await Promise.all([
+      getDocs(collection(db, 'schedule')),
+      getDocs(collection(db, 'schedule_exceptions')),
+    ]);
+    localStorage.setItem('ambis_schedule', JSON.stringify(sSnap.docs.map(d => d.data())));
+    localStorage.setItem('ambis_schedule_exceptions', JSON.stringify(xSnap.docs.map(d => d.data())));
+  } catch(e) {
+    console.warn('schedule load error:', e.message);
+  }
   if(typeof initCheckin === 'function') initCheckin();
   ci_startLive();
 }
@@ -265,11 +276,22 @@ html,body{width:100%;height:100%;font-family:'Noto Sans JP',sans-serif;backgroun
   cursor:pointer;transition:all .15s;width:100%;
   font-family:'Noto Sans JP',sans-serif;text-align:left;
 }
-.class-btn:hover{border-color:var(--navy-light);background:#f8f9fc;}
-.class-btn.selected{border-color:var(--navy);background:#f0f3fa;}
+.class-btn:hover{background:#f8f9fc;}
 .class-btn-icon{font-size:18px;width:24px;text-align:center;flex-shrink:0;}
-.class-btn-title{font-size:12px;font-weight:500;color:var(--text-primary);}
-.class-btn-sub{font-size:9px;color:var(--text-muted);margin-top:1px;}
+.class-btn-title{font-size:15px;font-weight:500;color:var(--text-primary);}
+.class-btn-sub{font-size:10px;color:var(--text-muted);margin-top:1px;}
+/* クラスごとの色（管理アプリの練習カレンダーと同じ）：初心者=青／オールレベル=緑／フリーマット=ゴールド */
+.class-btn.cb-beginner{--cc:#3a5fc8;--cc-dk:#2c4aa0;}
+.class-btn.cb-all{--cc:#27ae60;--cc-dk:#1e7a45;}
+.class-btn.cb-free{--cc:#c9a96e;--cc-dk:#8a6a2f;}
+.class-btn{border-left:6px solid var(--cc,var(--border));}
+.class-btn .class-btn-icon,.class-btn .class-btn-title{color:var(--cc-dk,var(--text-primary));}
+.class-btn .class-btn-check{margin-left:auto;display:none;}
+.class-btn.selected{background:var(--cc,var(--navy));border-color:var(--cc,var(--navy));}
+.class-btn.selected .class-btn-icon,.class-btn.selected .class-btn-title,.class-btn.selected .class-btn-sub{color:#fff;}
+.class-btn.selected .class-btn-check{display:block;color:#fff;}
+.class-btn.done:not(.selected){background:#f4f5f8;border-color:#e2e5ec;border-left-color:#c3c8d3;}
+.class-btn.done:not(.selected) .class-btn-icon,.class-btn.done:not(.selected) .class-btn-title{color:#9aa1b0;}
 
 .checkin-submit{
   width:100%;padding:13px;border-radius:8px;
@@ -581,24 +603,72 @@ function showMemberPanel(member){
   const todayClasses=attendance.filter(a=>a.memberId===member.id&&a.date===today).map(a=>a.class);
   document.getElementById('class-btns').innerHTML=Object.entries(classInfo).map(([key,cls])=>{
     const done=todayClasses.includes(key);
-    return `<button class="class-btn${done?' selected':''}" id="cls-${key}" onclick="selectClass('${key}')">
+    return `<button class="class-btn cb-${key}${done?' done':''}" id="cls-${key}" data-done="${done?1:0}" onclick="selectClass('${key}')">
       <div class="class-btn-icon">${cls.icon}</div>
       <div>
         <div class="class-btn-title">${cls.label}${done?' <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><polyline points="20 6 9 17 4 12"/></svg>':''}</div>
         <div class="class-btn-sub">${done?'本日登録済':'タップして選択'}</div>
       </div>
+      <svg class="class-btn-check" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
     </button>`;
   }).join('');
   document.getElementById('checkin-submit').disabled=true;
   document.getElementById('status-idle').style.display='none';
   document.getElementById('result-card').classList.add('show');
+  // 今の時間のクラスを最初から選んでおく（本日登録済みのクラスは選ばない）
+  const sug=suggestClassKey();
+  if(sug && !todayClasses.includes(sug)) selectClass(sug);
+}
+
+// ── 今の時間に合うクラスを探す（開催中＝終了15分前まで／これから＝開始30分前から）──
+const CI_FALLBACK_SCHEDULE=[
+  {dow:6,name:'初心者クラス',start:'09:30',end:'10:30'},{dow:6,name:'オールレベルクラス',start:'11:00',end:'12:00'},
+  {dow:6,name:'初心者クラス',start:'17:30',end:'18:30'},{dow:6,name:'オールレベルクラス',start:'19:00',end:'20:00'},
+  {dow:6,name:'フリーマット',start:'20:00',end:'21:00'},
+  {dow:0,name:'初心者クラス',start:'09:30',end:'10:30'},{dow:0,name:'オールレベルクラス',start:'11:00',end:'12:00'},
+  {dow:0,name:'初心者クラス',start:'15:00',end:'16:00'},
+  {dow:1,name:'フリーマット',start:'10:00',end:'11:30'},{dow:4,name:'フリーマット',start:'10:00',end:'11:30'},{dow:5,name:'フリーマット',start:'10:00',end:'11:30'},
+];
+function ciClassKeyOf(name){
+  name=String(name||'');
+  if(name.indexOf('初心者')>=0) return 'beginner';
+  if(name.indexOf('オールレベル')>=0) return 'all';
+  if(name.indexOf('フリーマット')>=0||name.indexOf('オープンマット')>=0) return 'free';
+  return null;
+}
+function suggestClassKey(now){
+  try{
+    now=now||new Date();
+    const today=getToday(), dow=now.getDay(), cur=now.getHours()*60+now.getMinutes();
+    const toMin=t=>{ const m=/^(\d{1,2}):(\d{2})/.exec(String(t||'')); return m?(+m[1])*60+(+m[2]):null; };
+    let sched=[]; try{ sched=JSON.parse(localStorage.getItem('ambis_schedule')||'[]'); }catch(e){}
+    if(!Array.isArray(sched)||!sched.length) sched=CI_FALLBACK_SCHEDULE;
+    let ex=[]; try{ ex=JSON.parse(localStorage.getItem('ambis_schedule_exceptions')||'[]').filter(e=>e.date===today); }catch(e){}
+    const hit=(e,name)=>!e.targetClass||e.targetClass===name;
+    let list=sched.filter(c=>Number(c.dow)===dow).map(c=>{
+      if(ex.some(e=>e.type==='cancel'&&hit(e,c.name))) return null;
+      const chg=ex.find(e=>e.type==='change'&&hit(e,c.name));
+      return {name:c.name, start:(chg&&chg.newStart)||c.start, end:(chg&&chg.newEnd)||c.end};
+    }).filter(Boolean);
+    ex.filter(e=>e.type==='extra').forEach(e=>list.push({name:e.targetClass||'', start:e.newStart, end:e.newEnd}));
+    const all=list.map(c=>({key:ciClassKeyOf(c.name), s:toMin(c.start), e:toMin(c.end)})).filter(c=>c.key&&c.s!==null&&c.e!==null);
+    // ① 開催中で、終了15分前まで → そのクラス（遅れて来た人）
+    const running=all.filter(c=>cur>=c.s&&cur<c.e-15).sort((a,b)=>b.s-a.s);
+    if(running.length) return running[0].key;
+    // ② 30分以内に始まるクラス → いちばん早く始まるクラス
+    const upcoming=all.filter(c=>cur>=c.s-30&&cur<c.s).sort((a,b)=>a.s-b.s);
+    return upcoming.length?upcoming[0].key:null;
+  }catch(e){ return null; }
 }
 
 function selectClass(cls){
   selectedClass=cls;
-  document.querySelectorAll('.class-btn').forEach(b=>b.classList.remove('selected'));
+  document.querySelectorAll('.class-btn').forEach(b=>{
+    b.classList.remove('selected');
+    const sub=b.querySelector('.class-btn-sub'); if(sub) sub.textContent=b.dataset.done==='1'?'本日登録済':'タップして選択';
+  });
   const btn=document.getElementById('cls-'+cls);
-  if(btn)btn.classList.add('selected');
+  if(btn){ btn.classList.add('selected'); const sub=btn.querySelector('.class-btn-sub'); if(sub) sub.textContent='選択中'; }
   document.getElementById('checkin-submit').disabled=false;
 }
 
