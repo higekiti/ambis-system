@@ -134,6 +134,8 @@ window.addEventListener("load", initAdminGis);
 const fbFunctions = getFunctions(fbApp, 'asia-northeast1');
 window.fbCallCreateMemberBillingLink = httpsCallable(fbFunctions, 'createMemberBillingLink');
 window.fbCallCreateGuestCheckout = httpsCallable(fbFunctions, 'createGuestCheckoutSession');
+window.fbCallChangeMemberPlan = httpsCallable(fbFunctions, 'changeMemberPlan');
+window.fbCallCreateCardUpdateLink = httpsCallable(fbFunctions, 'createCardUpdateLink');
 </script>
 <style>
 :root {
@@ -987,17 +989,24 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
 
 <!-- ══ MODAL: DELETE ══ -->
 <div class="modal-overlay" id="modal-stripe-stop">
-  <div class="modal" style="max-width:440px;">
-    <div class="modal-header"><div class="modal-title">月会費の自動引き落としを停止してください</div><button class="modal-close" onclick="document.getElementById('modal-stripe-stop').classList.remove('open')">×</button></div>
+  <div class="modal" style="max-width:460px;">
+    <div class="modal-header"><div class="modal-title" id="stripe-act-title">Stripeの月会費の手続き</div><button class="modal-close" onclick="closeStripeAction()">×</button></div>
     <div class="modal-body">
-      <p style="font-size:13px;color:var(--text-secondary);line-height:1.9;"><strong id="stripe-stop-name"></strong> さんは、Stripeで月会費の自動引き落としが登録されています。<br>
-      <strong style="color:var(--danger,#c0392b);">管理アプリで<span id="stripe-stop-kind">退会</span>にしても、Stripeの引き落としは自動では止まりません。</strong><br>
-      Stripeダッシュボードの「サブスクリプション」で、この会員を検索して<strong>キャンセル</strong>（休会の場合は<strong>支払いの一時停止</strong>）をしてください。</p>
-      <div id="stripe-stop-email" style="font-size:12px;color:var(--text-muted);margin-top:8px;"></div>
+      <p style="font-size:13px;color:var(--text-secondary);line-height:1.9;margin-bottom:10px;"><strong id="stripe-stop-name"></strong> さんは、Stripe（カード）で月会費を自動決済しています。<br>
+      <strong style="color:var(--danger,#c0392b);">管理アプリで<span id="stripe-stop-kind">退会</span>にしただけでは、カードの自動決済は変わりません。</strong>下のボタンで手続きしてください。</p>
+      <div id="stripe-act-cancel" style="display:none;font-size:13px;line-height:1.9;">
+        <label style="display:block;"><input type="radio" name="stripe-cancel-when" value="this"> <b>今月末で退会</b>（今月15日までの申し出）→ 今月末の決済をせずに終了</label>
+        <label style="display:block;"><input type="radio" name="stripe-cancel-when" value="next"> <b>来月末で退会</b>（16日以降の申し出）→ 今月末に来月分を決済し、来月末で終了</label>
+      </div>
+      <div id="stripe-act-pause" style="display:none;font-size:13px;line-height:1.8;">次の月末の決済から、<b>在籍料（¥500／月）</b>に切り替わります（日割りなし）。<br><span style="font-size:11.5px;color:var(--text-muted);">休会を始める月の<b>前月中</b>に押してください（例：1月から休会 → 12月中に押す）。</span></div>
+      <div id="stripe-act-resume" style="display:none;font-size:13px;line-height:1.8;">次の月末の決済から、<b>通常の月会費</b>に戻ります（日割りなし）。</div>
+      <div id="stripe-act-msg" style="font-size:12.5px;margin-top:10px;"></div>
+      <div id="stripe-stop-email" style="font-size:11.5px;color:var(--text-muted);margin-top:8px;"></div>
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="document.getElementById('modal-stripe-stop').classList.remove('open')">あとで対応する</button>
-      <a class="btn btn-primary" style="text-decoration:none;" href="https://dashboard.stripe.com/subscriptions" target="_blank" rel="noopener" onclick="document.getElementById('modal-stripe-stop').classList.remove('open')">Stripeを開く</a>
+    <div class="modal-footer" style="flex-wrap:wrap;gap:6px;">
+      <a class="btn btn-ghost" style="text-decoration:none;" href="https://dashboard.stripe.com/subscriptions" target="_blank" rel="noopener">Stripeを開く</a>
+      <button class="btn btn-ghost" onclick="closeStripeAction()">あとで対応する</button>
+      <button class="btn btn-primary" id="stripe-act-btn" onclick="runStripeAction()">実行する</button>
     </div>
   </div>
 </div>
@@ -1511,7 +1520,8 @@ const STRIPE_PRICE_MAP = {
   8800: 'price_1U6LKhHsxx8k2zzDLwpLUKz2', // 【基本会員】土日クラス通い放題 月額8,800円（本番）
 };
 const STRIPE_WEEKDAY_MAT_ADDON_PRICE_ID = 'price_1U6LKvHsxx8k2zzDAxak2ncR'; // 平日フリーマット通い放題オプション 月額2,200円（本番）
-const STRIPE_SIGNUP_FEE_PRICE_ID = 'price_1U6LLGHsxx8k2zzDWqcPLmV4'; // 入会金 11,000円（単発）（本番）
+const STRIPE_SIGNUP_FEE_PRICE_ID = 'price_1U6LLGHsxx8k2zzDWqcPLmV4'; // 入会金 11,000円（単発）（本番）※2026-11以降は窓口払いのため未使用
+const STRIPE_PAUSE_PRICE_ID = 'price_1UZuEIHsxx8k2zzDBuPZRygw'; // 休会 在籍料 500円／月（継続）← Stripeで作成後、価格IDに差し替え
 const DEFAULT_TRIAL_FEE = 3300;
 const PRIVATE_LESSON_FEE = 11000;
 const ENTRY_FEE   = 11000;
@@ -1803,14 +1813,64 @@ function previewPhoto(e){
 }
 
 const sourceLabelMap={SNS:'SNS（Instagram等）',friend:'友人・知人の紹介',member:'既存会員の紹介',walkin:'通りすがり・看板',search:'検索・ホームページ',other:'その他'};
-// Stripeの定期支払いが動いている可能性がある会員か
-function hasLiveStripeSub(m){ return !!(m && m.stripeUid && !['canceled','incomplete_expired'].includes(m.billingStatus)); }
+// Stripe（カード）で月会費の自動決済が動いている会員か
+function hasLiveStripeSub(m){ return !!(m && (m.stripeSubscriptionId || ['active','trialing','past_due','unpaid'].includes(m.billingStatus)) && !['canceled','incomplete_expired'].includes(m.billingStatus)); }
+let __stripeAct=null;  // {member, kind}
 function showStripeStopReminder(m, kind){
   if(!hasLiveStripeSub(m)) return;
+  __stripeAct={member:m, kind:kind||'退会'};
+  const k=__stripeAct.kind;
   document.getElementById('stripe-stop-name').textContent=m.name||'';
-  document.getElementById('stripe-stop-kind').textContent=kind||'退会';
-  document.getElementById('stripe-stop-email').textContent=m.email?('検索用メール：'+m.email):'';
+  document.getElementById('stripe-stop-kind').textContent=k;
+  document.getElementById('stripe-stop-email').textContent=m.email?('Stripeで探すときのメール：'+m.email):'';
+  document.getElementById('stripe-act-title').textContent={'退会':'退会：カードの自動決済を止める','休会':'休会：在籍料に切り替える','復会':'復会：月会費に戻す'}[k]||'Stripeの月会費の手続き';
+  document.getElementById('stripe-act-cancel').style.display=k==='退会'?'block':'none';
+  document.getElementById('stripe-act-pause').style.display=k==='休会'?'block':'none';
+  document.getElementById('stripe-act-resume').style.display=k==='復会'?'block':'none';
+  if(k==='退会'){
+    const day=new Date().getDate();
+    document.querySelectorAll('input[name="stripe-cancel-when"]').forEach(r=>{ r.checked=(r.value===(day<=15?'this':'next')); });
+  }
+  document.getElementById('stripe-act-btn').textContent={'退会':'退会を予約する','休会':'在籍料に切り替える','復会':'月会費に戻す'}[k]||'実行する';
+  document.getElementById('stripe-act-btn').disabled=false;
+  const msg=document.getElementById('stripe-act-msg'); msg.textContent=''; msg.style.color='';
+  if(k==='休会' && (!STRIPE_PAUSE_PRICE_ID || STRIPE_PAUSE_PRICE_ID.indexOf('REPLACE')>=0)){
+    msg.textContent='在籍料（¥500）の価格IDがまだ設定されていません。設定されるまでは、Stripeの画面で切り替えてください。'; msg.style.color='#c0392b';
+    document.getElementById('stripe-act-btn').disabled=true;
+  }
   document.getElementById('modal-stripe-stop').classList.add('open');
+}
+function closeStripeAction(){ document.getElementById('modal-stripe-stop').classList.remove('open'); __stripeAct=null; }
+async function runStripeAction(){
+  if(!__stripeAct) return;
+  const {member:m, kind:k}=__stripeAct;
+  const btn=document.getElementById('stripe-act-btn'); const msg=document.getElementById('stripe-act-msg');
+  const req={memberId:m.id};
+  if(k==='退会'){ const r=document.querySelector('input[name="stripe-cancel-when"]:checked'); req.action='cancel'; req.when=r?r.value:'this'; }
+  else if(k==='休会'){ req.action='pause'; req.pausePriceId=STRIPE_PAUSE_PRICE_ID; }
+  else { req.action='resume'; req.priceId=STRIPE_PRICE_MAP[m.monthlyFee||MONTHLY_FEE]; req.addonPriceId=(m.hasWeekdayMatOption && STRIPE_WEEKDAY_MAT_ADDON_PRICE_ID.indexOf('REPLACE')<0)?STRIPE_WEEKDAY_MAT_ADDON_PRICE_ID:null; }
+  const fmt=t=>{ const d=new Date(t*1000); return (d.getMonth()+1)+'/'+d.getDate(); };
+  btn.disabled=true; msg.style.color=''; msg.textContent='Stripeで手続きしています…';
+  try{
+    const res=await window.fbCallChangeMemberPlan(req);
+    const d=res.data||{};
+    msg.style.color='#1e7a45';
+    msg.textContent = k==='退会' ? ('完了しました。'+(d.cancelAt?fmt(d.cancelAt):'期間の終わり')+'で自動決済が終了します。')
+                    : k==='休会' ? ('完了しました。次の月末の決済から在籍料¥500になります。')
+                    : ('完了しました。次の月末の決済から通常の月会費に戻ります。');
+    btn.textContent='完了';
+  }catch(e){
+    msg.style.color='#c0392b'; msg.textContent='うまくいきませんでした：'+(e.message||e)+'（Stripeの画面で手続きしてください）'; btn.disabled=false;
+  }
+}
+// カード変更リンク（決済の失敗・カードの期限切れなど）
+async function sendCardUpdateLink(memberId){
+  const m=members.find(x=>x.id===memberId); if(!m) return;
+  showPayLinkModal(m.name+' さんのカード変更リンク（決済はされません）');
+  try{
+    const res=await window.fbCallCreateCardUpdateLink({memberId});
+    showPayLinkReady(res.data.url);
+  }catch(e){ showPayLinkError(e.message||'カード変更リンクの作成に失敗しました'); }
 }
 // 会員IDの採番：過去に使ったID（削除済み会員・出席記録を含む）と重複しない番号にする
 function nextMemberId(){
@@ -1850,6 +1910,8 @@ function saveMember(){
       const prevStatus=members[idx].status;
       members[idx]={...members[idx],...data,photo:photoData||members[idx].photo};
       if(prevStatus==='active' && (data.status==='inactive'||data.status==='left')){ __stopTarget=members[idx]; __stopKind=data.status==='inactive'?'休会':'退会'; }
+      else if(prevStatus==='inactive' && data.status==='active'){ __stopTarget=members[idx]; __stopKind='復会'; }
+      else if(prevStatus==='inactive' && data.status==='left'){ __stopTarget=members[idx]; __stopKind='退会'; }
     }
     showToast('会員情報を更新しました');
   } else {
@@ -1893,7 +1955,7 @@ function deleteMember(full){
       date:localDateStr(),
     });
   }
-  const __stopTarget=(member&&member.status==='active')?{...member}:null;
+  const __stopTarget=(member&&member.status!=='left')?{...member}:null;
   if(full){members=members.filter(m=>m.id!==deletingId);showToast('完全削除しました');}
   else{const idx=members.findIndex(m=>m.id===deletingId);if(idx!==-1)members[idx].status='left';showToast('退会処理が完了しました');}
   saveAll();
@@ -2119,7 +2181,7 @@ function renderPayment(){
       <td><div class="action-btns">
         ${st!=='paid'?`<button class="btn btn-success btn-sm" onclick="markPaid('${m.id}','${ym}')">支払い確認</button>`:''}
         ${st==='paid'?`<button class="btn btn-ghost btn-sm" onclick="markPaid('${m.id}','${ym}','pending')">取消</button>`:''}
-        ${!(m.stripeSubscriptionId||['active','trialing','past_due','unpaid'].includes(m.billingStatus))?`<button class="btn btn-ghost btn-sm" onclick="sendMemberBillingLink('${m.id}')">${m.stripeUid?'カード登録リンクを再発行':'カード登録リンクを発行'}</button>`:''}
+        ${!(m.stripeSubscriptionId||['active','trialing','past_due','unpaid'].includes(m.billingStatus))?`<button class="btn btn-ghost btn-sm" onclick="sendMemberBillingLink('${m.id}')">${m.stripeUid?'カード登録リンクを再発行':'カード登録リンクを発行'}</button>`:`<button class="btn btn-ghost btn-sm" onclick="sendCardUpdateLink('${m.id}')">カード変更リンク</button>`}
       </div></td>
     </tr>`;
   }).join('');

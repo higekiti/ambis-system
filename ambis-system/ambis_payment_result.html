@@ -147,6 +147,17 @@
       }
       detailEl.textContent = '項目：月会費（カード登録）';
     }
+    if (type === 'card_update') {
+      if (status === 'cancel') {
+        titleEl.textContent = 'カードの変更がキャンセルされました';
+        msgEl.textContent = 'カードは変更されていません。';
+        noteEl.textContent = 'もう一度変更される場合は、スタッフから届いたリンクを再度お開きください。';
+      } else {
+        titleEl.textContent = 'カードの変更が完了しました';
+        msgEl.textContent = '以後の月会費は、新しいカードで決済されます。お支払いが遅れていた分がある場合は、新しいカードで決済されます。';
+      }
+      detailEl.textContent = '項目：お支払いカードの変更';
+    }
   })();
 </script>
 </body>
