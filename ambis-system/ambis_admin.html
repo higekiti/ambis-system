@@ -1832,7 +1832,7 @@ function showStripeStopReminder(m, kind){
     document.querySelectorAll('input[name="stripe-cancel-when"]').forEach(r=>{ r.checked=(r.value===(day<=15?'this':'next')); });
   }
   document.getElementById('stripe-act-btn').textContent={'退会':'退会を予約する','休会':'在籍料に切り替える','復会':'月会費に戻す'}[k]||'実行する';
-  document.getElementById('stripe-act-btn').disabled=false;
+  document.getElementById('stripe-act-btn').disabled=false; __stripeActDone=false;
   const msg=document.getElementById('stripe-act-msg'); msg.textContent=''; msg.style.color='';
   if(k==='休会' && (!STRIPE_PAUSE_PRICE_ID || STRIPE_PAUSE_PRICE_ID.indexOf('REPLACE')>=0)){
     msg.textContent='在籍料（¥500）の価格IDがまだ設定されていません。設定されるまでは、Stripeの画面で切り替えてください。'; msg.style.color='#c0392b';
@@ -1840,8 +1840,10 @@ function showStripeStopReminder(m, kind){
   }
   document.getElementById('modal-stripe-stop').classList.add('open');
 }
-function closeStripeAction(){ document.getElementById('modal-stripe-stop').classList.remove('open'); __stripeAct=null; }
+function closeStripeAction(){ document.getElementById('modal-stripe-stop').classList.remove('open'); __stripeAct=null; __stripeActDone=false; }
+let __stripeActDone=false;
 async function runStripeAction(){
+  if(__stripeActDone){ closeStripeAction(); return; }
   if(!__stripeAct) return;
   const {member:m, kind:k}=__stripeAct;
   const btn=document.getElementById('stripe-act-btn'); const msg=document.getElementById('stripe-act-msg');
@@ -1858,7 +1860,7 @@ async function runStripeAction(){
     msg.textContent = k==='退会' ? ('完了しました。'+(d.cancelAt?fmt(d.cancelAt):'期間の終わり')+'で自動決済が終了します。')
                     : k==='休会' ? ('完了しました。次の月末の決済から在籍料¥500になります。')
                     : ('完了しました。次の月末の決済から通常の月会費に戻ります。');
-    btn.textContent='完了';
+    btn.textContent='完了'; btn.disabled=false; __stripeActDone=true;
   }catch(e){
     msg.style.color='#c0392b'; msg.textContent='うまくいきませんでした：'+(e.message||e)+'（Stripeの画面で手続きしてください）'; btn.disabled=false;
   }
