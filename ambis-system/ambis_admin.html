@@ -2181,7 +2181,7 @@ function renderPayment(){
       <td><div class="action-btns">
         ${st!=='paid'?`<button class="btn btn-success btn-sm" onclick="markPaid('${m.id}','${ym}')">支払い確認</button>`:''}
         ${st==='paid'?`<button class="btn btn-ghost btn-sm" onclick="markPaid('${m.id}','${ym}','pending')">取消</button>`:''}
-        ${!(m.stripeSubscriptionId||['active','trialing','past_due','unpaid'].includes(m.billingStatus))?`<button class="btn btn-ghost btn-sm" onclick="sendMemberBillingLink('${m.id}')">${m.stripeUid?'カード登録リンクを再発行':'カード登録リンクを発行'}</button>`:`<button class="btn btn-ghost btn-sm" onclick="sendCardUpdateLink('${m.id}')">カード変更リンク</button>`}
+        ${!hasLiveStripeSub(m)?`<button class="btn btn-ghost btn-sm" onclick="sendMemberBillingLink('${m.id}')">${m.stripeUid?'カード登録リンクを再発行':'カード登録リンクを発行'}</button>`:`<button class="btn btn-ghost btn-sm" onclick="sendCardUpdateLink('${m.id}')">カード変更リンク</button>`}
       </div></td>
     </tr>`;
   }).join('');
