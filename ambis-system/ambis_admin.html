@@ -2119,7 +2119,7 @@ function renderPayment(){
       <td><div class="action-btns">
         ${st!=='paid'?`<button class="btn btn-success btn-sm" onclick="markPaid('${m.id}','${ym}')">支払い確認</button>`:''}
         ${st==='paid'?`<button class="btn btn-ghost btn-sm" onclick="markPaid('${m.id}','${ym}','pending')">取消</button>`:''}
-        ${!m.stripeUid?`<button class="btn btn-ghost btn-sm" onclick="sendMemberBillingLink('${m.id}')">決済リンクを発行</button>`:''}
+        ${!(m.stripeSubscriptionId||['active','trialing','past_due','unpaid'].includes(m.billingStatus))?`<button class="btn btn-ghost btn-sm" onclick="sendMemberBillingLink('${m.id}')">${m.stripeUid?'カード登録リンクを再発行':'カード登録リンクを発行'}</button>`:''}
       </div></td>
     </tr>`;
   }).join('');
@@ -2160,6 +2160,8 @@ function copyPayLink(){
   showToast('リンクをコピーしました');
 }
 async function sendMemberBillingLink(memberId){
+  // 【2026-11 月末決済対応】カード登録だけのリンクを発行（その場では決済しない）。
+  // 登録が済むと、月会費は毎月末日に翌月分が自動決済される（日割りなし）。入会金・入会月の会費は窓口払い。
   const activeMembers=members.filter(x=>x.status==='active');
   const m=activeMembers.find(x=>x.id===memberId);
   if(!m){ showToast('会員が見つかりません'); return; }
@@ -2169,10 +2171,11 @@ async function sendMemberBillingLink(memberId){
     return;
   }
   const addonPriceId=(m.hasWeekdayMatOption && STRIPE_WEEKDAY_MAT_ADDON_PRICE_ID!=='price_REPLACE_ME_ADDON') ? STRIPE_WEEKDAY_MAT_ADDON_PRICE_ID : null;
-  const signupFeePriceId=(!m.signupFeePaid && STRIPE_SIGNUP_FEE_PRICE_ID!=='price_REPLACE_ME_SIGNUP') ? STRIPE_SIGNUP_FEE_PRICE_ID : null;
-  showPayLinkModal(m.name+' さんの決済リンク');
+  showPayLinkModal(m.name+' さんのカード登録リンク（毎月末日に翌月分を決済）');
   try{
-    const res=await window.fbCallCreateMemberBillingLink({memberId, priceId, addonPriceId, signupFeePriceId});
+    const res=await window.fbCallCreateMemberBillingLink({memberId, priceId, addonPriceId});
+    if(res.data && res.data.url){ showPayLinkReady(res.data.url); return; }
+    // 旧方式（拡張機能経由）のFunctionsが動いている場合の互換処理
     const path=res.data.checkoutSessionPath;
     const parts=path.split('/');
     const ref=fbDoc(db, parts[0], parts[1], parts[2], parts[3]);

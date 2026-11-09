@@ -135,6 +135,18 @@
         : 'ご利用ありがとうございました。';
     }
     if (type) { detailEl.textContent = '項目：' + label; }
+    // 【2026-11 月末決済対応】月会費はカード登録のみ（その場では決済しない）
+    if (type === 'member') {
+      if (status === 'cancel') {
+        titleEl.textContent = 'カード登録がキャンセルされました';
+        msgEl.textContent = 'カードはまだ登録されていません。';
+        noteEl.textContent = 'もう一度登録される場合は、スタッフから届いたリンクを再度お開きください。';
+      } else {
+        titleEl.textContent = 'カードの登録が完了しました';
+        msgEl.textContent = '月会費は、毎月末日に翌月分が自動で決済されます。入会月の会費は窓口でお支払いください。';
+      }
+      detailEl.textContent = '項目：月会費（カード登録）';
+    }
   })();
 </script>
 </body>
