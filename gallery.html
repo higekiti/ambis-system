@@ -304,12 +304,12 @@
         }
         .photo-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(6, 1fr);
             gap: 4px;
             margin-top: 28px;
         }
         .photo-grid img {
-            width: 100%; height: 220px;
+            width: 100%; height: auto; aspect-ratio: 3 / 4;
             object-fit: cover;
             filter: brightness(0.92) contrast(1.04);
             transition: filter 0.35s ease, transform 0.35s ease;
@@ -473,9 +473,11 @@
             .phone-eyebrow::before { display: none; }
             .live-badge { justify-content: center; }
         }
+        @media (max-width: 960px) {
+            .photo-grid { grid-template-columns: repeat(3, 1fr); }
+        }
         @media (max-width: 640px) {
             .photo-grid { grid-template-columns: repeat(2, 1fr); }
-            .photo-grid img { height: 160px; }
             .spec-card { flex-direction: column; gap: 14px; }
         }
     </style>
@@ -599,7 +601,6 @@
         <img src="files/construction-35.jpg" alt="内装クリーニング後の道場 — 11月10日" loading="lazy">
         <img src="files/construction-36.jpg" alt="マットを敷く前の道場スペース — 11月10日" loading="lazy">
         <img src="files/construction-37.jpg" alt="更衣室の棚" loading="lazy">
-        <img src="files/construction-38.jpg" alt="更衣室の棚と窓" loading="lazy">
         <img src="files/construction-39.jpg" alt="前の道場の棚を解体 — 11月2日" loading="lazy">
         <img src="files/construction-40.jpg" alt="道場に運び込んだマット — 10月22日" loading="lazy">
         <img src="files/construction-41.jpg" alt="丸めた状態で届いたマット" loading="lazy">
@@ -610,12 +611,9 @@
         <img src="files/construction-32.jpg" alt="完成したシャワールーム — 照明をつけた様子" loading="lazy">
         <img src="files/construction-33.jpg" alt="完成したトイレ" loading="lazy">
         <img src="files/construction-34.jpg" alt="シャワールームの扉" loading="lazy">
-        <img src="files/construction-16.jpg" alt="道場の奥 — 9月19日・工事前" loading="lazy">
-        <img src="files/construction-17.jpg" alt="道場の奥 — 10月3日・解体工事中" loading="lazy">
         <img src="files/construction-23.jpg" alt="内装デザイン打ち合わせ — プロジェクターでロゴを壁に投影" loading="lazy">
         <img src="files/construction-24.jpg" alt="内装デザイン打ち合わせ — Life With Jiu-Jitsuを印刷して壁に配置" loading="lazy">
         <img src="files/construction-25.jpg" alt="シャワールーム・トイレまわりの通路 — 壁と扉の取り付け" loading="lazy">
-        <img src="files/construction-26.jpg" alt="シャワールームの扉" loading="lazy">
         <img src="files/construction-27.jpg" alt="内装デザイン打ち合わせ — ロゴの大きさを実寸で確認" loading="lazy">
         <img src="files/construction-28.jpg" alt="シャワールーム・トイレの壁の施工" loading="lazy">
         <img src="files/construction-20.jpg" alt="シャワー・トイレ工事 — 解体作業の様子" loading="lazy">
