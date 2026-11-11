@@ -236,6 +236,9 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text
 .type-dot{width:6px;height:6px;border-radius:50%;}
 .type-trial .type-dot{background:#3a5fc8;}
 .type-visitor .type-dot{background:#c08a1a;}
+.type-private{background:#f3eefc;color:#6b3fb5;}
+.type-private .type-dot{background:#6b3fb5;}
+.pl-wish{font-size:11px;color:var(--text-secondary);line-height:1.6;}
 .filter-tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
 .filter-tab{padding:7px 14px;border-radius:20px;border:1px solid var(--border);background:var(--bg-card);font-size:12px;color:var(--text-secondary);cursor:pointer;transition:all .15s;}
 .filter-tab.active{background:var(--navy);color:var(--gold);border-color:var(--navy);}
@@ -501,6 +504,7 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
     <div class="nav-label">EXTERNAL</div>
     <div class="nav-item" onclick="showPage('rental',this);closeSidebar()"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2"/><path d="M5 21l3-7 2-2 2 2 3 7"/><path d="M8 13l-2-5"/><path d="M16 13l2-5"/></svg></span>レンタル管理</div>
     <div class="nav-item" onclick="showPage('trial',this);closeSidebar()"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg></span>体験・ビジター管理</div>
+    <div class="nav-item" onclick="showPage('private',this);closeSidebar()"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="7" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M2.5 20c.6-4 2.9-6 5.5-6s4.9 2 5.5 6"/><path d="M14 19.5c.4-2.8 1.6-4.5 3.2-4.5s2.9 1.7 3.3 4.5"/></svg></span>プライベートレッスン</div>
     <div class="nav-label">OTHER</div>
     <div class="nav-item" onclick="showPage('tournament',this);closeSidebar()"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M5 4H3v2a4 4 0 0 0 4 4"/><path d="M19 4h2v2a4 4 0 0 1-4 4"/></svg></span>注目大会管理</div>
     <div class="nav-item" onclick="showPage('payment',this);closeSidebar()"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 7v10"/><path d="M8 11h8"/><path d="M8 15h8"/></svg></span>支払い管理</div>
@@ -534,7 +538,7 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
       </div>
       <div class="table-wrap" id="upcoming-widget" style="margin-bottom:20px;border:1px solid var(--navy);">
         <div class="section-header" style="padding:14px 18px 10px;margin-bottom:0;">
-          <div class="section-title" style="font-size:13px;">体験・ビジター 来訪予定 <span style="font-size:10px;color:var(--text-muted);font-weight:400;">（今日から7日間）</span></div>
+          <div class="section-title" style="font-size:13px;">来訪予定（体験・ビジター・プライベート） <span style="font-size:10px;color:var(--text-muted);font-weight:400;">（今日から7日間）</span></div>
           <div style="display:flex;gap:6px;">
             <button class="btn btn-ghost btn-sm" onclick="openTrialModal('add')">＋ 登録</button>
             <button class="btn btn-ghost btn-sm" onclick="showPage('trial', document.querySelector('.nav-item[onclick*=\'trial\']'))">一覧を見る</button>
@@ -662,7 +666,7 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
       <div class="section-header">
         <div class="section-title">支払い状況（今月）</div>
         <div style="font-size:11px;color:var(--text-muted);" id="pay-month-label"></div>
-        <button class="btn btn-primary btn-sm" style="margin-left:auto;" onclick="openPrivateLessonModal()">＋ プライベートレッスン決済</button>
+        <button class="btn btn-primary btn-sm" style="margin-left:auto;" onclick="openPlModal('add')">＋ プライベートレッスン</button>
       </div>
       <div class="table-wrap">
         <table><thead><tr><th>会員</th><th>月会費</th><th>入会費</th><th>ステータス</th><th></th></tr></thead>
@@ -907,6 +911,34 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
         <table><thead><tr><th>種別</th><th>来訪日</th><th>クラス</th><th>氏名</th><th>連絡先</th><th>入会経路</th><th>入会</th><th></th></tr></thead>
         <tbody id="trial-tbody"></tbody></table>
         <div class="empty-state" id="empty-trial" style="display:none;"><div class="icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg></div><p>登録がありません</p></div>
+      </div>
+    </div>
+
+    <div class="page" id="page-private">
+      <div class="stats-row">
+        <div class="stat-card gold"><div class="label">UPCOMING</div><div class="value" id="pl-stat-upcoming">0</div><div class="sub">確定済みの今後の予定</div></div>
+        <div class="stat-card"><div class="label">REQUESTS</div><div class="value" id="pl-stat-request">0</div><div class="sub">日程未確定の申込み</div></div>
+        <div class="stat-card"><div class="label">THIS MONTH</div><div class="value" id="pl-stat-month">0</div><div class="sub">今月の実施・予定</div></div>
+        <div class="stat-card"><div class="label">UNPAID</div><div class="value" id="pl-stat-unpaid">0</div><div class="sub">未払い（キャンセル除く）</div></div>
+      </div>
+      <div class="filter-tabs">
+        <div class="filter-tab active" onclick="filterPl('all',this)">すべて</div>
+        <div class="filter-tab" onclick="filterPl('request',this)">申込み（未確定）</div>
+        <div class="filter-tab" onclick="filterPl('confirmed',this)">日程確定</div>
+        <div class="filter-tab" onclick="filterPl('done',this)">実施済み</div>
+        <div class="filter-tab" onclick="filterPl('cancel',this)">キャンセル</div>
+      </div>
+      <div class="section-header">
+        <div class="section-title">プライベートレッスン一覧</div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <div class="search-bar"><span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span><input type="text" id="pl-search" placeholder="名前・電話番号で検索..." oninput="renderPlList()"></div>
+          <button class="btn btn-primary" onclick="openPlModal('add')">＋ 登録</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table><thead><tr><th>状態</th><th>日時</th><th>氏名</th><th>連絡先</th><th>支払い</th><th></th></tr></thead>
+        <tbody id="pl-tbody"></tbody></table>
+        <div class="empty-state" id="empty-pl" style="display:none;"><div class="icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="7" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M2.5 20c.6-4 2.9-6 5.5-6s4.9 2 5.5 6"/><path d="M14 19.5c.4-2.8 1.6-4.5 3.2-4.5s2.9 1.7 3.3 4.5"/></svg></div><p>登録がありません</p></div>
       </div>
     </div>
 
@@ -1500,6 +1532,84 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
 </div>
 
 <!-- ══ MODAL: TRIAL DELETE ══ -->
+<div class="modal-overlay" id="modal-pl">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title" id="modal-pl-title">プライベートレッスン登録</div><button class="modal-close" onclick="closePlModal()">×</button></div>
+    <div class="modal-body">
+      <div class="form-row" id="pl-paste-wrap" style="background:#f7f8fb;border:1px dashed var(--border);border-radius:8px;padding:10px 12px;">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="togglePlPaste()">申込メールから自動入力</button>
+        <span style="font-size:10.5px;color:var(--text-muted);margin-left:6px;">HPのプライベートレッスン申込メールを貼り付けると、下の欄が自動で埋まります</span>
+        <div id="pl-paste-box" style="display:none;margin-top:8px;">
+          <textarea id="pl-paste" style="min-height:120px;" placeholder="届いた申込メールの本文を、そのまま貼り付けてください"></textarea>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:6px;">
+            <button type="button" class="btn btn-primary btn-sm" onclick="applyPlPaste()">読み取って入力</button>
+            <span id="pl-paste-msg" style="font-size:11px;color:var(--text-secondary);"></span>
+          </div>
+        </div>
+      </div>
+      <div class="form-row-2">
+        <div><label>区分 *</label><select id="pl-kind" onchange="togglePlKind()"><option value="member">AMBIs会員</option><option value="guest">会員以外</option></select></div>
+        <div id="pl-member-wrap"><label>会員を選ぶ</label><select id="pl-member-sel" onchange="onPlMemberSelect()"></select></div>
+        <div id="pl-dojo-wrap" style="display:none;"><label>所属道場</label><input type="text" id="pl-dojo" placeholder="任意"></div>
+      </div>
+      <div class="form-row-2">
+        <div><label>氏名 *</label><input type="text" id="pl-name" placeholder="山田 太郎"></div>
+        <div><label>ふりがな</label><input type="text" id="pl-kana" placeholder="やまだ たろう"></div>
+      </div>
+      <div class="form-row-2">
+        <div><label>電話番号</label><input type="tel" id="pl-phone" placeholder="090-0000-0000"></div>
+        <div><label>メールアドレス</label><input type="email" id="pl-email" placeholder="任意"></div>
+      </div>
+      <div class="form-row-2">
+        <div><label>年齢</label><input type="number" id="pl-age" min="3" max="99" oninput="togglePlGuardian()"></div>
+        <div><label>性別</label><select id="pl-gender"><option value="">未選択</option><option value="male">男性</option><option value="female">女性</option><option value="none">回答しない</option></select></div>
+      </div>
+      <div class="form-row" id="pl-guardian-row" style="display:none;"><label>保護者のお名前（18歳未満）</label><input type="text" id="pl-guardian" placeholder="例：山田 花子"></div>
+      <div class="form-row-2">
+        <div><label>帯</label><input type="text" id="pl-belt" placeholder="例：青帯 2本／柔術は未経験"></div>
+        <div><label>よく使うガード</label><input type="text" id="pl-guard" placeholder="任意"></div>
+      </div>
+      <div class="form-row-2">
+        <div><label>体重（kg）</label><input type="number" id="pl-weight" min="10" max="200"></div>
+        <div><label>身長（cm）</label><input type="number" id="pl-height" min="80" max="220"></div>
+      </div>
+      <div class="section-divider">LESSON</div>
+      <div class="form-row"><label>申込時の希望日程</label><textarea id="pl-wishes" style="min-height:58px;" placeholder="第1希望：…"></textarea></div>
+      <div class="form-row-2">
+        <div><label>確定した日</label><input type="date" id="pl-date"></div>
+        <div style="display:flex;gap:6px;">
+          <div style="flex:1;"><label>開始</label><input type="time" id="pl-start" step="900" onchange="onPlStartChange()"></div>
+          <div style="flex:1;"><label>終了</label><input type="time" id="pl-end" step="900"></div>
+        </div>
+      </div>
+      <div class="form-row-2">
+        <div><label>状態</label><select id="pl-status"><option value="request">申込み（日程未確定）</option><option value="confirmed">日程確定</option><option value="done">実施済み</option><option value="cancel">キャンセル</option></select></div>
+        <div><label>料金（円）</label><input type="number" id="pl-price" min="0" step="100"></div>
+      </div>
+      <div class="form-row-2">
+        <div><label>道着</label><select id="pl-gi"><option value="">未定</option><option value="no">持参</option><option value="gi">道着＋帯レンタル（¥1,000）</option></select></div>
+        <div><label>支払い</label><select id="pl-pay"><option value="pending">未払い</option><option value="paid">支払い済み（カード）</option><option value="counter">支払い済み（窓口）</option><option value="failed">決済失敗</option></select></div>
+      </div>
+      <div class="form-row"><label>目的</label><input type="text" id="pl-goals" placeholder="例：試合対策、覚えたい技がある"></div>
+      <div class="form-row"><label>学びたいこと・くわしい内容</label><textarea id="pl-detail" style="min-height:64px;"></textarea></div>
+      <div class="form-row"><label>ケガ・配慮してほしいこと</label><textarea id="pl-health" style="min-height:48px;"></textarea></div>
+      <div class="form-row"><label>メモ（申込時のメッセージなど）</label><textarea id="pl-note" style="min-height:64px;"></textarea></div>
+      <div class="form-row" id="pl-actions-row" style="display:none;background:#f7f8fb;border-radius:8px;padding:10px 12px;">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="sendPlPaymentLink()">決済リンクを発行</button>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="addPlToCalendar(editingPlId)">Googleカレンダーに追加</button>
+        </div>
+        <div style="font-size:10.5px;color:var(--text-muted);margin-top:6px;">決済リンクは、会員の方（メール登録あり）には自動でメールが届きます。会員以外の方には、表示されるリンクをLINEなどで送ってください。</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="pl-del-btn" style="margin-right:auto;color:#c0392b;display:none;" onclick="deletePl()">削除</button>
+      <button class="btn btn-ghost" onclick="closePlModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="savePl()">保存する</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-trial-delete">
   <div class="modal" style="max-width:380px;">
     <div class="modal-header"><div class="modal-title">記録の削除</div><button class="modal-close" onclick="document.getElementById('modal-trial-delete').classList.remove('open')">×</button></div>
@@ -1552,6 +1662,8 @@ let editingExceptionId = null;
 let editingRentalId    = null;
 let deletingRentalId   = null;
 let editingTrialId     = null;
+let privateLessons     = JSON.parse(localStorage.getItem('ambis_private_lessons')         || '[]');
+let editingPlId = null, plFilter = 'all';
 let deletingTrialId    = null;
 let rentalCalYear, rentalCalMonth;
 let trialFilter = 'all';
@@ -1594,7 +1706,7 @@ function showPage(page, el) {
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
   if(el) el.classList.add('active');
-  const titles={members:'会員管理',attendance:'出席記録',belt:'昇格履歴',dormant:'休眠アラート',coaching:'コーチングノート',birthday:'誕生日管理',news:'道場ニュース',schedule:'練習カレンダー管理',rental:'レンタル管理',trial:'体験・ビジター管理',tournament:'注目大会管理',payment:'支払い管理',analytics:'出席分析'};
+  const titles={members:'会員管理',attendance:'出席記録',belt:'昇格履歴',dormant:'休眠アラート',coaching:'コーチングノート',birthday:'誕生日管理',news:'道場ニュース',schedule:'練習カレンダー管理',rental:'レンタル管理',trial:'体験・ビジター管理',private:'プライベートレッスン',tournament:'注目大会管理',payment:'支払い管理',analytics:'出席分析'};
   document.getElementById('page-title').textContent = titles[page]||'';
 
   const actionsEl = document.getElementById('topbar-actions');
@@ -1629,6 +1741,9 @@ function showPage(page, el) {
   } else if(page==='trial'){
     actionsEl.innerHTML='';
     renderTrialList();
+  } else if(page==='private'){
+    actionsEl.innerHTML='';
+    renderPlList();
   } else if(page==='tournament'){
     actionsEl.innerHTML=`<button class="btn btn-primary" onclick="openTournamentModal()">＋ 大会を登録</button>`;
     renderTournaments();
@@ -3042,9 +3157,11 @@ function renderUpcomingVisitors(){
   const today=localDateStr();
   const lim=new Date(); lim.setDate(lim.getDate()+7); const limStr=localDateStr(lim);
   const list=trialVisitors.filter(t=>t.date&&t.date>=today&&t.date<=limStr)
+    .concat(privateLessons.filter(p=>p.status==='confirmed'&&p.date&&p.date>=today&&p.date<=limStr).map(p=>({...p, __pl:true, type:'private', classStart:p.start||'', className:'プライベートレッスン'})))
     .sort((a,b)=>(a.date+(a.classStart||'99:99')).localeCompare(b.date+(b.classStart||'99:99')));
   if(!list.length){
-    body.innerHTML='<div style="font-size:12px;color:var(--text-muted);padding:6px 0 2px;">今後7日間の来訪予定はありません</div>';
+    const req=privateLessons.filter(p=>p.status==='request').length;
+    body.innerHTML='<div style="font-size:12px;color:var(--text-muted);padding:6px 0 2px;">今後7日間の来訪予定はありません'+(req?`（日程未確定のプライベートレッスン申込みが ${req}件 あります）`:'')+'</div>';
     return;
   }
   const dn=['日','月','火','水','木','金','土'];
@@ -3053,12 +3170,12 @@ function renderUpcomingVisitors(){
     const isToday=t.date===today;
     const dLabel=`${p[1]}/${p[2]}（${dn[d.getDay()]}）`;
     const cls=(t.classStart?`<span style="font-family:'Bebas Neue',sans-serif;font-size:15px;color:var(--navy);letter-spacing:.5px;">${escapeHtml(t.classStart)}</span> `:'')+`<span style="font-size:12px;">${escapeHtml(t.className||'クラス未定')}</span>`;
-    const prof=trialProfileText(t);
+    const prof=t.__pl?plProfileText(t):trialProfileText(t);
     return `<div style="display:flex;align-items:center;gap:12px;padding:9px 0;${i<list.length-1?'border-bottom:1px solid #f0f0f0;':''}flex-wrap:wrap;">
       <div style="min-width:86px;">${isToday?'<span style="display:inline-block;background:var(--gold);color:#fff;font-size:10px;font-weight:500;padding:1px 7px;border-radius:9px;margin-right:4px;">本日</span>':''}<span style="font-size:12px;font-weight:500;color:var(--navy);">${dLabel}</span></div>
       <div style="min-width:150px;">${cls}</div>
-      <div style="flex:1;min-width:140px;"><span class="type-pill type-${escapeHtml(t.type)}" style="margin-right:6px;"><span class="type-dot"></span>${trialTypeLabel[t.type]||''}</span><span style="font-size:13px;font-weight:500;">${escapeHtml(t.name)}</span>${prof?`<div style="font-size:10.5px;color:var(--text-secondary);margin-top:2px;">${escapeHtml(prof)}</div>`:''}</div>
-      <div style="display:flex;gap:6px;">${calBtnHtml(t)}<button class="btn btn-ghost btn-sm" onclick="openTrialModal('edit','${escapeHtml(t.id)}')">詳細</button></div>
+      <div style="flex:1;min-width:140px;"><span class="type-pill type-${escapeHtml(t.type)}" style="margin-right:6px;"><span class="type-dot"></span>${t.__pl?'プライベート':(trialTypeLabel[t.type]||'')}</span><span style="font-size:13px;font-weight:500;">${escapeHtml(t.name)}</span>${prof?`<div style="font-size:10.5px;color:var(--text-secondary);margin-top:2px;">${escapeHtml(prof)}</div>`:''}</div>
+      <div style="display:flex;gap:6px;">${t.__pl?plCalBtnHtml(t):calBtnHtml(t)}<button class="btn btn-ghost btn-sm" onclick="${t.__pl?'openPlModal':'openTrialModal'}('edit','${escapeHtml(t.id)}')">詳細</button></div>
     </div>`;
   }).join('');
 }
@@ -3269,6 +3386,239 @@ function deleteTrial(){
   renderTrialList();
   renderUpcomingVisitors();
   showToast('削除しました');
+}
+
+
+// ══ PRIVATE LESSONS（プライベートレッスン管理）══
+// データ：private_lessons コレクション。決済（Stripe）の結果は Functions が paymentStatus に書き込む。
+const plStatusLabel={request:'申込み',confirmed:'日程確定',done:'実施済み',cancel:'キャンセル'};
+const plStatusCls={request:'status-inactive',confirmed:'status-active',done:'status-neutral',cancel:'status-left'};
+const plPayLabel={pending:'未払い',paid:'支払い済み',counter:'窓口で支払い済み',failed:'決済失敗'};
+// 状態が未設定の古い記録（以前の「プライベートレッスン決済」で作ったもの）は、日付から判断する
+function plStatusOf(p){ return p.status||(p.date?(p.date<localDateStr()?'done':'confirmed'):'request'); }
+function plIsPaid(p){ return p.paymentStatus==='paid'||p.paymentStatus==='counter'; }
+function plName(p){ return p.name||p.memberName||''; }
+function plProfileText(p){
+  const a=[];
+  a.push(p.kind==='guest'?('会員以外'+(p.dojo?'（'+p.dojo+'）':'')):(p.kind==='member'||p.memberId?'会員':''));
+  if(p.age) a.push(p.age+'歳'); if(p.belt) a.push(p.belt); if(p.weight) a.push(p.weight+'kg');
+  if(p.goals) a.push(p.goals);
+  return a.filter(Boolean).join('・');
+}
+function filterPl(f,el){ plFilter=f; document.querySelectorAll('#page-private .filter-tab').forEach(t=>t.classList.remove('active')); el.classList.add('active'); renderPlList(); }
+function renderPlList(){
+  const tbody=document.getElementById('pl-tbody'), empty=document.getElementById('empty-pl'); if(!tbody) return;
+  if(window.__plCloudOk===false && !window.__plWarned){ window.__plWarned=true; showToast('プライベートレッスンのデータをクラウドから読み込めませんでした（この端末にだけ保存されます）'); }
+  const q=(document.getElementById('pl-search')?.value||'').toLowerCase();
+  const today=localDateStr();
+  let data=privateLessons.map(p=>({...p, status:plStatusOf(p)}));
+  if(plFilter!=='all') data=data.filter(p=>p.status===plFilter);
+  if(q) data=data.filter(p=>plName(p).toLowerCase().includes(q)||(p.phone||'').includes(q));
+  const ord={request:0,confirmed:1,done:2,cancel:3};
+  data.sort((a,b)=>(ord[a.status]-ord[b.status])||((a.status==='confirmed'?1:-1)*((a.date||'')+(a.start||'')).localeCompare((b.date||'')+(b.start||''))));
+  if(!data.length){ tbody.innerHTML=''; empty.style.display='block'; }
+  else{
+    empty.style.display='none';
+    tbody.innerHTML=data.map(p=>{
+      const dn=['日','月','火','水','木','金','土'];
+      let when='<span style="color:var(--text-muted);font-size:12px;">未確定</span>';
+      if(p.date){ const d=p.date.split('-').map(Number); const w=new Date(d[0],d[1]-1,d[2]).getDay(); when=`<span style="font-family:'Bebas Neue',sans-serif;font-size:15px;color:var(--navy);">${p.date}</span> <span style="font-size:11px;">（${dn[w]}）${escapeHtml(p.start||'')}${p.end?'〜'+escapeHtml(p.end):''}</span>`; }
+      else if(p.wishes){ when+=`<div class="pl-wish">${escapeHtml(String(p.wishes).split('\n')[0])}</div>`; }
+      const pay=plPayLabel[p.paymentStatus||'pending']||'未払い';
+      const payCls=plIsPaid(p)?'status-active':p.paymentStatus==='failed'?'status-left':'status-inactive';
+      return `<tr>
+        <td><span class="status-pill ${plStatusCls[p.status]||''}">${plStatusLabel[p.status]||''}</span></td>
+        <td>${when}</td>
+        <td style="font-weight:500;">${escapeHtml(plName(p))}${p.guardian?`<span style="font-size:10px;color:var(--text-muted);font-weight:400;">（保護者：${escapeHtml(p.guardian)}）</span>`:''}<div style="font-size:10px;color:var(--text-muted);font-weight:400;margin-top:2px;">${escapeHtml(plProfileText(p))}</div></td>
+        <td style="font-size:12px;color:var(--text-secondary);">${escapeHtml(p.phone||'―')}</td>
+        <td><span class="status-pill ${payCls}">${pay}</span><div style="font-size:10px;color:var(--text-muted);margin-top:2px;">¥${Number(p.price||0).toLocaleString()}</div></td>
+        <td><div class="action-btns">
+          ${p.status==='confirmed'&&p.date&&p.date>=today?plCalBtnHtml(p):''}
+          <button class="btn btn-ghost btn-sm" onclick="openPlModal('edit','${escapeHtml(p.id)}')">編集</button>
+        </div></td>
+      </tr>`;
+    }).join('');
+  }
+  // 集計
+  const all=privateLessons.map(p=>({...p, status:plStatusOf(p)}));
+  const ym=today.slice(0,7);
+  const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
+  set('pl-stat-upcoming', all.filter(p=>p.status==='confirmed'&&p.date&&p.date>=today).length);
+  set('pl-stat-request', all.filter(p=>p.status==='request').length);
+  set('pl-stat-month', all.filter(p=>(p.status==='confirmed'||p.status==='done')&&(p.date||'').startsWith(ym)).length);
+  set('pl-stat-unpaid', all.filter(p=>p.status!=='cancel'&&p.status!=='request'&&!plIsPaid(p)).length);
+}
+function togglePlKind(){
+  const g=document.getElementById('pl-kind').value==='guest';
+  document.getElementById('pl-member-wrap').style.display=g?'none':'block';
+  document.getElementById('pl-dojo-wrap').style.display=g?'block':'none';
+}
+function togglePlGuardian(){ const a=parseInt(document.getElementById('pl-age').value,10); document.getElementById('pl-guardian-row').style.display=(a>0&&a<18)?'block':'none'; }
+function onPlMemberSelect(){
+  const m=members.find(x=>x.id===document.getElementById('pl-member-sel').value); if(!m) return;
+  document.getElementById('pl-name').value=m.name||'';
+  if(!document.getElementById('pl-kana').value) document.getElementById('pl-kana').value=m.kana||'';
+  if(!document.getElementById('pl-email').value) document.getElementById('pl-email').value=m.email||'';
+  if(!document.getElementById('pl-phone').value) document.getElementById('pl-phone').value=m.contact||'';
+  if(!document.getElementById('pl-belt').value){ const b={white:'白帯',blue:'青帯',purple:'紫帯',brown:'茶帯',black:'黒帯'}[m.belt]; if(b) document.getElementById('pl-belt').value=b+(m.stripe?' '+m.stripe+'本':''); }
+}
+function onPlStartChange(){
+  const s=document.getElementById('pl-start').value; if(!/^\d{2}:\d{2}$/.test(s)) return;
+  const [h,mi]=s.split(':').map(Number); const e=h*60+mi+60;
+  document.getElementById('pl-end').value=String(Math.floor(e/60)).padStart(2,'0')+':'+String(e%60).padStart(2,'0');
+}
+function openPlModal(mode,id){
+  editingPlId=null;
+  const ids=['pl-name','pl-kana','pl-phone','pl-email','pl-age','pl-guardian','pl-belt','pl-guard','pl-weight','pl-height','pl-wishes','pl-date','pl-start','pl-end','pl-goals','pl-detail','pl-health','pl-note','pl-dojo','pl-paste'];
+  ids.forEach(x=>document.getElementById(x).value='');
+  document.getElementById('pl-gender').value=''; document.getElementById('pl-gi').value='';
+  document.getElementById('pl-kind').value='member'; document.getElementById('pl-status').value='request';
+  document.getElementById('pl-pay').value='pending'; document.getElementById('pl-price').value=PRIVATE_LESSON_FEE;
+  const sel=document.getElementById('pl-member-sel');
+  sel.innerHTML='<option value="">（選ぶと名前・連絡先が入ります）</option>'+members.filter(m=>m.status!=='left').map(m=>`<option value="${escapeHtml(m.id)}">${escapeHtml(m.name)}</option>`).join('');
+  document.getElementById('pl-paste-box').style.display='none'; document.getElementById('pl-paste-msg').textContent='';
+  if(mode==='edit'&&id){
+    const p=privateLessons.find(x=>x.id===id); if(!p) return;
+    editingPlId=id;
+    document.getElementById('modal-pl-title').textContent='プライベートレッスンを編集';
+    const kind=p.kind||(p.memberId?'member':'guest');
+    document.getElementById('pl-kind').value=kind; sel.value=p.memberId||'';
+    const f={'pl-name':plName(p),'pl-kana':p.kana,'pl-phone':p.phone,'pl-email':p.email,'pl-age':p.age,'pl-guardian':p.guardian,'pl-belt':p.belt,'pl-guard':p.guard,'pl-weight':p.weight,'pl-height':p.height,
+      'pl-wishes':p.wishes,'pl-date':p.date,'pl-start':p.start,'pl-end':p.end,'pl-goals':p.goals,'pl-detail':p.detail,'pl-health':p.health,'pl-note':p.note,'pl-dojo':p.dojo,'pl-gender':p.gender,'pl-gi':p.giRental};
+    Object.entries(f).forEach(([k,v])=>{ if(v!==undefined&&v!==null) document.getElementById(k).value=v; });
+    document.getElementById('pl-status').value=plStatusOf(p);
+    document.getElementById('pl-pay').value=p.paymentStatus||'pending';
+    document.getElementById('pl-price').value=p.price||PRIVATE_LESSON_FEE;
+    document.getElementById('pl-paste-wrap').style.display='none';
+    document.getElementById('pl-actions-row').style.display='block';
+    document.getElementById('pl-del-btn').style.display='inline-block';
+  } else {
+    document.getElementById('modal-pl-title').textContent='プライベートレッスン登録';
+    document.getElementById('pl-paste-wrap').style.display='block';
+    document.getElementById('pl-actions-row').style.display='none';
+    document.getElementById('pl-del-btn').style.display='none';
+  }
+  togglePlKind(); togglePlGuardian();
+  document.getElementById('modal-pl').classList.add('open');
+}
+function closePlModal(){ document.getElementById('modal-pl').classList.remove('open'); }
+function collectPl(){
+  const v=id=>document.getElementById(id).value.trim();
+  const kind=v('pl-kind');
+  const data={
+    kind, memberId: kind==='member'?(v('pl-member-sel')||''):'',
+    name:v('pl-name'), kana:v('pl-kana'), phone:v('pl-phone'), email:v('pl-email'),
+    age:toPosInt(v('pl-age')), gender:v('pl-gender'), guardian:v('pl-guardian'),
+    belt:v('pl-belt'), guard:v('pl-guard'), weight:toPosInt(v('pl-weight')), height:toPosInt(v('pl-height')),
+    dojo: kind==='guest'?v('pl-dojo'):'',
+    wishes:v('pl-wishes'), date:v('pl-date'), start:v('pl-start'), end:v('pl-end'),
+    status:v('pl-status'), price:parseInt(v('pl-price'),10)||0, giRental:v('pl-gi'), paymentStatus:v('pl-pay'),
+    goals:v('pl-goals'), detail:v('pl-detail'), health:v('pl-health'), note:v('pl-note'),
+  };
+  data.memberName=data.name;   // 以前の決済データとの互換
+  if(!(data.age>0&&data.age<18)) data.guardian='';
+  return data;
+}
+async function savePl(opts){
+  const d=collectPl();
+  if(!d.name){ showToast('氏名を入力してください'); return false; }
+  if(d.kind==='member' && !d.memberId){ const m=members.find(x=>x.name===d.name); if(m) d.memberId=m.id; }
+  if(d.status==='confirmed' && !d.date){ showToast('日程確定にするときは、確定した日を入れてください'); return false; }
+  if(editingPlId){
+    const i=privateLessons.findIndex(x=>x.id===editingPlId);
+    if(i!==-1){
+      const prev=privateLessons[i];
+      if(prev.date!==d.date||prev.start!==d.start) d.calAddedAt='';   // 日時が変わったらカレンダー登録をやり直せるように
+      privateLessons[i]={...prev,...d};
+    }
+  } else {
+    editingPlId='pl-'+Date.now();
+    privateLessons.push({id:editingPlId,...d,createdAt:new Date().toISOString()});
+  }
+  saveAll();
+  if(opts&&opts.keepOpen){ if(window.db && window.__plCloudOk!==false) await saveToFirestore('private_lessons', privateLessons); return true; }
+  showToast('保存しました');
+  closePlModal(); renderPlList(); renderUpcomingVisitors();
+  return true;
+}
+async function sendPlPaymentLink(){
+  const ok=await savePl({keepOpen:true}); if(!ok) return;
+  const p=privateLessons.find(x=>x.id===editingPlId); if(!p) return;
+  if(plIsPaid(p)){ showToast('このレッスンは支払い済みです'); return; }
+  if(!p.price){ showToast('料金を入れてください'); return; }
+  const desc=`${plName(p)} 様 プライベートレッスン${p.date?'（'+p.date+(p.start?' '+p.start:'')+'）':''}`;
+  closePlModal(); renderPlList();
+  sendGuestPaymentLink('private_lesson', p.id, p.price, desc);
+}
+function deletePl(){
+  if(!editingPlId) return;
+  const p=privateLessons.find(x=>x.id===editingPlId);
+  if(!confirm(`${plName(p)} さんのプライベートレッスンの記録を削除します。よろしいですか？`)) return;
+  privateLessons=privateLessons.filter(x=>x.id!==editingPlId); editingPlId=null;
+  saveAll(); closePlModal(); renderPlList(); renderUpcomingVisitors(); showToast('削除しました');
+}
+// Googleカレンダー（予定作成画面を開くだけ。電話番号などの個人情報は入れない）
+function plCalendarUrl(p){
+  const ymd=(p.date||'').replace(/-/g,''); const f=t=>t.replace(':','')+'00';
+  let end=p.end; if(!end&&p.start){ const [h,m]=p.start.split(':').map(Number); const e=h*60+m+60; end=String(Math.floor(e/60)).padStart(2,'0')+':'+String(e%60).padStart(2,'0'); }
+  const dates=p.start?`${ymd}T${f(p.start)}/${ymd}T${f(end)}`:`${ymd}/${ymd}`;
+  const det=['プライベートレッスン'];
+  if(p.belt) det.push('帯：'+p.belt); if(p.goals) det.push('目的：'+p.goals); if(p.guard) det.push('よく使うガード：'+p.guard);
+  if(p.giRental) det.push('道着：'+(p.giRental==='gi'?'レンタル':'持参'));
+  det.push('詳細は管理アプリ「プライベートレッスン」で確認');
+  const q=new URLSearchParams({action:'TEMPLATE', text:`プライベート：${plName(p)}`, dates, ctz:'Asia/Tokyo', details:det.join('\n'), location:DOJO_ADDRESS});
+  return 'https://calendar.google.com/calendar/render?'+q.toString();
+}
+function addPlToCalendar(id){
+  const i=privateLessons.findIndex(x=>x.id===id); if(i<0) return;
+  const p=privateLessons[i]; if(!p.date){ showToast('確定した日が入っていません'); return; }
+  window.open(plCalendarUrl(p),'_blank','noopener');
+  if(!p.calAddedAt){ privateLessons[i]={...p, calAddedAt:localDateStr()}; saveAll(); }
+  renderUpcomingVisitors(); renderPlList();
+}
+function plCalBtnHtml(p){
+  const done=!!p.calAddedAt;
+  return `<button class="btn btn-ghost btn-sm" title="${done?'追加済み（もう一度開けます）':'Googleカレンダーに追加'}" onclick="addPlToCalendar('${escapeHtml(p.id)}')" style="${done?'color:var(--text-muted);':''}">${done?'カレンダー済':'カレンダーに追加'}</button>`;
+}
+// HPのプライベートレッスン申込メールから自動入力（private.html の【項目】値 の形式）
+function togglePlPaste(){ const b=document.getElementById('pl-paste-box'); b.style.display=b.style.display==='none'?'block':'none'; }
+function parsePlMail(text){
+  text=String(text||'').replace(/\r/g,'');
+  const r={}; const re=/【([^】]+)】([^\n【]*)/g; let m;
+  while((m=re.exec(text))){ const k=m[1].trim(), v=m[2].trim(); if(!(k in r)) r[k]=v; }
+  const block=key=>{ const i=text.indexOf('【'+key+'】'); if(i<0) return ''; let rest=text.slice(i+key.length+2); const ends=['【メッセージ】','【学びたいこと】','【送信元ページ】'].map(e=>rest.indexOf(e)).filter(x=>x>=0); if(ends.length) rest=rest.slice(0,Math.min(...ends)); return rest.trim(); };
+  r['学びたいこと']=block('学びたいこと'); r['メッセージ']=block('メッセージ');
+  return r;
+}
+function applyPlPaste(){
+  const r=parsePlMail(document.getElementById('pl-paste').value);
+  const msg=document.getElementById('pl-paste-msg');
+  if(!r['お名前']){ msg.textContent='読み取れませんでした。メール本文の【お名前】などの部分を含めて貼り付けてください。'; msg.style.color='#c0392b'; return; }
+  const set=(id,v)=>{ if(v!==undefined&&v!==null&&v!=='') document.getElementById(id).value=v; };
+  ['pl-kana','pl-email','pl-phone','pl-dojo','pl-age','pl-guardian','pl-belt','pl-guard','pl-weight','pl-height','pl-wishes','pl-goals','pl-detail','pl-health','pl-gender','pl-gi'].forEach(id=>{ document.getElementById(id).value=''; });
+  const guest=/会員以外/.test(r['会員区分']||'');
+  document.getElementById('pl-kind').value=guest?'guest':'member'; togglePlKind();
+  set('pl-name',r['お名前']); set('pl-kana',r['ふりがな']); set('pl-email',r['メール']); set('pl-phone',r['電話番号']); set('pl-dojo',r['所属道場']);
+  if(!guest){ const m=members.find(x=>(x.name||'').replace(/\s/g,'')===(r['お名前']||'').replace(/\s/g,'')); document.getElementById('pl-member-sel').value=m?m.id:''; }
+  const g=r['性別']||''; set('pl-gender', g==='男性'?'male':g==='女性'?'female':g?'none':'');
+  set('pl-age',(/(\d+)/.exec(r['年齢']||'')||[])[1]); togglePlGuardian();
+  set('pl-guardian',(r['保護者']||'').replace(/（参加に同意）/,''));
+  set('pl-belt',r['帯']); set('pl-guard',r['よく使うガード']);
+  set('pl-weight',(/(\d+)/.exec(r['体重']||'')||[])[1]); set('pl-height',(/(\d+)/.exec(r['身長']||'')||[])[1]);
+  const w=['第1希望','第2希望','第3希望'].filter(k=>r[k]).map(k=>k+'：'+r[k]);
+  set('pl-wishes',w.join('\n'));
+  // 第1希望をそのまま「確定した日」の候補として入れておく（状態は「申込み」のまま。確定したら状態を変える）
+  const w1=/(\d{4}-\d{2}-\d{2}).*?(\d{1,2}:\d{2})(?:\s*[〜~\-]\s*(\d{1,2}:\d{2}))?/.exec(r['第1希望']||'');
+  if(w1){ set('pl-date',w1[1]); set('pl-start',w1[2].padStart(5,'0')); if(w1[3]) set('pl-end',w1[3].padStart(5,'0')); else onPlStartChange(); }
+  document.getElementById('pl-status').value='request';
+  set('pl-goals',r['目的']);
+  const gi=r['道着']||''; set('pl-gi', /レンタル/.test(gi)?'gi':/持参/.test(gi)?'no':'');
+  set('pl-detail',r['学びたいこと']); set('pl-health',r['配慮してほしいこと']);
+  const notes=[]; if(/相談/.test(r['レッスン時間']||'')) notes.push('レッスン時間：相談したい');
+  if(r['メッセージ']) notes.push('【申込時のメッセージ】\n'+r['メッセージ']);
+  if(notes.length){ const cur=document.getElementById('pl-note').value.trim(); document.getElementById('pl-note').value=(cur?cur+'\n':'')+notes.join('\n'); }
+  msg.style.color='var(--text-secondary)';
+  msg.textContent='入力しました。「確定した日」には第1希望を仮に入れています。日程が決まったら状態を「日程確定」にして保存してください。';
 }
 
 // ══ SELECTS ══
@@ -3975,6 +4325,7 @@ const __SYNC_DEFS=[
   ['withdrawal_reasons',()=>withdrawalReasons,  v=>{withdrawalReasons=v;},  'ambis_withdrawal_reasons'],
   ['rental_bookings',   ()=>rentalBookings,     v=>{rentalBookings=v;},     'ambis_rental_bookings'],
   ['trial_visitors',    ()=>trialVisitors,      v=>{trialVisitors=v;},      'ambis_trial_visitors'],
+  ['private_lessons',   ()=>privateLessons,     v=>{privateLessons=v;},     'ambis_private_lessons'],
 ];
 let __liveStarted=false, __rerenderTimer=null, __pendingColls=new Set();
 function startLiveSync(){
@@ -4008,6 +4359,8 @@ function __rerenderActivePage(){
     if(page==='members') filterMembers();
     else if(page==='attendance'){ renderAttendance(); renderMonthlyChart(); }
     else if(page==='trial') renderTrialList();
+    else if(page==='private') renderPlList();
+    if(colls.has('trial_visitors')||colls.has('private_lessons')) renderUpcomingVisitors();
     else if(page==='belt') renderBeltHistory();
     else if(page==='dormant') renderDormant();
     else if(page==='birthday') renderBirthday();
@@ -4071,6 +4424,7 @@ function saveAll(){
   localStorage.setItem('ambis_withdrawal_reasons',JSON.stringify(withdrawalReasons));
   localStorage.setItem('ambis_rental_bookings',JSON.stringify(rentalBookings));
   localStorage.setItem('ambis_trial_visitors',JSON.stringify(trialVisitors));
+  localStorage.setItem('ambis_private_lessons',JSON.stringify(privateLessons));
   // Firestoreにも非同期で保存
   if(window.db){
     saveToFirestore('members', members, {merge:true});
@@ -4086,6 +4440,7 @@ function saveAll(){
     saveToFirestore('withdrawal_reasons', withdrawalReasons);
     saveToFirestore('rental_bookings', rentalBookings);
     saveToFirestore('trial_visitors', trialVisitors);
+    if(window.__plCloudOk!==false) saveToFirestore('private_lessons', privateLessons);
   }
 }
 
@@ -4144,7 +4499,7 @@ window.initApp = async function(){
   const [
     fbMembers, fbAttendance, fbBeltHistory, fbPayments,
     fbTournaments, fbCoaching, fbNews, fbSchedule,
-    fbScheduleEx, fbWithdrawal, fbRental, fbTrial
+    fbScheduleEx, fbWithdrawal, fbRental, fbTrial, fbPrivate
   ] = await Promise.all([
     loadFromFirestore('members'),
     loadFromFirestore('attendance'),
@@ -4158,6 +4513,7 @@ window.initApp = async function(){
     loadFromFirestore('withdrawal_reasons'),
     loadFromFirestore('rental_bookings'),
     loadFromFirestore('trial_visitors'),
+    loadFromFirestore('private_lessons'),
   ]);
 
   // 取得に成功したデータは0件でも反映する（全削除が他の端末で復活しないように）。会員(members)だけは安全のため空なら上書きしない。
@@ -4173,6 +4529,8 @@ window.initApp = async function(){
   if(Array.isArray(fbWithdrawal)) withdrawalReasons = fbWithdrawal;
   if(Array.isArray(fbRental))       rentalBookings   = fbRental;
   if(Array.isArray(fbTrial))         trialVisitors    = fbTrial;
+  if(Array.isArray(fbPrivate))       privateLessons   = fbPrivate;
+  window.__plCloudOk = Array.isArray(fbPrivate);   // 読み込めないとき（権限など）はクラウド保存を止め、手元だけに保存する
 
   // サンプルデータ投入判定（安全版）：
   // 以前はページ読み込み時に無条件でmembersが空ならサンプルデータを投入しsaveAll()を呼んでいたが、
@@ -4249,6 +4607,7 @@ window.showScheduleTab=showScheduleTab;
 window.sendMemberBillingLink=sendMemberBillingLink;window.sendGuestPaymentLink=sendGuestPaymentLink;
 window.sendTrialPaymentLink=sendTrialPaymentLink;window.sendRentalPaymentLink=sendRentalPaymentLink;
 window.toggleRentalPayLinkBtn=toggleRentalPayLinkBtn;window.copyPayLink=copyPayLink;window.closePayLinkModal=closePayLinkModal;
+window.openPlModal=openPlModal;window.closePlModal=closePlModal;window.savePl=savePl;window.deletePl=deletePl;window.filterPl=filterPl;window.renderPlList=renderPlList;window.togglePlKind=togglePlKind;window.togglePlGuardian=togglePlGuardian;window.onPlMemberSelect=onPlMemberSelect;window.onPlStartChange=onPlStartChange;window.sendPlPaymentLink=sendPlPaymentLink;window.addPlToCalendar=addPlToCalendar;window.togglePlPaste=togglePlPaste;window.applyPlPaste=applyPlPaste;
 window.openPrivateLessonModal=openPrivateLessonModal;window.closePrivateLessonModal=closePrivateLessonModal;window.sendPrivateLessonPaymentLink=sendPrivateLessonPaymentLink;
 
 
