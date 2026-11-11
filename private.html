@@ -7,6 +7,17 @@
     <title>プライベートレッスンのお申込み | AMBIs Jiu-Jitsu Academy</title>
     <meta name="robots" content="index,follow">
     <meta name="description" content="AMBIs Jiu-Jitsu Academyのプライベートレッスン（1対1の個別指導）お申込みフォーム。熊本市水前寺。会員・会員以外の方どちらもお申込みいただけます。">
+    <link rel="canonical" href="https://ambis-jj.com/private.html">
+    <meta property="og:title" content="プライベートレッスンのお申込み | AMBIs Jiu-Jitsu Academy">
+    <meta property="og:description" content="1対1で、あなたのペースで。熊本・水前寺のブラジリアン柔術道場AMBIsのプライベートレッスン（1時間 ¥11,000）。会員・会員以外どちらもお申込みいただけます。">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ambis-jj.com/private.html">
+    <meta property="og:image" content="https://ambis-jj.com/ogp.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="AMBIs Jiu-Jitsu Academy">
+    <meta property="og:locale" content="ja_JP">
+    <meta name="twitter:card" content="summary_large_image">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="icon" type="image/png" href="favicon-32.png" sizes="32x32">
     <!-- GA4 -->
@@ -150,10 +161,10 @@
 </header>
 
 <div class="pg-hero">
-    <span class="pg-tag">Private Lesson</span>
-    <h1 class="pg-title">プライベートレッスン</h1>
+    <span class="pg-tag" id="hero-tag">Private Lesson</span>
+    <h1 class="pg-title" id="hero-title">プライベートレッスン</h1>
     <div class="gold-bar"></div>
-    <p class="pg-sub">
+    <p class="pg-sub" id="hero-sub">
         一人ひとりの目的やレベルに合わせた、1対1の柔術レッスンです。<br>
         初心者の方から経験者の方まで、お気軽にどうぞ。
     </p>
@@ -165,8 +176,8 @@
         <div class="s-icon">
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#C8A769" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
-        <h2>お申込みを受け付けました</h2>
-        <p>
+        <h2 id="success-title">お申込みを受け付けました</h2>
+        <p id="success-text">
             ご希望の日程を確認して、<br>
             2営業日以内に日程確定のご連絡をします。<br><br>
             ご不明な点はLINEよりお気軽にどうぞ。
@@ -191,7 +202,7 @@
             <div class="feat">
                 <svg width="30" height="30" viewBox="0 0 32 32" fill="none" stroke="#122E53" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="7" width="22" height="20" rx="2"/><path d="M5 13h22M11 4v6M21 4v6"/><path d="M11.5 20l3 3 6-6" stroke="#C8A769"/></svg>
                 <div class="feat-t">日程は<br>ご相談で</div>
-                <div class="feat-s">土・日・祝の<br>クラス以外の時間</div>
+                <div class="feat-s">土・日のクラス以外の時間<br>（平日・祝日はご相談）</div>
             </div>
         </div>
 
@@ -203,7 +214,7 @@
             </div>
             <div class="price-r">
                 <div class="price-val">¥11,000<small>／ 1時間</small></div>
-                <div class="price-note">道着＋帯レンタル ¥1,000 ／ 会員・会員以外どちらもOK</div>
+                <div class="price-note">道着＋帯レンタル ¥1,000 ／ 会員・会員以外どちらもOK<br>（日程が重なった場合は、会員の方を優先します）</div>
             </div>
         </div>
 
@@ -247,6 +258,7 @@
                 <div class="f-row is-hidden" id="dojo-row">
                     <label class="f-label" for="p-dojo">所属道場<span class="opt">任意</span></label>
                     <input type="text" id="p-dojo" placeholder="例：〇〇柔術アカデミー（所属なしの方は空欄でOK）">
+                    <p class="f-note" style="margin-top:6px;">会員以外の方は、当日に同意書（ケガなどについて）へのご記入をお願いします。</p>
                 </div>
                 <div class="f-2col">
                     <div class="f-row">
@@ -261,7 +273,12 @@
                         <input type="number" id="p-age" min="5" max="99" inputmode="numeric" placeholder="例：35" oninput="checkAge()">
                     </div>
                 </div>
-                <p class="f-note warn is-hidden" id="age-note" style="margin:-10px 0 16px;">18歳未満の方は、保護者の方の同意が必要です。詳しくは、お申込み後にご連絡します。</p>
+                <p class="f-note warn is-hidden" id="age-note" style="margin:-10px 0 16px;">18歳未満の方は、保護者の方の同意が必要です。保護者の方がご入力ください。</p>
+                <div class="f-row is-hidden" id="guardian-row">
+                    <label class="f-label" for="p-guardian">保護者のお名前<span class="req">必須</span></label>
+                    <input type="text" id="p-guardian" placeholder="例：山田 花子">
+                    <p class="f-note">上の「お名前」にはレッスンを受けるお子さまのお名前、メール・電話番号には保護者の方の連絡先をご入力ください。</p>
+                </div>
 
                 <div class="sec-gap"></div>
                 <div class="sec-h"><span class="n">02</span><span class="t">柔術の経験</span><span class="e">EXPERIENCE</span></div>
@@ -300,25 +317,25 @@
 
                 <div class="sec-gap"></div>
                 <div class="sec-h"><span class="n">03</span><span class="t">ご希望の日程</span><span class="e">SCHEDULE</span></div>
-                <p class="f-note" style="margin:-6px 0 12px;">第3希望までお知らせください。プライベートレッスンは<b>土・日・祝日</b>に行っています（平日はお受けしていません）。日付を選ぶと、予約できる時間が表示されます（クラスの時間と、その前後30分は除きます）。</p>
+                <p class="f-note" style="margin:-6px 0 12px;">第3希望までお知らせください。プライベートレッスンは<b>土・日</b>に行っています。平日・祝日をご希望の場合は、下の「その他ご質問・ご要望」欄にご希望の日時をお書きください（空いていれば調整します）。日付を選ぶと、予約できる時間が表示されます（クラスの時間と、その前後30分は除きます）。</p>
                 <div class="wish">
                     <span class="wish-l first">第1希望 <span class="req">必須</span></span>
                     <input type="date" id="w1-date" aria-label="第1希望の日付" onchange="buildTimes(1)">
                     <select id="w1-time" aria-label="第1希望の時間"></select>
                 </div>
-                <p class="f-note warn is-hidden" id="w1-warn" style="margin:-4px 0 8px;">平日はお受けしていません。土・日・祝日の日付を選んでください。</p>
+                <p class="f-note warn is-hidden" id="w1-warn" style="margin:-4px 0 8px;">このフォームでは土・日の日付を選んでください。平日・祝日をご希望の場合は、ご要望欄にお書きください。</p>
                 <div class="wish">
                     <span class="wish-l">第2希望</span>
                     <input type="date" id="w2-date" aria-label="第2希望の日付" onchange="buildTimes(2)">
                     <select id="w2-time" aria-label="第2希望の時間"></select>
                 </div>
-                <p class="f-note warn is-hidden" id="w2-warn" style="margin:-4px 0 8px;">平日はお受けしていません。土・日・祝日の日付を選んでください。</p>
+                <p class="f-note warn is-hidden" id="w2-warn" style="margin:-4px 0 8px;">このフォームでは土・日の日付を選んでください。平日・祝日をご希望の場合は、ご要望欄にお書きください。</p>
                 <div class="wish">
                     <span class="wish-l">第3希望</span>
                     <input type="date" id="w3-date" aria-label="第3希望の日付" onchange="buildTimes(3)">
                     <select id="w3-time" aria-label="第3希望の時間"></select>
                 </div>
-                <p class="f-note warn is-hidden" id="w3-warn" style="margin:-4px 0 8px;">平日はお受けしていません。土・日・祝日の日付を選んでください。</p>
+                <p class="f-note warn is-hidden" id="w3-warn" style="margin:-4px 0 8px;">このフォームでは土・日の日付を選んでください。平日・祝日をご希望の場合は、ご要望欄にお書きください。</p>
                 <div class="f-row" style="margin-top:12px;">
                     <label class="f-label">レッスンの時間<span class="req">必須</span></label>
                     <div class="radio-group">
@@ -362,7 +379,9 @@
 
                 <div class="agree-box">
                     <label class="check-item"><input type="checkbox" id="agree1"> 当日は体調を整え、手足の爪を短く切り、アクセサリーを外して参加します<span class="req">必須</span></label>
-                    <label class="check-item"><input type="checkbox" id="agree2"> 日程は、道場からの確定のご連絡をもって決まることを確認しました<span class="req">必須</span></label>
+                    <label class="check-item" id="agree2-row"><input type="checkbox" id="agree2"> 日程は、道場からの確定のご連絡をもって決まることを確認しました<span class="req">必須</span></label>
+                    <label class="check-item"><input type="checkbox" id="agree4"> キャンセルは前日までは無料、当日はレッスン料の100%をいただくことを確認しました<span class="req">必須</span></label>
+                    <label class="check-item is-hidden" id="agree3-row"><input type="checkbox" id="agree3"> 保護者として、レッスンへの参加に同意します<span class="req">必須</span></label>
                 </div>
 
                 <button type="submit" class="submit-btn" id="main-submit">プライベートレッスンを申し込む</button>
@@ -391,7 +410,7 @@
     /* ===== 予約できる時間 =====
        レッスンは1時間。受付は 9:00〜21:00 の間（30分きざみ）。
        AMBIsのクラス（HPのスケジュールと同じ）と、その前後30分にかかる時間は選べない。
-       受け付けるのは土・日・祝のみ（平日は対象外）。祝日は日曜と同じクラスがある前提で、日曜の時間を除外する。 */
+       フォームで選べるのは土・日のみ。平日・祝日は「ご要望」欄で相談（空いていれば調整）。 */
     const LESSON_MIN = 60, OPEN_MIN = 9*60, CLOSE_MIN = 21*60, BUFFER = 30;
     const CLASSES = {
         6: [['09:30','10:30'],['11:00','12:00'],['17:30','18:30'],['19:00','20:00'],['20:00','21:00']], // 土（20:00〜フリーマット）
@@ -404,8 +423,9 @@
     const toHM = m => String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
     function slotsFor(dateStr){
         const d=parseDate(dateStr); if(!d) return null;
-        const dow = HOLIDAYS.includes(dateStr) ? 0 : d.getDay();
-        if (dow !== 0 && dow !== 6) return [];   // 平日はプライベートレッスンの対象外（土・日・祝のみ）
+        if (HOLIDAYS.includes(dateStr)) return [];   // 祝日はフォームでは選べない（ご要望欄で相談）
+        const dow = d.getDay();
+        if (dow !== 0 && dow !== 6) return [];   // 平日もフォームでは選べない（ご要望欄で相談）
         const blocks=(CLASSES[dow]||[]).map(([a,b])=>[toMin(a)-BUFFER, toMin(b)+BUFFER]);
         const out=[];
         for(let s=OPEN_MIN; s+LESSON_MIN<=CLOSE_MIN; s+=30){
@@ -434,7 +454,9 @@
     }
     function toggleMember(){ document.getElementById('dojo-row').classList.toggle('is-hidden', radioVal('member')!=='会員以外'); }
     function toggleStripe(){ document.getElementById('stripe-row').classList.toggle('is-hidden', val('p-belt')==='柔術は未経験'); }
-    function checkAge(){ const a=parseInt(val('p-age'),10); document.getElementById('age-note').classList.toggle('is-hidden', !(a>0&&a<18)); }
+    const isMinor = () => { const a=parseInt(val('p-age'),10); return a>0 && a<18; };
+    function checkAge(){ const m=isMinor(); ['age-note','guardian-row','agree3-row'].forEach(id=>document.getElementById(id).classList.toggle('is-hidden', !m)); }
+
     initWish();
 
     async function submitForm(e){
@@ -450,11 +472,13 @@
         if(!val('p-age')) missing.push('年齢');
         if(!val('p-belt')) missing.push('帯の色');
         if(!val('w1-date') || !val('w1-time')) missing.push('第1希望の日付と時間');
-        for(const i of [2,3]){ if(val('w'+i+'-date') && !val('w'+i+'-time')) missing.push('第'+i+'希望の時間（土・日・祝の日付を選んでください）'); }
+        for(const i of [2,3]){ if(val('w'+i+'-date') && !val('w'+i+'-time')) missing.push('第'+i+'希望の時間（土・日の日付を選んでください）'); }
         if(!radioVal('dur')) missing.push('レッスンの時間');
+        if(isMinor() && !val('p-guardian')) missing.push('保護者のお名前');
         if(!goals.length) missing.push('目的');
         if(!radioVal('gi')) missing.push('道着・帯');
-        if(!document.getElementById('agree1').checked || !document.getElementById('agree2').checked) missing.push('確認事項（チェック）');
+        if(!document.getElementById('agree1').checked || !document.getElementById('agree2').checked || !document.getElementById('agree4').checked) missing.push('確認事項（チェック）');
+        if(isMinor() && !document.getElementById('agree3').checked) missing.push('保護者の同意（チェック）');
         if(missing.length){ alert('次の項目を入力してください：\n・'+missing.join('\n・')); return; }
         if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ alert('メールアドレスの形式をご確認ください。'); return; }
 
@@ -472,6 +496,7 @@
             radioVal('member')==='会員以外' && val('p-dojo') ? `【所属道場】${val('p-dojo')}` : null,
             val('p-gender') ? `【性別】${val('p-gender')}` : null,
             `【年齢】${val('p-age')}歳`,
+            isMinor() ? `【保護者】${val('p-guardian')}（参加に同意）` : null,
             `【帯】${val('p-belt')}${val('p-belt')!=='柔術は未経験' && val('p-stripe') ? ' '+val('p-stripe') : ''}`,
             val('p-weight') ? `【体重】${val('p-weight')}kg` : null,
             val('p-height') ? `【身長】${val('p-height')}cm` : null,
