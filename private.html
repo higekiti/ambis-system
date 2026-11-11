@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
+    <title>プライベートレッスンのお申込み | AMBIs Jiu-Jitsu Academy</title>
+    <meta name="robots" content="index,follow">
+    <meta name="description" content="AMBIs Jiu-Jitsu Academyのプライベートレッスン（1対1の個別指導）お申込みフォーム。熊本市水前寺。会員・会員以外の方どちらもお申込みいただけます。">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/png" href="favicon-32.png" sizes="32x32">
+    <!-- GA4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-9F3JKVRCG1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-9F3JKVRCG1');
+    </script>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@600;700&family=Playfair+Display:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            /* ブランドカラー（2026-10-07確定） */
+            --navy:      #122E53;
+            --navy-dark: #0B1D36;
+            --gold:      #C8A769;
+            --gold-lt:   #DCC28F;
+            --gold-dk:   #A8894F;
+            --cream:     #F4F1E9;
+            --cream-dk:  #E8E1D2;
+            --text:      #2B2F38;
+            --muted:     #7A7468;
+        }
+        body { font-family: 'Noto Sans JP', sans-serif; background: var(--cream); color: var(--text); min-height: 100vh; line-height: 1.7; }
+        a { text-decoration: none; color: inherit; }
+
+        /* ===== HEADER ===== */
+        .pg-header { background: var(--navy-dark); padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+        .hd-logo { display: flex; align-items: center; gap: 12px; }
+        .hd-logo img { height: 38px; width: auto; display: block; }
+        .hd-logo-sub { font-size: 10px; font-weight: 300; letter-spacing: 0.2em; color: var(--gold); white-space: nowrap; }
+        @media (max-width: 380px) { .hd-logo-sub { display: none; } }
+
+        /* ===== HERO ===== */
+        .pg-hero { background: var(--navy); padding: 50px 24px 44px; text-align: center; position: relative; overflow: hidden; }
+        .pg-hero::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--gold); opacity: .8; }
+        .pg-tag { display: block; font-family: 'Playfair Display', serif; font-style: italic; font-size: 12.5px; color: var(--gold); margin-bottom: 12px; letter-spacing: 0.1em; }
+        .pg-title { font-family: 'Noto Serif JP', serif; font-size: clamp(22px, 5.4vw, 30px); font-weight: 700; color: #fff; margin-bottom: 14px; letter-spacing: .04em; }
+        .gold-bar { width: 44px; height: 1px; background: var(--gold); margin: 0 auto 16px; opacity: 0.8; }
+        .pg-sub { font-size: 13px; color: rgba(244,241,233,0.62); line-height: 2; max-width: 400px; margin: 0 auto; }
+
+        /* ===== WRAP ===== */
+        .form-wrap { max-width: 580px; margin: 0 auto; padding: 34px 20px 80px; }
+
+        /* ===== FEATURE ===== */
+        .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 18px; }
+        .feat { background: #fff; border-top: 2px solid var(--gold); padding: 16px 10px 14px; text-align: center; }
+        .feat svg { display: block; margin: 0 auto 8px; }
+        .feat-t { font-size: 12.5px; font-weight: 700; color: var(--navy); line-height: 1.45; }
+        .feat-s { font-size: 10.5px; color: var(--muted); margin-top: 4px; line-height: 1.55; }
+        @media (max-width: 420px) { .feat-t { font-size: 11.5px; } .feat-s { font-size: 10px; } }
+
+        /* ===== PRICE / FLOW ===== */
+        .price-card { background: var(--navy); color: #fff; padding: 18px 22px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+        .price-l .en { font-family: 'Playfair Display', serif; font-style: italic; font-size: 11px; color: var(--gold); letter-spacing: .1em; }
+        .price-l .ja { font-size: 13px; color: rgba(255,255,255,.8); }
+        .price-r { text-align: right; }
+        .price-val { font-family: 'Noto Serif JP', serif; font-size: 28px; font-weight: 700; color: #fff; line-height: 1; }
+        .price-val small { font-family: 'Noto Sans JP', sans-serif; font-size: 12px; font-weight: 400; color: rgba(255,255,255,.7); margin-left: 4px; }
+        .price-note { font-size: 10.5px; color: var(--gold-lt); margin-top: 6px; }
+
+        .flow { background: #fff; border: 1px solid var(--cream-dk); padding: 18px 18px 6px; margin-bottom: 22px; }
+        .flow-h { font-size: 11px; font-weight: 700; letter-spacing: .14em; color: var(--gold-dk); margin-bottom: 12px; }
+        .flow-step { display: flex; gap: 12px; padding-bottom: 14px; position: relative; }
+        .flow-step:not(:last-child)::before { content: ''; position: absolute; left: 13px; top: 28px; bottom: 2px; width: 1px; background: var(--cream-dk); }
+        .flow-n { flex: 0 0 27px; height: 27px; border-radius: 50%; background: var(--gold); color: var(--navy); font-family: 'Noto Serif JP', serif; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center; }
+        .flow-t { font-size: 13px; font-weight: 700; color: var(--navy); line-height: 1.5; padding-top: 3px; }
+        .flow-s { font-size: 11.5px; color: var(--muted); line-height: 1.7; }
+
+        /* ===== FORM CARD ===== */
+        .form-card { background: #fff; border: 1px solid var(--cream-dk); padding: 28px 28px 32px; }
+        @media (max-width: 480px) { .form-card { padding: 22px 16px 26px; } }
+        .sec-h { display: flex; align-items: baseline; gap: 10px; border-bottom: 1px solid var(--gold); padding-bottom: 7px; margin: 6px 0 18px; }
+        .sec-h .n { font-family: 'Noto Serif JP', serif; font-size: 15px; font-weight: 700; color: var(--gold); }
+        .sec-h .t { font-family: 'Noto Serif JP', serif; font-size: 15px; font-weight: 700; color: var(--navy); }
+        .sec-h .e { font-size: 9.5px; letter-spacing: .14em; color: var(--gold-dk); font-weight: 700; }
+        .sec-gap { height: 14px; }
+
+        .f-row { margin-bottom: 18px; }
+        .f-label { display: block; font-size: 12px; font-weight: 700; color: var(--navy); letter-spacing: 0.07em; margin-bottom: 6px; }
+        .req { margin-left: 6px; font-size: 10px; font-weight: 700; color: #fff; background: var(--navy); padding: 1px 7px; white-space: nowrap; }
+        .opt { margin-left: 6px; font-size: 10px; color: var(--muted); font-weight: 400; }
+        input[type="text"], input[type="email"], input[type="tel"], input[type="date"], input[type="number"], select, textarea {
+            width: 100%; padding: 11px 13px; border: 1px solid #D8CFBE; background: var(--cream); font-family: 'Noto Sans JP', sans-serif; font-size: 14px; color: var(--text);
+            outline: none; border-radius: 0; -webkit-appearance: none; appearance: none; transition: border-color 0.2s, background 0.2s; }
+        input:focus, select:focus, textarea:focus { border-color: var(--gold); background: #fff; }
+        select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237A7468' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 13px center; background-color: var(--cream); padding-right: 34px; cursor: pointer; }
+        textarea { resize: vertical; min-height: 92px; }
+        .radio-group { display: flex; gap: 10px 18px; flex-wrap: wrap; }
+        .radio-group.col { flex-direction: column; gap: 9px; }
+        .radio-item, .check-item { display: flex; align-items: flex-start; gap: 8px; font-size: 13.5px; cursor: pointer; line-height: 1.6; }
+        .radio-item input, .check-item input { width: 16px; height: 16px; margin: 3px 0 0; padding: 0; flex-shrink: 0; cursor: pointer; accent-color: var(--navy); }
+        .chips { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .chip { display: flex; align-items: center; gap: 8px; border: 1px solid #D8CFBE; background: var(--cream); padding: 9px 11px; font-size: 13px; cursor: pointer; transition: all .15s; }
+        .chip input { width: 15px; height: 15px; accent-color: var(--navy); }
+        .chip:has(input:checked) { background: #fff; border-color: var(--navy); color: var(--navy); font-weight: 700; }
+        @media (max-width: 420px) { .chips { grid-template-columns: 1fr; } }
+        .f-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .wish { display: grid; grid-template-columns: 64px 1fr 1fr; gap: 8px; align-items: center; margin-bottom: 8px; }
+        .wish-l { font-size: 11.5px; font-weight: 700; color: var(--navy); }
+        .wish-l.first { color: var(--gold-dk); }
+        @media (max-width: 420px) { .wish { grid-template-columns: 1fr 1fr; } .wish-l { grid-column: 1 / -1; margin-bottom: -4px; } }
+        .f-note { font-size: 11.5px; color: var(--muted); margin-top: 6px; line-height: 1.7; }
+        .f-note.warn { color: #9a5b2a; }
+        .is-hidden { display: none !important; }
+        .agree-box { background: var(--cream); border: 1px solid #E5DCCB; padding: 14px 16px; margin-bottom: 18px; }
+        .agree-box .check-item { font-size: 12.5px; }
+        .agree-box .check-item + .check-item { margin-top: 8px; }
+
+        .submit-btn { width: 100%; padding: 15px; background: var(--gold); color: var(--navy); font-family: 'Noto Sans JP', sans-serif; font-size: 15px; font-weight: 700; border: none; cursor: pointer; letter-spacing: 0.06em; transition: background 0.2s; margin-top: 6px; }
+        .submit-btn:hover { background: var(--gold-lt); }
+        .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .form-legal { font-size: 11px; color: var(--muted); text-align: center; margin-top: 12px; line-height: 1.7; }
+        .form-legal a, .line-note a { color: var(--navy); text-decoration: underline; }
+        .line-note { text-align: center; margin-top: 18px; font-size: 12px; color: var(--muted); }
+
+        #success-box { display: none; text-align: center; padding: 56px 20px; }
+        .s-icon { width: 58px; height: 58px; background: var(--navy); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 22px; }
+        #success-box h2 { font-family: 'Noto Serif JP', serif; font-size: 21px; font-weight: 700; color: var(--navy); margin-bottom: 14px; }
+        #success-box p { font-size: 13.5px; color: var(--muted); line-height: 2; }
+        .back-btn { display: inline-block; margin-top: 28px; padding: 13px 32px; background: var(--navy); color: var(--cream); font-size: 13px; font-weight: 500; letter-spacing: 0.04em; }
+
+        .pg-footer { background: var(--navy-dark); padding: 24px; text-align: center; }
+        .pg-footer p { font-size: 11px; color: rgba(255,255,255,0.32); }
+        .pg-footer a { color: rgba(255,255,255,0.42); text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<header class="pg-header">
+    <a href="index.html" class="hd-logo">
+        <img src="logo-white.svg" alt="AMBIs">
+        <span class="hd-logo-sub">Jiu-Jitsu Academy</span>
+    </a>
+</header>
+
+<div class="pg-hero">
+    <span class="pg-tag">Private Lesson</span>
+    <h1 class="pg-title">プライベートレッスン</h1>
+    <div class="gold-bar"></div>
+    <p class="pg-sub">
+        一人ひとりの目的やレベルに合わせた、1対1の柔術レッスンです。<br>
+        初心者の方から経験者の方まで、お気軽にどうぞ。
+    </p>
+</div>
+
+<div class="form-wrap">
+
+    <div id="success-box">
+        <div class="s-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#C8A769" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h2>お申込みを受け付けました</h2>
+        <p>
+            ご希望の日程を確認して、<br>
+            2営業日以内に日程確定のご連絡をします。<br><br>
+            ご不明な点はLINEよりお気軽にどうぞ。
+        </p>
+        <a href="index.html" class="back-btn">トップページへ戻る</a>
+    </div>
+
+    <div id="form-section">
+
+        <!-- 特徴 -->
+        <div class="features">
+            <div class="feat">
+                <svg width="30" height="30" viewBox="0 0 32 32" fill="none" stroke="#122E53" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="9" r="4"/><circle cx="22" cy="11" r="3.2"/><path d="M3.5 26c.8-5.2 3.9-8 7.5-8s6.7 2.8 7.5 8"/><path d="M18 25.5c.5-3.7 2.2-6 4.6-6 2.4 0 4.1 2.3 4.6 6"/></svg>
+                <div class="feat-t">1対1で<br>じっくり</div>
+                <div class="feat-s">あなただけの<br>ペースで</div>
+            </div>
+            <div class="feat">
+                <svg width="30" height="30" viewBox="0 0 32 32" fill="none" stroke="#122E53" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="16" r="11"/><circle cx="16" cy="16" r="6"/><circle cx="16" cy="16" r="1.6" fill="#C8A769" stroke="#C8A769"/></svg>
+                <div class="feat-t">目的に合わせた<br>内容</div>
+                <div class="feat-s">基礎・試合対策・<br>苦手の克服など</div>
+            </div>
+            <div class="feat">
+                <svg width="30" height="30" viewBox="0 0 32 32" fill="none" stroke="#122E53" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="7" width="22" height="20" rx="2"/><path d="M5 13h22M11 4v6M21 4v6"/><path d="M11.5 20l3 3 6-6" stroke="#C8A769"/></svg>
+                <div class="feat-t">日程は<br>ご相談で</div>
+                <div class="feat-s">土・日・祝の<br>クラス以外の時間</div>
+            </div>
+        </div>
+
+        <!-- 料金 -->
+        <div class="price-card">
+            <div class="price-l">
+                <div class="en">Price</div>
+                <div class="ja">プライベートレッスン（税込）</div>
+            </div>
+            <div class="price-r">
+                <div class="price-val">¥11,000<small>／ 1時間</small></div>
+                <div class="price-note">道着＋帯レンタル ¥1,000 ／ 会員・会員以外どちらもOK</div>
+            </div>
+        </div>
+
+        <!-- 流れ -->
+        <div class="flow">
+            <div class="flow-h">お申込みの流れ</div>
+            <div class="flow-step"><div class="flow-n">1</div><div><div class="flow-t">このフォームでお申込み</div><div class="flow-s">ご希望の日時を、第3希望までお知らせください。</div></div></div>
+            <div class="flow-step"><div class="flow-n">2</div><div><div class="flow-t">道場から日程確定のご連絡</div><div class="flow-s">2営業日以内に、メールまたはお電話でご連絡します。</div></div></div>
+            <div class="flow-step"><div class="flow-n">3</div><div><div class="flow-t">お支払い</div><div class="flow-s">日程確定後に、カード決済用のリンクをお送りします（当日、道場窓口でのお支払いもできます）。</div></div></div>
+            <div class="flow-step"><div class="flow-n">4</div><div><div class="flow-t">レッスン当日</div><div class="flow-s">AMBIs（熊本市中央区水前寺）でお待ちしています。</div></div></div>
+        </div>
+
+        <div class="form-card">
+            <form id="main-form" onsubmit="submitForm(event)" novalidate>
+
+                <div class="sec-h"><span class="n">01</span><span class="t">お客さまの情報</span><span class="e">ABOUT YOU</span></div>
+                <div class="f-row">
+                    <label class="f-label" for="c-name">お名前<span class="req">必須</span></label>
+                    <input type="text" id="c-name" placeholder="例：山田 太郎" autocomplete="name">
+                </div>
+                <div class="f-row">
+                    <label class="f-label" for="c-kana">ふりがな<span class="req">必須</span></label>
+                    <input type="text" id="c-kana" placeholder="例：やまだ たろう">
+                </div>
+                <div class="f-row">
+                    <label class="f-label" for="c-email">メールアドレス<span class="req">必須</span></label>
+                    <input type="email" id="c-email" placeholder="example@email.com" autocomplete="email">
+                </div>
+                <div class="f-row">
+                    <label class="f-label" for="c-tel">電話番号<span class="req">必須</span></label>
+                    <input type="tel" id="c-tel" placeholder="090-0000-0000" autocomplete="tel">
+                    <p class="f-note">日程のご連絡や、当日の連絡に使います</p>
+                </div>
+                <div class="f-row">
+                    <label class="f-label">AMBIsの会員ですか？<span class="req">必須</span></label>
+                    <div class="radio-group">
+                        <label class="radio-item"><input type="radio" name="member" value="AMBIs会員" onchange="toggleMember()"> AMBIs会員</label>
+                        <label class="radio-item"><input type="radio" name="member" value="会員以外" onchange="toggleMember()"> 会員以外</label>
+                    </div>
+                </div>
+                <div class="f-row is-hidden" id="dojo-row">
+                    <label class="f-label" for="p-dojo">所属道場<span class="opt">任意</span></label>
+                    <input type="text" id="p-dojo" placeholder="例：〇〇柔術アカデミー（所属なしの方は空欄でOK）">
+                </div>
+                <div class="f-2col">
+                    <div class="f-row">
+                        <label class="f-label" for="p-gender">性別<span class="opt">任意</span></label>
+                        <select id="p-gender">
+                            <option value="">- 選択 -</option>
+                            <option>男性</option><option>女性</option><option>回答しない</option>
+                        </select>
+                    </div>
+                    <div class="f-row">
+                        <label class="f-label" for="p-age">年齢<span class="req">必須</span></label>
+                        <input type="number" id="p-age" min="5" max="99" inputmode="numeric" placeholder="例：35" oninput="checkAge()">
+                    </div>
+                </div>
+                <p class="f-note warn is-hidden" id="age-note" style="margin:-10px 0 16px;">18歳未満の方は、保護者の方の同意が必要です。詳しくは、お申込み後にご連絡します。</p>
+
+                <div class="sec-gap"></div>
+                <div class="sec-h"><span class="n">02</span><span class="t">柔術の経験</span><span class="e">EXPERIENCE</span></div>
+                <div class="f-2col">
+                    <div class="f-row">
+                        <label class="f-label" for="p-belt">帯の色<span class="req">必須</span></label>
+                        <select id="p-belt" onchange="toggleStripe()">
+                            <option value="">- 選択 -</option>
+                            <option>柔術は未経験</option>
+                            <option>白帯</option><option>青帯</option><option>紫帯</option><option>茶帯</option><option>黒帯</option>
+                        </select>
+                    </div>
+                    <div class="f-row" id="stripe-row">
+                        <label class="f-label" for="p-stripe">ストライプ<span class="opt">任意</span></label>
+                        <select id="p-stripe">
+                            <option value="">- 選択 -</option>
+                            <option>0本</option><option>1本</option><option>2本</option><option>3本</option><option>4本</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="f-2col">
+                    <div class="f-row">
+                        <label class="f-label" for="p-weight">体重（kg）<span class="opt">任意</span></label>
+                        <input type="number" id="p-weight" min="15" max="200" inputmode="numeric" placeholder="例：70">
+                    </div>
+                    <div class="f-row">
+                        <label class="f-label" for="p-height">身長（cm）<span class="opt">任意</span></label>
+                        <input type="number" id="p-height" min="90" max="220" inputmode="numeric" placeholder="例：170">
+                    </div>
+                </div>
+                <p class="f-note" style="margin:-10px 0 16px;">試合の階級や、練習の組み立ての参考にします。</p>
+                <div class="f-row">
+                    <label class="f-label" for="p-guard">よく使うガード・得意なポジション<span class="opt">任意</span></label>
+                    <input type="text" id="p-guard" placeholder="例：クローズドガード、デラヒーバ など">
+                </div>
+
+                <div class="sec-gap"></div>
+                <div class="sec-h"><span class="n">03</span><span class="t">ご希望の日程</span><span class="e">SCHEDULE</span></div>
+                <p class="f-note" style="margin:-6px 0 12px;">第3希望までお知らせください。プライベートレッスンは<b>土・日・祝日</b>に行っています（平日はお受けしていません）。日付を選ぶと、予約できる時間が表示されます（クラスの時間と、その前後30分は除きます）。</p>
+                <div class="wish">
+                    <span class="wish-l first">第1希望 <span class="req">必須</span></span>
+                    <input type="date" id="w1-date" aria-label="第1希望の日付" onchange="buildTimes(1)">
+                    <select id="w1-time" aria-label="第1希望の時間"></select>
+                </div>
+                <p class="f-note warn is-hidden" id="w1-warn" style="margin:-4px 0 8px;">平日はお受けしていません。土・日・祝日の日付を選んでください。</p>
+                <div class="wish">
+                    <span class="wish-l">第2希望</span>
+                    <input type="date" id="w2-date" aria-label="第2希望の日付" onchange="buildTimes(2)">
+                    <select id="w2-time" aria-label="第2希望の時間"></select>
+                </div>
+                <p class="f-note warn is-hidden" id="w2-warn" style="margin:-4px 0 8px;">平日はお受けしていません。土・日・祝日の日付を選んでください。</p>
+                <div class="wish">
+                    <span class="wish-l">第3希望</span>
+                    <input type="date" id="w3-date" aria-label="第3希望の日付" onchange="buildTimes(3)">
+                    <select id="w3-time" aria-label="第3希望の時間"></select>
+                </div>
+                <p class="f-note warn is-hidden" id="w3-warn" style="margin:-4px 0 8px;">平日はお受けしていません。土・日・祝日の日付を選んでください。</p>
+                <div class="f-row" style="margin-top:12px;">
+                    <label class="f-label">レッスンの時間<span class="req">必須</span></label>
+                    <div class="radio-group">
+                        <label class="radio-item"><input type="radio" name="dur" value="1時間（¥11,000）"> 1時間（¥11,000）</label>
+                        <label class="radio-item"><input type="radio" name="dur" value="相談したい"> 相談したい</label>
+                    </div>
+                </div>
+
+                <div class="sec-gap"></div>
+                <div class="sec-h"><span class="n">04</span><span class="t">レッスンの内容</span><span class="e">GOALS</span></div>
+                <div class="f-row">
+                    <label class="f-label">目的（いくつでも）<span class="req">必須</span></label>
+                    <div class="chips">
+                        <label class="chip"><input type="checkbox" name="goal" value="基礎を固めたい"> 基礎を固めたい</label>
+                        <label class="chip"><input type="checkbox" name="goal" value="試合対策"> 試合対策</label>
+                        <label class="chip"><input type="checkbox" name="goal" value="覚えたい技がある"> 覚えたい技がある</label>
+                        <label class="chip"><input type="checkbox" name="goal" value="苦手なポジションの克服"> 苦手なポジションの克服</label>
+                        <label class="chip"><input type="checkbox" name="goal" value="試合前の調整"> 試合前の調整</label>
+                        <label class="chip"><input type="checkbox" name="goal" value="アドバイスがほしい"> アドバイスがほしい</label>
+                    </div>
+                </div>
+                <div class="f-row">
+                    <label class="f-label" for="p-detail">学びたいこと・くわしい内容<span class="opt">任意</span></label>
+                    <textarea id="p-detail" placeholder="例：12月の大会に向けて、ハーフガードからのスイープを強化したい"></textarea>
+                </div>
+                <div class="f-row">
+                    <label class="f-label">道着・帯<span class="req">必須</span></label>
+                    <div class="radio-group col">
+                        <label class="radio-item"><input type="radio" name="gi" value="持参"> 自分の道着を持っていく</label>
+                        <label class="radio-item"><input type="radio" name="gi" value="道着＋帯レンタル（¥1,000）"> 道着＋帯をレンタル（¥1,000）</label>
+                    </div>
+                </div>
+                <div class="f-row">
+                    <label class="f-label" for="p-health">ケガ・持病など、配慮してほしいこと<span class="opt">任意</span></label>
+                    <textarea id="p-health" style="min-height:64px;" placeholder="例：右膝を以前ケガしています"></textarea>
+                </div>
+                <div class="f-row">
+                    <label class="f-label" for="p-msg">その他ご質問・ご要望<span class="opt">任意</span></label>
+                    <textarea id="p-msg" placeholder="「2人で受けたい」など、なんでもお気軽にどうぞ。"></textarea>
+                </div>
+
+                <div class="agree-box">
+                    <label class="check-item"><input type="checkbox" id="agree1"> 当日は体調を整え、手足の爪を短く切り、アクセサリーを外して参加します<span class="req">必須</span></label>
+                    <label class="check-item"><input type="checkbox" id="agree2"> 日程は、道場からの確定のご連絡をもって決まることを確認しました<span class="req">必須</span></label>
+                </div>
+
+                <button type="submit" class="submit-btn" id="main-submit">プライベートレッスンを申し込む</button>
+                <p class="form-legal">送信をもって<a href="privacy.html">プライバシーポリシー</a>に同意したものとみなします</p>
+            </form>
+        </div>
+
+        <p class="line-note">LINEでのお問い合わせは <a href="https://lin.ee/67nT6Qw2" target="_blank" rel="noopener">こちら</a> からどうぞ</p>
+        <p class="line-note" style="margin-top:8px;">体験レッスン・出稽古のお申込みは <a href="taiken.html">こちら</a></p>
+    </div>
+</div>
+
+<footer class="pg-footer">
+    <p style="margin-bottom:6px;">TEL <a href="tel:07085978887">070-8597-8887</a></p>
+    <p>© 2026 AMBIs Jiu-Jitsu Academy &ensp;|&ensp; <a href="privacy.html">プライバシーポリシー</a> &ensp;|&ensp; <a href="tokutei.html">特定商取引法</a></p>
+</footer>
+
+<script>
+    const DOW = ['日','月','火','水','木','金','土'];
+    const OPEN_DATE = '2026-11-22';
+    function localDateStr(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+    function parseDate(v){ const p=String(v||'').split('-').map(Number); return (p.length===3&&p[0])?new Date(p[0],p[1]-1,p[2]):null; }
+    function radioVal(name){ const r=document.querySelector(`input[name="${name}"]:checked`); return r?r.value:''; }
+    const val = id => (document.getElementById(id).value||'').trim();
+
+    /* ===== 予約できる時間 =====
+       レッスンは1時間。受付は 9:00〜21:00 の間（30分きざみ）。
+       AMBIsのクラス（HPのスケジュールと同じ）と、その前後30分にかかる時間は選べない。
+       受け付けるのは土・日・祝のみ（平日は対象外）。祝日は日曜と同じクラスがある前提で、日曜の時間を除外する。 */
+    const LESSON_MIN = 60, OPEN_MIN = 9*60, CLOSE_MIN = 21*60, BUFFER = 30;
+    const CLASSES = {
+        6: [['09:30','10:30'],['11:00','12:00'],['17:30','18:30'],['19:00','20:00'],['20:00','21:00']], // 土（20:00〜フリーマット）
+        0: [['09:30','10:30'],['11:00','12:00'],['15:00','16:00']],                                     // 日・祝
+    };
+    // 祝日（2026〜2027年。年が変わるときに追加してください）
+    const HOLIDAYS = ['2026-11-23','2027-01-01','2027-01-11','2027-02-11','2027-02-23','2027-03-22','2027-04-29','2027-05-03','2027-05-04','2027-05-05',
+                      '2027-07-19','2027-08-11','2027-09-20','2027-09-23','2027-10-11','2027-11-03','2027-11-23'];
+    const toMin = t => { const [h,m]=t.split(':').map(Number); return h*60+m; };
+    const toHM = m => String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+    function slotsFor(dateStr){
+        const d=parseDate(dateStr); if(!d) return null;
+        const dow = HOLIDAYS.includes(dateStr) ? 0 : d.getDay();
+        if (dow !== 0 && dow !== 6) return [];   // 平日はプライベートレッスンの対象外（土・日・祝のみ）
+        const blocks=(CLASSES[dow]||[]).map(([a,b])=>[toMin(a)-BUFFER, toMin(b)+BUFFER]);
+        const out=[];
+        for(let s=OPEN_MIN; s+LESSON_MIN<=CLOSE_MIN; s+=30){
+            const e=s+LESSON_MIN;
+            if(blocks.some(([a,b])=> s<b && e>a)) continue;
+            out.push(s);
+        }
+        // 今日の場合は、今から2時間後より前の時刻は出さない
+        if(dateStr===localDateStr(new Date())){ const now=new Date(); const lim=now.getHours()*60+now.getMinutes()+120; return out.filter(s=>s>=lim); }
+        return out;
+    }
+    function buildTimes(i){
+        const v=val('w'+i+'-date'); const sel=document.getElementById('w'+i+'-time');
+        const slots=slotsFor(v);
+        if(!slots){ sel.innerHTML='<option value="">- 先に日付を選択 -</option>'; return; }
+        const d=parseDate(v); const tag=HOLIDAYS.includes(v)?'祝':DOW[d.getDay()];
+        document.getElementById('w'+i+'-warn').classList.toggle('is-hidden', slots.length>0);
+        if(!slots.length){ sel.innerHTML='<option value="">- この日は選べません -</option>'; sel.value=''; return; }
+        sel.innerHTML='<option value="">- 開始時刻（'+tag+'）-</option>'
+            + slots.map(s=>`<option value="${toHM(s)}〜${toHM(s+LESSON_MIN)}">${toHM(s)}〜${toHM(s+LESSON_MIN)}</option>`).join('')
+            + '<option value="時間は相談したい">時間は相談したい</option>';
+    }
+    function initWish(){
+        const today = localDateStr(new Date()); const min = today > OPEN_DATE ? today : OPEN_DATE;
+        [1,2,3].forEach(i=>{ document.getElementById('w'+i+'-date').min = min; buildTimes(i); });
+    }
+    function toggleMember(){ document.getElementById('dojo-row').classList.toggle('is-hidden', radioVal('member')!=='会員以外'); }
+    function toggleStripe(){ document.getElementById('stripe-row').classList.toggle('is-hidden', val('p-belt')==='柔術は未経験'); }
+    function checkAge(){ const a=parseInt(val('p-age'),10); document.getElementById('age-note').classList.toggle('is-hidden', !(a>0&&a<18)); }
+    initWish();
+
+    async function submitForm(e){
+        e.preventDefault();
+        const name=val('c-name'), kana=val('c-kana'), email=val('c-email'), tel=val('c-tel');
+        const goals=[...document.querySelectorAll('input[name="goal"]:checked')].map(x=>x.value);
+        const missing=[];
+        if(!name) missing.push('お名前');
+        if(!kana) missing.push('ふりがな');
+        if(!email) missing.push('メールアドレス');
+        if(!tel) missing.push('電話番号');
+        if(!radioVal('member')) missing.push('AMBIsの会員かどうか');
+        if(!val('p-age')) missing.push('年齢');
+        if(!val('p-belt')) missing.push('帯の色');
+        if(!val('w1-date') || !val('w1-time')) missing.push('第1希望の日付と時間');
+        for(const i of [2,3]){ if(val('w'+i+'-date') && !val('w'+i+'-time')) missing.push('第'+i+'希望の時間（土・日・祝の日付を選んでください）'); }
+        if(!radioVal('dur')) missing.push('レッスンの時間');
+        if(!goals.length) missing.push('目的');
+        if(!radioVal('gi')) missing.push('道着・帯');
+        if(!document.getElementById('agree1').checked || !document.getElementById('agree2').checked) missing.push('確認事項（チェック）');
+        if(missing.length){ alert('次の項目を入力してください：\n・'+missing.join('\n・')); return; }
+        if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ alert('メールアドレスの形式をご確認ください。'); return; }
+
+        const btn=document.getElementById('main-submit'); const orig=btn.textContent; btn.textContent='送信中...'; btn.disabled=true;
+        const dateLabel = v => { const d=parseDate(v); return d ? `${v}（${DOW[d.getDay()]}）` : v; };
+        const wish = i => { const d=val('w'+i+'-date'), t=val('w'+i+'-time'); return d ? `${dateLabel(d)} ${t||'時間未選択'}` : ''; };
+        // ※ 【項目名】値 の形式（管理アプリで読み取れるように、体験フォームとそろえています）
+        const lines=[
+            '【種別】プライベートレッスン申込',
+            `【お名前】${name}`,
+            `【ふりがな】${kana}`,
+            `【メール】${email}`,
+            `【電話番号】${tel}`,
+            `【会員区分】${radioVal('member')}`,
+            radioVal('member')==='会員以外' && val('p-dojo') ? `【所属道場】${val('p-dojo')}` : null,
+            val('p-gender') ? `【性別】${val('p-gender')}` : null,
+            `【年齢】${val('p-age')}歳`,
+            `【帯】${val('p-belt')}${val('p-belt')!=='柔術は未経験' && val('p-stripe') ? ' '+val('p-stripe') : ''}`,
+            val('p-weight') ? `【体重】${val('p-weight')}kg` : null,
+            val('p-height') ? `【身長】${val('p-height')}cm` : null,
+            val('p-guard') ? `【よく使うガード】${val('p-guard')}` : null,
+            `【第1希望】${wish(1)}`,
+            wish(2) ? `【第2希望】${wish(2)}` : null,
+            wish(3) ? `【第3希望】${wish(3)}` : null,
+            `【レッスン時間】${radioVal('dur')}`,
+            `【目的】${goals.join('、')}`,
+            `【道着】${radioVal('gi')}`,
+            val('p-health') ? `【配慮してほしいこと】${val('p-health').replace(/\n/g,' ')}` : null,
+            '【確認事項】確認済み',
+            val('p-detail') ? `\n【学びたいこと】\n${val('p-detail')}` : null,
+            val('p-msg') ? `\n【メッセージ】\n${val('p-msg')}` : null,
+            '\n【送信元ページ】https://ambis-jj.com/private.html',
+        ];
+        try{
+            const res=await fetch('https://api.web3forms.com/submit',{ method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ access_key:'878f390f-eafe-47a0-a0a3-ad1545c10fa5', subject:`【AMBIs プライベートレッスン申込】${name}`, name, email, message: lines.filter(Boolean).join('\n') }) });
+            const data=await res.json();
+            if(!data.success) throw new Error(data.message||'error');
+            document.getElementById('form-section').style.display='none';
+            document.getElementById('success-box').style.display='block';
+            window.scrollTo({top:0,behavior:'smooth'});
+            if(typeof gtag!=='undefined') gtag('event','form_submit',{event_category:'form',event_label:'private'});
+        }catch(err){
+            alert('送信に失敗しました。お手数ですがLINEよりご連絡ください。');
+            btn.textContent=orig; btn.disabled=false;
+        }
+    }
+</script>
+</body>
+</html>
