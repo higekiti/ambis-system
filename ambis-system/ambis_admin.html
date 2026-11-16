@@ -988,7 +988,7 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
       </div>
       <div class="form-row"><label>連絡方法（決済リンクの送付方法）</label><select id="f-contactMethod"><option value="line">LINE（手動送付）</option><option value="email">メール（自動送信）</option><option value="cash">現金</option></select></div>
       <div class="form-row"><label>入会日 *</label><input type="date" id="f-joindate"></div>
-      <div class="form-row"><label>誕生日</label><input type="date" id="f-birthday"></div>
+      <div class="form-row"><label>誕生日</label><input type="date" id="f-birthday" onchange="updateInsNote()"></div>
       <div class="section-divider">BELT INFO</div>
       <div class="form-row-2">
         <div><label>帯の色 *</label>
@@ -1011,6 +1011,12 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
       </div>
       <div class="form-row"><label>備考</label><input type="text" id="f-note" placeholder="怪我・特記事項など"></div>
       <div class="form-row"><label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="f-weekday-mat" style="width:auto;"> 平日フリーマット通い放題オプション（月額¥2,200）</label></div>
+      <div class="section-divider">SPORTS INSURANCE</div>
+      <div class="form-row-2">
+        <div><label>スポーツ安全保険</label><select id="f-ins-fy" onchange="updateInsNote()"></select></div>
+        <div><label>掛金の支払日（スポあんネット）</label><input type="date" id="f-ins-date" onchange="updateInsNote()"></div>
+      </div>
+      <div id="f-ins-note" style="font-size:10.5px;color:var(--text-muted);margin:-6px 0 12px;"></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeMemberModal()">キャンセル</button>
@@ -1775,7 +1781,7 @@ function renderMembers(data) {
       const yearCount=attendance.filter(a=>a.memberId===m.id&&a.date&&a.date.startsWith(thisYear)).length;
       const totalCount=attendance.filter(a=>a.memberId===m.id).length;
       return `<tr>
-        <td><div class="member-cell"><div class="avatar">${avatarContent}</div><div class="member-name-cell"><div class="name">${m.name}</div><div class="id">${m.id}</div></div></div></td>
+        <td><div class="member-cell"><div class="avatar">${avatarContent}</div><div class="member-name-cell"><div class="name">${m.name}</div><div class="id">${m.id}${insPillHtml(m)}</div></div></div></td>
         <td><span class="belt-pill ${belt.cls}"><span class="belt-dot"></span>${belt.label}</span></td>
         <td><div class="stripes-cell">${stripes}</div></td>
         <td style="font-size:12px;color:var(--text-secondary);">${m.joindate||'―'}</td>
@@ -1846,6 +1852,59 @@ function filterMembers(){
 }
 
 // ══ MEMBER MODAL ══
+
+// ══ スポーツ安全保険（会員ごとの加入記録）══
+// 年度は4月1日〜翌3月31日。補償は「掛金の支払日の翌日」から3月31日まで。
+function insCurrentFY(d){ d=d||new Date(); return d.getMonth()>=3 ? d.getFullYear() : d.getFullYear()-1; }
+function insAgeClass(m){
+  if(!m.birthday) return '';
+  const fy=insCurrentFY(); const b=m.birthday.split('-').map(Number); if(!b[0]) return '';
+  let age=fy-b[0]; if(b[1]>4||(b[1]===4&&b[2]>1)) age--;          // 年度の4月1日時点の満年齢
+  if(age<=14) return 'A1（中学生以下）¥800';   // 4月1日時点で14歳以下＝中学生以下
+  return age>=65?'B（65歳以上）¥1,200':'C（大人）¥2,000';
+}
+function insStatus(m){
+  const fy=insCurrentFY();
+  if(m.insFY==='no') return {state:'no', label:'加入しない'};
+  if(String(m.insFY)===String(fy)){
+    if(m.insPaidDate){
+      const p=m.insPaidDate.split('-').map(Number); const start=new Date(p[0],p[1]-1,p[2]+1);
+      const today=new Date(); today.setHours(0,0,0,0);
+      if(today<start) return {state:'wait', label:`保険 ${start.getMonth()+1}/${start.getDate()}〜`};
+      return {state:'ok', label:`保険 ${fy}年度`};
+    }
+    return {state:'wait', label:'保険 支払い待ち'};
+  }
+  return {state:'none', label:'保険 未加入'};
+}
+function insPillHtml(m){
+  if(m.status==='left') return '';
+  const st=insStatus(m);
+  const cls={ok:'status-active',wait:'status-inactive',none:'status-left',no:'status-neutral'}[st.state];
+  return ` <span class="status-pill ${cls}" style="margin-left:4px;font-size:9px;padding:1px 6px;" title="スポーツ安全保険">${st.label}</span>`;
+}
+function buildInsOptions(keep){
+  const fy=insCurrentFY(); const sel=document.getElementById('f-ins-fy');
+  const opts=[['','未加入（未定）'],[String(fy),`${fy}年度（${fy}/4〜${fy+1}/3）に加入`],[String(fy+1),`${fy+1}年度（${fy+1}/4〜${fy+2}/3）に加入`],['no','加入しない（本人の希望）']];
+  if(keep && !opts.some(o=>o[0]===String(keep))) opts.splice(1,0,[String(keep),`${keep}年度に加入（過去の記録）`]);
+  sel.innerHTML=opts.map(o=>`<option value="${o[0]}">${o[1]}</option>`).join('');
+  sel.value=String(keep||''); updateInsNote();
+}
+function updateInsNote(){
+  const el=document.getElementById('f-ins-note'); if(!el) return;
+  const fy=document.getElementById('f-ins-fy').value, d=document.getElementById('f-ins-date').value;
+  const bd=document.getElementById('f-birthday').value;
+  const cls=insAgeClass({birthday:bd});
+  let t='';
+  if(fy==='no') t='加入しない会員です。練習中のケガは自己責任であることを、入会申込書で確認済みにしておきましょう。';
+  else if(fy){
+    if(d){ const p=d.split('-').map(Number); const s0=new Date(p[0],p[1]-1,p[2]+1); t=`補償期間：${s0.getFullYear()}/${s0.getMonth()+1}/${s0.getDate()} 〜 ${Number(fy)+1}/3/31（支払日の翌日から）`; }
+    else t='スポあんネットで登録・支払いをしたら、支払日を入れてください（補償は支払日の翌日から）。';
+  } else t='入会申込書で「加入を希望する」の人は、スポあんネットで追加登録して支払日を入れてください。';
+  if(cls) t+=`　区分の目安：${cls}`;
+  el.textContent=t;
+}
+
 function openMemberModal(mode,id){
   editingMemberId=null; photoData=null;
   document.getElementById('photo-preview-img').style.display='none';
@@ -1864,6 +1923,7 @@ function openMemberModal(mode,id){
   document.getElementById('f-monthly').value=MONTHLY_FEE;
   document.getElementById('f-weekday-mat').checked=false;
   document.getElementById('f-entry').value=ENTRY_FEE;
+  buildInsOptions(''); document.getElementById('f-ins-date').value='';
 
   if(mode==='edit'&&id){
     const m=members.find(x=>x.id===id); if(!m)return;
@@ -1894,7 +1954,8 @@ function openMemberModal(mode,id){
     document.getElementById('f-monthly').value=m.monthlyFee||MONTHLY_FEE;
     document.getElementById('f-entry').value=m.entryFee||ENTRY_FEE;
   document.getElementById('f-weekday-mat').checked=!!m.hasWeekdayMatOption;
-    document.getElementById('f-birthday').value=m.birthday||'';
+    buildInsOptions(m.insFY||''); document.getElementById('f-ins-date').value=m.insPaidDate||'';
+    document.getElementById('f-birthday').value=m.birthday||''; updateInsNote();
     if(m.photo){photoData=m.photo;document.getElementById('photo-preview-img').src=m.photo;document.getElementById('photo-preview-img').style.display='block';document.getElementById('photo-placeholder').style.display='none';}
   } else {
     document.getElementById('modal-member-title').textContent='新規会員登録';
@@ -2019,6 +2080,8 @@ function saveMember(){
     photo:photoData,
     birthday:document.getElementById('f-birthday').value,
     hasWeekdayMatOption:document.getElementById('f-weekday-mat').checked,
+    insFY:document.getElementById('f-ins-fy').value,
+    insPaidDate:document.getElementById('f-ins-date').value,
   };
   let __stopTarget=null, __stopKind='';
   if(editingMemberId){
@@ -4607,7 +4670,7 @@ window.showScheduleTab=showScheduleTab;
 window.sendMemberBillingLink=sendMemberBillingLink;window.sendGuestPaymentLink=sendGuestPaymentLink;
 window.sendTrialPaymentLink=sendTrialPaymentLink;window.sendRentalPaymentLink=sendRentalPaymentLink;
 window.toggleRentalPayLinkBtn=toggleRentalPayLinkBtn;window.copyPayLink=copyPayLink;window.closePayLinkModal=closePayLinkModal;
-window.openPlModal=openPlModal;window.closePlModal=closePlModal;window.savePl=savePl;window.deletePl=deletePl;window.filterPl=filterPl;window.renderPlList=renderPlList;window.togglePlKind=togglePlKind;window.togglePlGuardian=togglePlGuardian;window.onPlMemberSelect=onPlMemberSelect;window.onPlStartChange=onPlStartChange;window.sendPlPaymentLink=sendPlPaymentLink;window.addPlToCalendar=addPlToCalendar;window.togglePlPaste=togglePlPaste;window.applyPlPaste=applyPlPaste;
+window.updateInsNote=updateInsNote;window.openPlModal=openPlModal;window.closePlModal=closePlModal;window.savePl=savePl;window.deletePl=deletePl;window.filterPl=filterPl;window.renderPlList=renderPlList;window.togglePlKind=togglePlKind;window.togglePlGuardian=togglePlGuardian;window.onPlMemberSelect=onPlMemberSelect;window.onPlStartChange=onPlStartChange;window.sendPlPaymentLink=sendPlPaymentLink;window.addPlToCalendar=addPlToCalendar;window.togglePlPaste=togglePlPaste;window.applyPlPaste=applyPlPaste;
 window.openPrivateLessonModal=openPrivateLessonModal;window.closePrivateLessonModal=closePrivateLessonModal;window.sendPrivateLessonPaymentLink=sendPrivateLessonPaymentLink;
 
 
