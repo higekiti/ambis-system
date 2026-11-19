@@ -540,6 +540,9 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
         <div class="section-header" style="padding:14px 18px 10px;margin-bottom:0;">
           <div class="section-title" style="font-size:13px;">来訪予定（体験・ビジター・プライベート） <span style="font-size:10px;color:var(--text-muted);font-weight:400;">（今日から7日間）</span></div>
           <div style="display:flex;gap:6px;">
+            <select id="visit-export-range" class="btn btn-ghost btn-sm" style="padding:4px 8px;width:auto;" title="出力する範囲"><option value="today">今日</option><option value="week">7日間</option></select>
+            <button class="btn btn-ghost btn-sm" onclick="exportVisitsExcel()" title="来訪予定をExcelで保存">Excel</button>
+            <button class="btn btn-ghost btn-sm" onclick="exportVisitsPdf()" title="印刷用の画面を開く（PDFに保存・印刷）">PDF</button>
             <button class="btn btn-ghost btn-sm" onclick="openTrialModal('add')">＋ 登録</button>
             <button class="btn btn-ghost btn-sm" onclick="showPage('trial', document.querySelector('.nav-item[onclick*=\'trial\']'))">一覧を見る</button>
           </div>
@@ -950,6 +953,7 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
   <div class="modal">
     <div class="modal-header"><div class="modal-title" id="modal-member-title">新規会員登録</div><button class="modal-close" onclick="closeMemberModal()">×</button></div>
     <div class="modal-body">
+      <div id="f-from-trial" style="display:none;background:#f3f6fb;border:1px solid #dbe4f2;border-radius:8px;padding:9px 12px;margin-bottom:14px;font-size:12px;color:var(--text-secondary);"></div>
       <div class="form-row">
         <label>プロフィール写真</label>
         <div class="photo-upload">
@@ -1531,6 +1535,7 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
       </div>
     </div>
     <div class="modal-footer">
+      <button class="btn btn-ghost" id="tr-join-btn" style="margin-right:auto;display:none;" onclick="startJoinFromTrial(editingTrialId)">入会登録へ（情報を転記）</button>
       <button class="btn btn-ghost" onclick="closeTrialModal()">キャンセル</button>
       <button class="btn btn-primary" onclick="saveTrial()">保存する</button>
     </div>
@@ -1674,6 +1679,7 @@ let deletingTrialId    = null;
 let rentalCalYear, rentalCalMonth;
 let trialFilter = 'all';
 let editingMemberId = null;
+let joinFromTrialId = null;   // 体験・ビジターから入会登録するとき、元の記録のID
 let deletingId      = null;
 let photoData       = null;
 
@@ -1906,7 +1912,8 @@ function updateInsNote(){
 }
 
 function openMemberModal(mode,id){
-  editingMemberId=null; photoData=null;
+  editingMemberId=null; photoData=null; joinFromTrialId=null;
+  const jb=document.getElementById('f-from-trial'); if(jb) jb.style.display='none';
   document.getElementById('photo-preview-img').style.display='none';
   document.getElementById('photo-placeholder').style.display='block';
   document.getElementById('photo-input').value='';
@@ -2096,8 +2103,18 @@ function saveMember(){
     showToast('会員情報を更新しました');
   } else {
     const newId=nextMemberId();
-    members.push({id:newId,...data});
-    showToast('会員を登録しました');
+    const fromT = joinFromTrialId ? trialVisitors.find(t=>t.id===joinFromTrialId) : null;
+    members.push({id:newId,...data, ...(fromT?{trialId:fromT.id, trialDate:fromT.date||''}:{})});
+    if(fromT){
+      // 元の体験・ビジターの記録を「入会した」にして、会員とつなぐ
+      const ti=trialVisitors.findIndex(t=>t.id===fromT.id);
+      if(ti!==-1) trialVisitors[ti]={...trialVisitors[ti], converted:'yes', memberId:newId, joinedAt:data.joindate||localDateStr()};
+      joinFromTrialId=null;
+      showToast('会員を登録しました（体験の記録を「入会した」にしました）');
+      renderTrialList(); renderUpcomingVisitors();
+    } else {
+      showToast('会員を登録しました');
+    }
   }
   saveAll(); closeMemberModal(); renderMembers(members);
   rebuildSelects();
@@ -3269,6 +3286,7 @@ function renderTrialList(){
         <td><span class="status-pill ${convCls}">${convLabel}</span></td>
         <td><div class="action-btns">
           ${t.date&&t.date>=localDateStr()?calBtnHtml(t):''}
+          ${t.memberId?`<span style="font-size:10px;color:var(--text-muted);align-self:center;">会員 ${escapeHtml(t.memberId)}</span>`:`<button class="btn btn-ghost btn-sm" onclick="startJoinFromTrial('${t.id}')" title="この記録の情報を会員登録に転記">入会登録へ</button>`}
           <button class="btn btn-ghost btn-sm" onclick="openTrialModal('edit','${t.id}')">編集</button>
           <button class="btn btn-ghost btn-sm" onclick="openTrialDeleteModal('${t.id}')">削除</button>
         </div></td>
@@ -3375,7 +3393,9 @@ function openTrialModal(mode,id){
     updateTrialGiOptions(t.giRental||'');
     toggleReferrerRow();
     document.getElementById('tr-paste-wrap').style.display='none';
+    document.getElementById('tr-join-btn').style.display = t.memberId ? 'none' : 'inline-block';
   } else {
+    document.getElementById('tr-join-btn').style.display='none';
     document.getElementById('tr-paste-wrap').style.display='block';
     document.getElementById('modal-trial-title').textContent='体験・ビジター登録';
   }
@@ -3451,6 +3471,126 @@ function deleteTrial(){
   showToast('削除しました');
 }
 
+
+
+// ══ 体験・ビジター → 会員登録（入力済みの情報を転記）══
+function startJoinFromTrial(id){
+  const t=trialVisitors.find(x=>x.id===id); if(!t){ showToast('記録が見つかりません'); return; }
+  if(t.memberId){ showToast('この方はすでに会員登録済みです（'+t.memberId+'）'); return; }
+  // 同じ名前の会員がすでにいる場合は確認（二重登録の防止）
+  const norm=v=>String(v||'').replace(/\s/g,'');
+  const dup=members.find(m=>norm(m.name)===norm(t.name) && m.status!=='left');
+  if(dup && !confirm(`「${dup.name}」さん（${dup.id}）はすでに会員として登録されています。\nそれでも新しく会員登録しますか？`)) return;
+  closeTrialModal();
+  openMemberModal('add');
+  joinFromTrialId=t.id;
+  const set=(fid,v)=>{ const el=document.getElementById(fid); if(el && v!==undefined && v!==null && v!=='') el.value=v; };
+  set('f-name',t.name); set('f-kana',t.kana); set('f-contact',t.phone); set('f-email',(t.email||'').toLowerCase());
+  // 入会経路・紹介者（体験と同じ選択肢）
+  if(t.sourceType){ set('f-source-type',t.sourceType); set('f-referrer',t.referrer); set('f-source-other',t.sourceOther); }
+  toggleMemberReferrerRow();
+  // 帯（柔術経験者・ビジターのみ。未経験・他格闘技は白帯のまま）
+  if(t.belt && (t.experience==='bjj' || t.type==='visitor')) set('f-belt',t.belt);
+  set('f-joindate',localDateStr());
+  // 備考：ケガ・配慮と、体験日などを残す
+  const kind=t.type==='visitor'?'ビジター':'体験';
+  const notes=[];
+  if(t.health) notes.push('配慮：'+t.health);
+  notes.push(`${kind}：${t.date||''}${t.className?' '+t.className:''}`);
+  if(t.type==='visitor' && t.dojo) notes.push('元の所属：'+t.dojo);
+  set('f-note',notes.join('／'));
+  updateInsNote();
+  const box=document.getElementById('f-from-trial');
+  box.innerHTML=`<b>${escapeHtml(kind)}の記録（${escapeHtml(t.date||'')}）から転記しました。</b> 足りない項目（Gmail・誕生日・連絡方法など）を入れて「登録する」を押すと、${escapeHtml(kind)}の記録が自動で「入会した」になります。`;
+  box.style.display='block';
+}
+
+// ══ 来訪予定のエクスポート（Excel・PDF）══
+// 体験・ビジター・プライベートレッスン（日程確定）を、時間順にまとめる
+function collectVisits(range){
+  const today=localDateStr();
+  const lim=new Date(); lim.setDate(lim.getDate()+(range==='week'?7:0)); const limStr=localDateStr(lim);
+  const dn=['日','月','火','水','木','金','土'];
+  const dl=d=>{ const p=String(d||'').split('-').map(Number); if(!p[0]) return d||''; const w=new Date(p[0],p[1]-1,p[2]).getDay(); return `${p[1]}/${p[2]}（${dn[w]}）`; };
+  const beltJa={white:'白帯',blue:'青帯',purple:'紫帯',brown:'茶帯',black:'黒帯'};
+  const rows=[];
+  trialVisitors.filter(t=>t.date&&t.date>=today&&t.date<=limStr).forEach(t=>{
+    const exp=[trialExpLabel[t.experience]||'', beltJa[t.belt]||''].filter(Boolean).join('・');
+    const gi=trialGiText(t)||'';
+    const size=[t.height?t.height+'cm':'', t.weight?t.weight+'kg':''].filter(Boolean).join(' / ');
+    const pay = t.type==='trial' ? '無料' : (t.paymentStatus==='paid' ? '支払い済み' : `未払い（¥${Number(t.fee||0).toLocaleString()}）`);
+    rows.push({sort:t.date+(t.classStart||'99:99'), date:dl(t.date), time:[t.classStart,t.classEnd].filter(Boolean).join('〜'), cls:t.className||'未定',
+      kind:t.type==='visitor'?'ビジター':'体験', name:t.name||'', kana:t.kana||'', phone:t.phone||'',
+      gender:(t.gender&&t.gender!=='none')?(trialGenderLabel[t.gender]||''):'', age:t.age?t.age+'歳':'',
+      exp: t.type==='visitor' ? [exp, t.dojo?'所属：'+t.dojo:''].filter(Boolean).join('・') : exp,
+      gi, size, health:t.health||'', pay, note:t.note||''});
+  });
+  privateLessons.filter(p=>plStatusOf(p)==='confirmed'&&p.date&&p.date>=today&&p.date<=limStr).forEach(p=>{
+    rows.push({sort:p.date+(p.start||'99:99'), date:dl(p.date), time:[p.start,p.end].filter(Boolean).join('〜'), cls:'プライベートレッスン',
+      kind:'プライベート', name:plName(p), kana:p.kana||'', phone:p.phone||'',
+      gender:{male:'男性',female:'女性'}[p.gender]||'', age:p.age?p.age+'歳'+(p.guardian?'（保護者：'+p.guardian+'）':''):'',
+      exp:[p.belt, p.goals?'目的：'+p.goals:''].filter(Boolean).join('・'),
+      gi:p.giRental==='gi'?'道着レンタル':p.giRental==='no'?'持参':'', size:[p.height?p.height+'cm':'', p.weight?p.weight+'kg':''].filter(Boolean).join(' / '),
+      health:p.health||'', pay:plIsPaid(p)?'支払い済み':`未払い（¥${Number(p.price||0).toLocaleString()}）`, note:p.note||''});
+  });
+  rows.sort((a,b)=>a.sort.localeCompare(b.sort));
+  return rows;
+}
+const VISIT_COLS=[['date','日付'],['time','時間'],['cls','クラス'],['kind','種別'],['name','氏名'],['kana','ふりがな'],['phone','電話番号'],['gender','性別'],['age','年齢'],['exp','経験・帯'],['gi','道着'],['size','身長・体重'],['health','ケガ・配慮'],['pay','料金・支払い'],['note','メモ']];
+function visitRangeLabel(range){
+  const d=new Date(); const e=new Date(); e.setDate(e.getDate()+7);
+  const f=x=>`${x.getMonth()+1}/${x.getDate()}`;
+  return range==='week' ? `${f(d)}〜${f(e)}（7日間）` : `${f(d)}（今日）`;
+}
+function exportVisitsExcel(){
+  const range=(document.getElementById('visit-export-range')||{}).value||'today';
+  const rows=collectVisits(range);
+  if(!rows.length){ showToast(range==='week'?'今日から7日間の来訪予定はありません':'今日の来訪予定はありません'); return; }
+  if(typeof XLSX==='undefined'){ showToast('Excelの準備ができていません。少し待ってからもう一度お試しください'); return; }
+  const aoa=[[`AMBIs 来訪予定 ${visitRangeLabel(range)}`],[`出力：${new Date().toLocaleString('ja-JP')}　※個人情報を含みます。取り扱いに注意してください`],[],VISIT_COLS.map(c=>c[1])]
+    .concat(rows.map(r=>VISIT_COLS.map(c=>r[c[0]]||'')));
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols']=[10,12,16,10,14,14,14,6,12,20,12,12,24,16,24].map(w=>({wch:w}));
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '来訪予定');
+  XLSX.writeFile(wb, `AMBIs_来訪予定_${localDateStr()}${range==='week'?'_7日間':''}.xlsx`);
+  showToast('Excelを保存しました（'+rows.length+'件）');
+}
+function exportVisitsPdf(){
+  const range=(document.getElementById('visit-export-range')||{}).value||'today';
+  const rows=collectVisits(range);
+  if(!rows.length){ showToast(range==='week'?'今日から7日間の来訪予定はありません':'今日の来訪予定はありません'); return; }
+  const w=window.open('','_blank');
+  if(!w){ showToast('ポップアップがブロックされました。ブラウザの設定で許可してください'); return; }
+  const kindColor={'体験':'#3a5fc8','ビジター':'#c08a1a','プライベート':'#6b3fb5'};
+  const body=rows.map(r=>`<tr>${VISIT_COLS.map(c=>{
+      const v=escapeHtml(r[c[0]]||'');
+      if(c[0]==='kind') return `<td><span class="k" style="color:${kindColor[r.kind]||'#333'};border-color:${kindColor[r.kind]||'#999'}">${v}</span></td>`;
+      if(c[0]==='name') return `<td class="nm">${v}${r.kana?`<div class="sub">${escapeHtml(r.kana)}</div>`:''}</td>`;
+      if(c[0]==='kana') return '';
+      if(c[0]==='health') return `<td class="${v?'warn':''}">${v}</td>`;
+      return `<td>${v}</td>`; }).join('')}</tr>`).join('');
+  const head=VISIT_COLS.filter(c=>c[0]!=='kana').map(c=>`<th>${c[1]}</th>`).join('');
+  w.document.write(`<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8"><title>AMBIs 来訪予定 ${visitRangeLabel(range)}</title>
+<style>
+@page{size:A4 landscape;margin:10mm;}
+*{box-sizing:border-box;} body{font-family:'Noto Sans JP','Hiragino Sans','Yu Gothic',sans-serif;color:#1d2633;margin:0;font-size:10px;}
+.hd{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #122E53;padding-bottom:6px;margin-bottom:8px;}
+.hd h1{font-size:16px;margin:0;color:#122E53;} .hd .r{font-size:9px;color:#6b7686;text-align:right;}
+table{width:100%;border-collapse:collapse;table-layout:auto;} th{background:#122E53;color:#fff;font-weight:600;font-size:9px;padding:5px 4px;text-align:left;white-space:nowrap;}
+td{border-bottom:1px solid #ddd5c4;padding:5px 4px;vertical-align:top;} tr:nth-child(even) td{background:#faf8f3;}
+td.nm{font-weight:700;font-size:11px;} .sub{font-weight:400;font-size:8.5px;color:#6b7686;} td.warn{color:#b5452f;font-weight:600;}
+.k{display:inline-block;border:1px solid;border-radius:4px;padding:0 4px;font-size:9px;font-weight:700;white-space:nowrap;}
+.ft{margin-top:8px;font-size:8.5px;color:#6b7686;} .bar{margin:0 0 8px;display:flex;gap:8px;} .bar button{padding:6px 14px;font-size:12px;cursor:pointer;}
+@media print{.bar{display:none;}}
+</style></head><body>
+<div class="bar"><button onclick="window.print()">印刷 / PDFに保存</button><button onclick="window.close()">閉じる</button></div>
+<div class="hd"><h1>AMBIs 来訪予定　${visitRangeLabel(range)}　<span style="font-size:11px;color:#a8894f;">${rows.length}件</span></h1><div class="r">出力：${new Date().toLocaleString('ja-JP')}<br>個人情報を含みます。使い終わったら処分してください</div></div>
+<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>
+<div class="ft">PDFにするときは、印刷画面の「送信先（プリンター）」で「PDFに保存」を選んでください。</div>
+</body></html>`);
+  w.document.close();
+  setTimeout(()=>{ try{ w.focus(); w.print(); }catch(e){} }, 400);
+}
 
 // ══ PRIVATE LESSONS（プライベートレッスン管理）══
 // データ：private_lessons コレクション。決済（Stripe）の結果は Functions が paymentStatus に書き込む。
@@ -4670,7 +4810,7 @@ window.showScheduleTab=showScheduleTab;
 window.sendMemberBillingLink=sendMemberBillingLink;window.sendGuestPaymentLink=sendGuestPaymentLink;
 window.sendTrialPaymentLink=sendTrialPaymentLink;window.sendRentalPaymentLink=sendRentalPaymentLink;
 window.toggleRentalPayLinkBtn=toggleRentalPayLinkBtn;window.copyPayLink=copyPayLink;window.closePayLinkModal=closePayLinkModal;
-window.updateInsNote=updateInsNote;window.openPlModal=openPlModal;window.closePlModal=closePlModal;window.savePl=savePl;window.deletePl=deletePl;window.filterPl=filterPl;window.renderPlList=renderPlList;window.togglePlKind=togglePlKind;window.togglePlGuardian=togglePlGuardian;window.onPlMemberSelect=onPlMemberSelect;window.onPlStartChange=onPlStartChange;window.sendPlPaymentLink=sendPlPaymentLink;window.addPlToCalendar=addPlToCalendar;window.togglePlPaste=togglePlPaste;window.applyPlPaste=applyPlPaste;
+window.updateInsNote=updateInsNote;window.startJoinFromTrial=startJoinFromTrial;window.exportVisitsExcel=exportVisitsExcel;window.exportVisitsPdf=exportVisitsPdf;window.openPlModal=openPlModal;window.closePlModal=closePlModal;window.savePl=savePl;window.deletePl=deletePl;window.filterPl=filterPl;window.renderPlList=renderPlList;window.togglePlKind=togglePlKind;window.togglePlGuardian=togglePlGuardian;window.onPlMemberSelect=onPlMemberSelect;window.onPlStartChange=onPlStartChange;window.sendPlPaymentLink=sendPlPaymentLink;window.addPlToCalendar=addPlToCalendar;window.togglePlPaste=togglePlPaste;window.applyPlPaste=applyPlPaste;
 window.openPrivateLessonModal=openPrivateLessonModal;window.closePrivateLessonModal=closePrivateLessonModal;window.sendPrivateLessonPaymentLink=sendPrivateLessonPaymentLink;
 
 
