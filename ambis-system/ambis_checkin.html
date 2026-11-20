@@ -70,11 +70,14 @@ async function ci_loadAndStart(){
     ]);
     const fbMembers = mSnap.docs.map(d => d.data());
     const fbAttendance = aSnap.docs.map(d => d.data());
+    window.__ciRosterErr = fbMembers.length ? '' : '名簿が0人です（管理アプリを一度開くと名簿が作られます）';
     if(fbMembers.length)   { localStorage.setItem('ambis_members', JSON.stringify(fbMembers)); }
     if(fbAttendance.length){ localStorage.setItem('ambis_attendance', JSON.stringify(fbAttendance)); }
   } catch(e) {
     console.warn('Firebase load error:', e.message);
+    window.__ciRosterErr = '名簿を読み込めませんでした（' + (e.code||e.message||'エラー') + '）';
   }
+  if(typeof window.ciShowRosterStatus==='function') window.ciShowRosterStatus();
   // クラス時間（今の時間のクラスを自動で選ぶため）。読めなくても受付は動く
   try {
     const [sSnap, xSnap] = await Promise.all([
@@ -100,7 +103,8 @@ function ci_startLive(){
     if(!list.length) return;   // 0件のときは上書きしない（安全策）
     localStorage.setItem('ambis_members', JSON.stringify(list));
     if(typeof window.ciOnDataChanged==='function') window.ciOnDataChanged();
-  }, e=>console.warn('roster live error:', e.message));
+    window.__ciRosterErr='';
+  }, e=>{ console.warn('roster live error:', e.message); window.__ciRosterErr='名簿を読み込めませんでした（'+(e.code||e.message)+'）'; if(typeof window.ciShowRosterStatus==='function') window.ciShowRosterStatus(); });
   ci_watchTodayAttendance();
   setInterval(ci_watchTodayAttendance, 60000);   // 日付が変わったら監視対象を切り替え
 }
@@ -415,6 +419,7 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
         <div class="status-idle" id="status-idle">
           <div class="status-idle-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg></div>
           <div class="status-idle-text">QRコードをカメラに<br>かざしてください</div>
+          <div id="ci-roster-status" style="font-size:10.5px;color:var(--text-muted);margin-top:6px;"></div>
         </div>
         <div class="result-card" id="result-card">
           <div class="result-member">
@@ -582,11 +587,19 @@ async function scanFrame(){
 function handleQR(data){
   loadData();
   let memberId=null;
+  data=String(data||'').trim();
   try{const url=new URL(data);memberId=url.searchParams.get('id');}
   catch(e){if(data.startsWith('AMBIs-'))memberId=data;}
-  if(!memberId)return;
-  const member=members.find(m=>m.id===memberId&&m.status==='active');
-  if(!member)return;if(currentMember&&currentMember.id===member.id)return;
+  if(!memberId){ showToast('AMBIsの会員QRではありません','error'); return; }
+  memberId=memberId.trim();
+  const found=members.find(m=>m.id===memberId);
+  if(!found){
+    showToast(members.length?`名簿に見つかりません（${memberId}）。管理アプリで会員登録を確認してください`:'名簿が読み込まれていません。画面を再読み込みしてください','error');
+    ciShowRosterStatus(); return;
+  }
+  if(found.status!=='active'){ showToast(`${found.name} さんは${found.status==='inactive'?'休会中':'退会済み'}のため受付できません`,'error'); return; }
+  const member=found;
+  if(currentMember&&currentMember.id===member.id)return;
   playScanSound();currentMember=member;selectedClass=null;
   showMemberPanel(member);
 }
@@ -723,15 +736,23 @@ function showToast(msg,type='success'){
     background:${type==='success'?'#0a1628':'#e67e22'};color:${type==='success'?'#c9a96e':'#fff'};
     padding:10px 22px;border-radius:8px;font-size:13px;
     font-family:'Noto Sans JP',sans-serif;z-index:999;
-    box-shadow:0 4px 16px rgba(10,22,40,0.15);white-space:nowrap;`;
+    box-shadow:0 4px 16px rgba(10,22,40,0.15);max-width:90vw;text-align:center;line-height:1.6;`;
   el.textContent=msg;document.body.appendChild(el);
-  setTimeout(()=>el.remove(),2500);
+  setTimeout(()=>el.remove(),type==='success'?2500:5000);
 }
 
+window.ciShowRosterStatus=function(){
+  const el=document.getElementById('ci-roster-status'); if(!el) return;
+  let list=[]; try{ list=JSON.parse(localStorage.getItem('ambis_members')||'[]'); }catch(e){}
+  const act=list.filter(m=>m.status==='active').length;
+  if(window.__ciRosterErr){ el.style.color='#c0392b'; el.textContent=window.__ciRosterErr+(list.length?`（前回の名簿 ${act}人で受付中）`:''); }
+  else { el.style.color=''; el.textContent=`名簿：在籍 ${act}人`; }
+};
+function ciShowRosterStatus(){ window.ciShowRosterStatus(); }
 function ciEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 // 名簿・出席がリアルタイム更新されたとき
 window.ciOnDataChanged=function(){
-  loadData(); renderLog();
+  loadData(); renderLog(); ciShowRosterStatus();
   // 表示中の会員が休会・退会になった場合は表示を閉じる
   if(currentMember){
     const m=members.find(x=>x.id===currentMember.id);
@@ -759,7 +780,7 @@ function ciUpdateSoundHint(){
 document.addEventListener('pointerdown', ciUnlockAudio, {passive:true});
 let __ciInited=false;
 function initCheckin(){
-  loadData();renderLog();
+  loadData();renderLog();ciShowRosterStatus();
   if(__ciInited) return;   // ログインし直しても二重に起動しない
   __ciInited=true;
   updateClock();

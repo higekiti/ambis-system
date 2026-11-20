@@ -4594,7 +4594,7 @@ async function loadFromFirestore(collectionName){
 // membersから「非PIIのみ」を抽出してrosterへ、閲覧を許可するメールをroster_readersへ同期。
 // saveToFirestoreは「配列に無いドキュメントを自動削除」するため、退会・削除時のクリーンアップも自動。
 // チェックインタブレット等、会員以外で名簿を読ませたいGoogleアカウントのメールを下記に追加する。
-const ROSTER_DEVICE_EMAILS = [];  // 例: ['ambis-tablet@gmail.com']（タブレット設置時に追記）
+const ROSTER_DEVICE_EMAILS = ['ambis.bjj@gmail.com'];  // 受付タブレットにログインしている道場アカウント（名簿を読めるように）
 function buildRosterArray(){
   return members.map(m=>({
     id:m.id, name:m.name, belt:m.belt, stripe:m.stripe,
