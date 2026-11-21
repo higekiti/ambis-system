@@ -72,7 +72,7 @@ async function ci_loadAndStart(){
     const fbAttendance = aSnap.docs.map(d => d.data());
     window.__ciRosterErr = fbMembers.length ? '' : '名簿が0人です（管理アプリを一度開くと名簿が作られます）';
     if(fbMembers.length)   { localStorage.setItem('ambis_members', JSON.stringify(fbMembers)); }
-    if(fbAttendance.length){ localStorage.setItem('ambis_attendance', JSON.stringify(fbAttendance)); }
+    localStorage.setItem('ambis_attendance', JSON.stringify(fbAttendance));   // 0件（リセット後）でも反映する
   } catch(e) {
     console.warn('Firebase load error:', e.message);
     window.__ciRosterErr = '名簿を読み込めませんでした（' + (e.code||e.message||'エラー') + '）';

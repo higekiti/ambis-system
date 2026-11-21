@@ -962,6 +962,11 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
           <div id="photo-placeholder"><div class="pu-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></div><div class="pu-text">タップして写真を追加</div></div>
         </div>
       </div>
+      <div class="form-row" id="f-mid-row" style="display:none;">
+        <label>会員番号</label>
+        <input type="text" id="f-mid" placeholder="AMBIs-0001" oninput="checkMidInput()" style="max-width:200px;">
+        <div id="f-mid-note" style="font-size:10.5px;color:var(--text-muted);margin-top:4px;">空いている番号が自動で入ります。変えることもできます（例：1 → AMBIs-0001）</div>
+      </div>
       <div class="form-row-2">
         <div><label>氏名 *</label><input type="text" id="f-name" placeholder="田中 太郎"></div>
         <div><label>ふりがな</label><input type="text" id="f-kana" placeholder="たなか たろう"></div>
@@ -1725,7 +1730,7 @@ function showPage(page, el) {
   if(page==='members'){
     actionsEl.innerHTML=`<button class="btn btn-ghost btn-sm" onclick="exportCSV()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>CSV</button><button class="btn btn-primary" onclick="openMemberModal('add')">＋ 会員登録</button>`;
   } else if(page==='attendance'){
-    actionsEl.innerHTML=`<button class="btn btn-ghost btn-sm" onclick="exportAttCSV()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>CSV</button>`;
+    actionsEl.innerHTML=`<button class="btn btn-ghost btn-sm" onclick="exportAttCSV()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>CSV</button><button class="btn btn-ghost btn-sm" style="color:#c0392b;" onclick="resetTestRecords()" title="テスト期間の出席記録と昇格履歴をすべて消す">テスト記録をリセット</button>`;
     renderAttendance(); renderMonthlyChart();
   } else if(page==='belt'){
     actionsEl.innerHTML=`<button class="btn btn-primary" onclick="openBeltModal()">＋ 昇格登録</button>`;
@@ -1787,7 +1792,7 @@ function renderMembers(data) {
       const yearCount=attendance.filter(a=>a.memberId===m.id&&a.date&&a.date.startsWith(thisYear)).length;
       const totalCount=attendance.filter(a=>a.memberId===m.id).length;
       return `<tr>
-        <td><div class="member-cell"><div class="avatar">${avatarContent}</div><div class="member-name-cell"><div class="name">${m.name}</div><div class="id">${m.id}${insPillHtml(m)}</div></div></div></td>
+        <td><div class="member-cell"><div class="avatar">${avatarContent}</div><div class="member-name-cell"><div class="name">${m.name}${isDemoMemberId(m.id)?' <span class="status-pill status-neutral" style="font-size:9px;padding:1px 6px;">デモ用</span>':''}</div><div class="id">${m.id}${isDemoMemberId(m.id)?'':insPillHtml(m)}</div></div></div></td>
         <td><span class="belt-pill ${belt.cls}"><span class="belt-dot"></span>${belt.label}</span></td>
         <td><div class="stripes-cell">${stripes}</div></td>
         <td style="font-size:12px;color:var(--text-secondary);">${m.joindate||'―'}</td>
@@ -1813,7 +1818,7 @@ function renderDormantWidget(){
   const body=document.getElementById('dormant-widget-body');
   if(!widget||!body) return;
   const today=new Date();
-  const activeMembers=members.filter(m=>m.status==='active');
+  const activeMembers=realMembers().filter(m=>m.status==='active');
   const withLastAtt=activeMembers.map(m=>{
     const myAtt=attendance.filter(a=>a.memberId===m.id).sort((a,b)=>b.date.localeCompare(a.date));
     const lastDate=myAtt.length?myAtt[0].date:m.joindate||'';
@@ -1841,12 +1846,12 @@ function renderDormantWidget(){
 }
 
 function updateMemberStats(){
-  const active=members.filter(m=>m.status==='active');
-  const notActive=members.filter(m=>m.status!=='active');
+  const active=realMembers().filter(m=>m.status==='active');
+  const notActive=realMembers().filter(m=>m.status!=='active');
   const now=new Date();
   const ym=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  const monthTotal=attendance.filter(a=>a.date&&a.date.startsWith(ym)).length;
-  document.getElementById('stat-total').textContent=members.length;
+  const monthTotal=attendance.filter(a=>a.date&&a.date.startsWith(ym)&&!isDemoMemberId(a.memberId)).length;
+  document.getElementById('stat-total').textContent=realMembers().length;
   document.getElementById('stat-active').textContent=active.length;
   document.getElementById('stat-month').textContent=monthTotal;
   document.getElementById('stat-inactive').textContent=notActive.length;
@@ -1935,6 +1940,7 @@ function openMemberModal(mode,id){
   if(mode==='edit'&&id){
     const m=members.find(x=>x.id===id); if(!m)return;
     editingMemberId=id;
+    document.getElementById('f-mid-row').style.display='none';
     document.getElementById('modal-member-title').textContent='会員情報を編集';
     document.getElementById('f-name').value=m.name||'';
     document.getElementById('f-kana').value=m.kana||'';
@@ -1966,6 +1972,8 @@ function openMemberModal(mode,id){
     if(m.photo){photoData=m.photo;document.getElementById('photo-preview-img').src=m.photo;document.getElementById('photo-preview-img').style.display='block';document.getElementById('photo-placeholder').style.display='none';}
   } else {
     document.getElementById('modal-member-title').textContent='新規会員登録';
+    document.getElementById('f-mid-row').style.display='block';
+    document.getElementById('f-mid').value=firstFreeMemberId(); checkMidInput();
   }
   document.getElementById('modal-member').classList.add('open');
 }
@@ -2058,6 +2066,42 @@ async function sendCardUpdateLink(memberId){
   }catch(e){ showPayLinkError(e.message||'カード変更リンクの作成に失敗しました'); }
 }
 // 会員IDの採番：過去に使ったID（削除済み会員・出席記録を含む）と重複しない番号にする
+// デモ用の会員（AMBIs-0000）：受付・会員アプリの説明用。会員数・支払い・休眠・分析・誕生日の集計には入れない
+function isDemoMemberId(id){ return id==='AMBIs-0000'; }   // 関数にして、読み込み順に左右されないようにする
+function realMembers(){ return members.filter(m=>!isDemoMemberId(m.id)); }
+// 会員番号の正規化（"1" "0001" "ambis-1" → "AMBIs-0001"）
+function normMemberId(v){
+  const m=/(\d+)\s*$/.exec(String(v||'').trim()); if(!m) return '';
+  return 'AMBIs-'+String(parseInt(m[1],10)).padStart(4,'0');
+}
+// その番号が使われている場所（会員・出席・支払い・退会理由・体験の入会記録・プライベート）
+function memberIdUsage(id){
+  const u=[];
+  const mm=members.find(x=>x.id===id); if(mm) u.push(`会員「${mm.name}」`);
+  const c=(arr,f)=>arr.filter(f).length;
+  const a=c(attendance,x=>x.memberId===id); if(a) u.push(`出席記録 ${a}件`);
+  const p=c(payments,x=>x.memberId===id); if(p) u.push(`支払い記録 ${p}件`);
+  const w=c(withdrawalReasons,x=>x.memberId===id); if(w) u.push(`退会理由 ${w}件`);
+  const t=c(trialVisitors,x=>x.memberId===id); if(t) u.push(`体験の入会記録 ${t}件`);
+  const pl=c(privateLessons,x=>x.memberId===id); if(pl) u.push(`プライベートレッスン ${pl}件`);
+  return u;
+}
+// 次の会員番号：今いる会員のいちばん大きい番号の次から、過去の記録で使われていない番号を順番に探す
+// （途中の空き番号は埋めない。会員がいなければ AMBIs-0001 から）
+function firstFreeMemberId(){
+  let mx=0; members.forEach(x=>{ const m=/^AMBIs-(\d+)$/.exec(String(x.id||'')); if(m) mx=Math.max(mx,parseInt(m[1],10)); });
+  for(let n=mx+1;n<10000;n++){ const id='AMBIs-'+String(n).padStart(4,'0'); if(!memberIdUsage(id).length) return id; }
+  return nextMemberId();
+}
+function checkMidInput(){
+  const el=document.getElementById('f-mid'), note=document.getElementById('f-mid-note'); if(!el||!note) return;
+  const id=normMemberId(el.value);
+  if(!id){ note.style.color='#c0392b'; note.textContent='番号を入れてください（例：1 → AMBIs-0001）'; return; }
+  const u=memberIdUsage(id);
+  if(u.length){ note.style.color='#c0392b'; note.textContent=`${id} は使えません：${u.join('・')} で使われています（記録が混ざるのを防ぐため）`; }
+  else if(isDemoMemberId(id)){ note.style.color='var(--gold)'; note.textContent=`${id} はデモ用の会員番号です（会員数・支払い・分析には数えません）`; }
+  else { note.style.color='var(--text-secondary)'; note.textContent=`${id} で登録します`; }
+}
 function nextMemberId(){
   let mx=0;
   const scan=id=>{ const m=/^AMBIs-(\d+)$/.exec(String(id||'')); if(m){ const n=parseInt(m[1],10); if(n>mx) mx=n; } };
@@ -2102,7 +2146,9 @@ function saveMember(){
     }
     showToast('会員情報を更新しました');
   } else {
-    const newId=nextMemberId();
+    let newId=normMemberId((document.getElementById('f-mid')||{}).value)||firstFreeMemberId();
+    const used=memberIdUsage(newId);
+    if(used.length){ alert(`会員番号 ${newId} は使えません。\n${used.join('・')} で使われています。\n別の番号にしてください。`); return; }
     const fromT = joinFromTrialId ? trialVisitors.find(t=>t.id===joinFromTrialId) : null;
     members.push({id:newId,...data, ...(fromT?{trialId:fromT.id, trialDate:fromT.date||''}:{})});
     if(fromT){
@@ -2213,7 +2259,7 @@ function renderAttendance(){
   const todayCount=attendance.filter(a=>a.date===today).length;
   const monthCount=attendance.filter(a=>a.date&&a.date.startsWith(ym)).length;
   const yearCount=attendance.filter(a=>a.date&&a.date.startsWith(thisYear)).length;
-  const activeCount=members.filter(m=>m.status==='active').length;
+  const activeCount=realMembers().filter(m=>m.status==='active').length;
 
   document.getElementById('att-today').textContent=todayCount;
   document.getElementById('att-month-total').textContent=monthCount;
@@ -2332,7 +2378,7 @@ function renderPayment(){
   const label=`${now.getFullYear()}年${now.getMonth()+1}月`;
   document.getElementById('pay-month-label').textContent=label;
 
-  const activeMembers=members.filter(m=>m.status==='active');
+  const activeMembers=realMembers().filter(m=>m.status==='active');
   const expected=activeMembers.reduce((s,m)=>s+(m.monthlyFee||MONTHLY_FEE),0);
   document.getElementById('pay-members').textContent=activeMembers.length;
   document.getElementById('pay-expected').textContent=expected.toLocaleString();
@@ -3473,6 +3519,27 @@ function deleteTrial(){
 
 
 
+
+// ══ テスト記録のリセット（オープン前の一度だけ使う想定）══
+// 出席記録（attendance）と昇格履歴（belt_history）だけを全件消す。会員・体験・ビジター・プライベート・支払いは変更しない。
+function resetTestRecords(){
+  const nA=attendance.length, nB=beltHistory.length;
+  const ids=new Set(members.map(m=>m.id));
+  const orphanPay=payments.filter(p=>!ids.has(p.memberId)), orphanW=withdrawalReasons.filter(w=>!ids.has(w.memberId));
+  if(!nA && !nB && !orphanPay.length && !orphanW.length){ showToast('リセットするテスト記録はありません'); return; }
+  if(!confirm(`テスト記録をリセットします。\n\n・出席記録 ${nA}件（すべて）\n・昇格履歴 ${nB}件（すべて）\n・削除済みの会員の支払い記録 ${orphanPay.length}件\n・削除済みの会員の退会理由 ${orphanW.length}件\n\nを削除します（今いる会員・体験・ビジター・プライベートレッスン、今いる会員の支払い記録はそのままです）。\n削除すると元に戻せません。よろしいですか？`)) return;
+  const typed=prompt('確認のため「リセット」と入力してください');
+  if(typed===null) return;
+  if(typed.trim()!=='リセット'){ showToast('入力が違うため、リセットを中止しました'); return; }
+  attendance=[]; beltHistory=[];
+  payments=payments.filter(p=>ids.has(p.memberId)); withdrawalReasons=withdrawalReasons.filter(w=>ids.has(w.memberId));
+  saveAll();
+  try{ renderAttendance(); renderMonthlyChart(); }catch(e){}
+  try{ renderBeltHistory(); }catch(e){}
+  try{ filterMembers(); }catch(e){}
+  showToast(`リセットしました（出席 ${nA}件・昇格 ${nB}件・支払い ${orphanPay.length}件・退会理由 ${orphanW.length}件）`);
+}
+
 // ══ 体験・ビジター → 会員登録（入力済みの情報を転記）══
 function startJoinFromTrial(id){
   const t=trialVisitors.find(x=>x.id===id); if(!t){ showToast('記録が見つかりません'); return; }
@@ -3951,7 +4018,7 @@ function computeMemberAttendanceStats(){
   const ymPrev = `${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth()+1).padStart(2,'0')}`;
   const d3mAgoStr = localDateStr(new Date(now.getFullYear(), now.getMonth()-3, now.getDate()));
   const d56AgoStr = localDateStr(new Date(now.getTime()-56*24*60*60*1000));
-  return members.filter(m=>m.status==='active').map(m=>{
+  return realMembers().filter(m=>m.status==='active').map(m=>{
     const myAtt = attendance.filter(a=>a.memberId===m.id);
     const thisMonth = myAtt.filter(a=>a.date && a.date.startsWith(ymThis)).length;
     const lastMonthCount = myAtt.filter(a=>a.date && a.date.startsWith(ymPrev)).length;
@@ -3990,7 +4057,7 @@ function renderAnalyticsSummaryCards(){
   const monthAtt = attendance.filter(a=>a.date && a.date.startsWith(ymThis));
   const monthTotal = monthAtt.length;
   const uniqueMemberIds = new Set(monthAtt.map(a=>a.memberId));
-  const activeMembers = members.filter(m=>m.status==='active');
+  const activeMembers = realMembers().filter(m=>m.status==='active');
   const elTotal = document.getElementById('an-month-total');
   const elMembers = document.getElementById('an-month-members');
   const elMembersSub = document.getElementById('an-month-members-sub');
@@ -4174,7 +4241,7 @@ function renderDormant(){
   if(!document.getElementById('dormant-tbody')) return;
   const today=new Date();
   const todayStr=localDateStr(today);
-  const activeMembers=members.filter(m=>m.status==='active');
+  const activeMembers=realMembers().filter(m=>m.status==='active');
 
   const withLastAtt=activeMembers.map(m=>{
     const myAtt=attendance.filter(a=>a.memberId===m.id).sort((a,b)=>b.date.localeCompare(a.date));
@@ -4314,7 +4381,7 @@ function renderBirthday(){
   const thisMonth=now.getMonth()+1;
   const nextMonth=thisMonth===12?1:thisMonth+1;
 
-  const withBday=members.filter(m=>m.status==='active'&&m.birthday).map(m=>{
+  const withBday=realMembers().filter(m=>m.status==='active'&&m.birthday).map(m=>{
     const bday=new Date(m.birthday);
     const month=bday.getMonth()+1;
     const day=bday.getDate();
@@ -4331,7 +4398,7 @@ function renderBirthday(){
 
   const tbody=document.getElementById('birthday-tbody');
   const empty=document.getElementById('empty-birthday');
-  const allWithBday=members.filter(m=>m.status==='active'&&m.birthday);
+  const allWithBday=realMembers().filter(m=>m.status==='active'&&m.birthday);
   if(!allWithBday.length){tbody.innerHTML='';empty.style.display='block';return;}
   empty.style.display='none';
   tbody.innerHTML=withBday.map(m=>{
@@ -4810,7 +4877,7 @@ window.showScheduleTab=showScheduleTab;
 window.sendMemberBillingLink=sendMemberBillingLink;window.sendGuestPaymentLink=sendGuestPaymentLink;
 window.sendTrialPaymentLink=sendTrialPaymentLink;window.sendRentalPaymentLink=sendRentalPaymentLink;
 window.toggleRentalPayLinkBtn=toggleRentalPayLinkBtn;window.copyPayLink=copyPayLink;window.closePayLinkModal=closePayLinkModal;
-window.updateInsNote=updateInsNote;window.startJoinFromTrial=startJoinFromTrial;window.exportVisitsExcel=exportVisitsExcel;window.exportVisitsPdf=exportVisitsPdf;window.openPlModal=openPlModal;window.closePlModal=closePlModal;window.savePl=savePl;window.deletePl=deletePl;window.filterPl=filterPl;window.renderPlList=renderPlList;window.togglePlKind=togglePlKind;window.togglePlGuardian=togglePlGuardian;window.onPlMemberSelect=onPlMemberSelect;window.onPlStartChange=onPlStartChange;window.sendPlPaymentLink=sendPlPaymentLink;window.addPlToCalendar=addPlToCalendar;window.togglePlPaste=togglePlPaste;window.applyPlPaste=applyPlPaste;
+window.updateInsNote=updateInsNote;window.resetTestRecords=resetTestRecords;window.checkMidInput=checkMidInput;window.startJoinFromTrial=startJoinFromTrial;window.exportVisitsExcel=exportVisitsExcel;window.exportVisitsPdf=exportVisitsPdf;window.openPlModal=openPlModal;window.closePlModal=closePlModal;window.savePl=savePl;window.deletePl=deletePl;window.filterPl=filterPl;window.renderPlList=renderPlList;window.togglePlKind=togglePlKind;window.togglePlGuardian=togglePlGuardian;window.onPlMemberSelect=onPlMemberSelect;window.onPlStartChange=onPlStartChange;window.sendPlPaymentLink=sendPlPaymentLink;window.addPlToCalendar=addPlToCalendar;window.togglePlPaste=togglePlPaste;window.applyPlPaste=applyPlPaste;
 window.openPrivateLessonModal=openPrivateLessonModal;window.closePrivateLessonModal=closePrivateLessonModal;window.sendPrivateLessonPaymentLink=sendPrivateLessonPaymentLink;
 
 
