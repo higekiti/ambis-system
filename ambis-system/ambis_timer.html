@@ -169,6 +169,14 @@ body.remote-mode .remote{display:flex;flex-direction:column;min-height:100vh;min
 .r-presets{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
 .r-preset{padding:13px 0;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--cream);font-size:16px;cursor:pointer;}
 .r-preset.active{border-color:var(--gold);color:var(--gold);background:rgba(200,167,105,.1);}
+.r-set{border:1px solid var(--line);border-radius:14px;padding:12px;background:rgba(255,255,255,.03);display:flex;flex-direction:column;gap:10px;}
+.r-set-row{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--cream);}
+.r-set-row .lbl{width:74px;color:var(--muted);font-size:12px;letter-spacing:1px;}
+.r-set-row input[type=number]{width:64px;padding:10px 6px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--cream);font-size:18px;text-align:center;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;}
+.r-set-row .u{font-size:12px;color:var(--muted);}
+.r-set-row label.fr{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);margin-left:auto;}
+.r-set-apply{padding:13px 0;border-radius:12px;border:1px solid var(--gold);background:rgba(200,167,105,.12);color:var(--gold);font-size:15px;font-weight:700;letter-spacing:1px;cursor:pointer;}
+.r-set-apply:active{transform:scale(.97);}
 .r-login{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;}
 .r-login h2{font-family:'Noto Serif JP',serif;font-weight:500;font-size:20px;}
 .r-login p{font-size:13px;color:var(--muted);line-height:1.8;}
@@ -323,6 +331,13 @@ body.remote-mode .remote{display:flex;flex-direction:column;min-height:100vh;min
     <div class="r-modes" id="r-modes"><button class="r-mode" data-m="sparring">SPARRING</button><button class="r-mode" data-m="circuit">CIRCUIT</button><button class="r-mode" data-m="class">CLASS</button></div>
     <div class="r-sec">PRESET</div>
     <div class="r-presets" id="r-presets"></div>
+    <div class="r-sec">CUSTOM（時間を指定）</div>
+    <div class="r-set" id="r-set">
+      <div class="r-set-row"><span class="lbl" id="r-set-wlbl">1ラウンド</span><input type="number" id="r-wm" min="0" max="99" inputmode="numeric"><span class="u">分</span><input type="number" id="r-ws" min="0" max="59" inputmode="numeric"><span class="u">秒</span></div>
+      <div class="r-set-row" id="r-set-restrow"><span class="lbl">休憩</span><input type="number" id="r-rs" min="0" max="600" inputmode="numeric"><span class="u">秒</span></div>
+      <div class="r-set-row" id="r-set-rdrow"><span class="lbl">ラウンド</span><input type="number" id="r-rd" min="1" max="99" inputmode="numeric"><span class="u">回</span><label class="fr"><input type="checkbox" id="r-free"> FREE</label></div>
+      <button class="r-set-apply" id="r-set-apply">この時間にする</button>
+    </div>
     <button class="r-btn" id="r-idle">☰ モニターをスケジュール画面にする</button>
     <div class="r-foot"><span id="r-user"></span>　<button class="link-btn" id="r-logout">ログアウト</button></div>
   </div>
@@ -363,12 +378,12 @@ const SCHEDULE=[
 ];
 
 // ── 状態 ──
-const S={mode:'sparring',preset:1,work:300,rest:18,rounds:6,free:false,
+const S={mode:'sparring',preset:1,work:300,rest:18,rounds:6,free:true,
   phase:'ready',   // ready | work | rest | done
   running:false,round:1,remain:300,endAt:0,warned:false,lastTick:-1};
 
 // ── 設定の保存 ──
-function saveSettings(){try{localStorage.setItem('ambis_timer_settings',JSON.stringify({mode:S.mode,preset:S.preset,work:S.work,rest:S.rest,rounds:S.rounds,free:S.free,sound:$('in-sound').value,soundV:2,v:3,warn:$('in-warn').checked,warnSec:$('in-warnsec').value}));}catch(e){}}
+function saveSettings(){try{localStorage.setItem('ambis_timer_settings',JSON.stringify({mode:S.mode,preset:S.preset,work:S.work,rest:S.rest,rounds:S.rounds,free:S.free,sound:$('in-sound').value,soundV:2,v:4,warn:$('in-warn').checked,warnSec:$('in-warnsec').value}));}catch(e){}}
 function loadSettings(){try{return JSON.parse(localStorage.getItem('ambis_timer_settings')||'null');}catch(e){return null;}}
 
 // ── 音（Web Audio） ──
@@ -447,7 +462,7 @@ function syncInputs(){
 // ── 操作 ──
 function stopClock(){S.running=false;releaseWake();}
 function resetTimer(){stopClock();S.phase='ready';S.round=1;S.remain=S.work;S.warned=false;S.lastTick=-1;render();}
-function applyPreset(i){const p=PRESETS[S.mode][i];if(!p)return;S.preset=i;S.work=p.work;S.rest=p.rest;S.rounds=p.rounds;S.free=false;syncInputs();resetTimer();saveSettings();}
+function applyPreset(i){const p=PRESETS[S.mode][i];if(!p)return;S.preset=i;S.work=p.work;S.rest=p.rest;S.rounds=p.rounds;S.free=S.mode!=='class';syncInputs();resetTimer();saveSettings();}   // ラウンド数は初期値で FREE（無制限）。クラスモードは1回
 function setMode(m){S.mode=m;applyPreset(m==='sparring'?1:0);}
 function readInputs(){
   const wm=Math.max(0,+$('in-wm').value||0),ws=Math.min(59,Math.max(0,+$('in-ws').value||0));
@@ -475,7 +490,7 @@ function phaseEnd(){
     if(S.rest>0){S.phase='rest';S.remain=S.rest;S.endAt=performance.now()+S.rest*1000;S.lastTick=-1;render();return;}
     S.round++;S.phase='work';S.remain=S.work;S.warned=false;S.endAt=performance.now()+S.work*1000;setTimeout(()=>snd('start'),900);render();return;
   }
-  if(S.phase==='rest'){S.round++;S.phase='work';S.remain=S.work;S.warned=false;S.endAt=performance.now()+S.work*1000;render();} // 休憩明けは音なし
+  if(S.phase==='rest'){S.round++;S.phase='work';S.remain=S.work;S.warned=false;S.endAt=performance.now()+S.work*1000;snd('start');render();} // 休憩明け（インターバル終了）は開始音を鳴らす
 }
 function loop(){
   if(S.running){
@@ -555,6 +570,12 @@ window.AMBIS_TIMER={
     else if(a==='preset')applyPreset(+arg);
     else if(a==='mode'&&PRESETS[arg])setMode(arg);
     else if(a==='idle'){if(arg)idleOn();else activity();}
+    else if(a==='set'&&arg){   // スマホから時間を指定（1ラウンドの分・秒、休憩秒、ラウンド数、FREE）
+      const w=Math.round(+arg.work||0), r=Math.round(+arg.rest||0), n=Math.round(+arg.rounds||0);
+      if(w>=5) S.work=Math.min(w,99*60+59);
+      if(S.mode!=='class'){ S.rest=Math.min(600,Math.max(0,r)); if(n>=1) S.rounds=Math.min(99,n); S.free=!!arg.free; }
+      S.preset=-1; syncInputs(); if(!S.running) resetTimer(); saveSettings(); render();
+    }
   },
   state(){return{mode:S.mode,phase:S.phase,running:S.running,
     remain:S.running?Math.max(0,(S.endAt-performance.now())/1000):S.remain,
@@ -588,8 +609,9 @@ document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement
 
 // ── 起動 ──
 const saved=loadSettings();
-if(saved&&saved.v===3){
-  S.mode=saved.mode||'sparring';S.preset=saved.preset??1;S.work=saved.work||300;S.rest=saved.rest??18;S.rounds=saved.rounds||6;S.free=!!saved.free;
+if(saved&&(saved.v===3||saved.v===4)){
+  S.mode=saved.mode||'sparring';S.preset=saved.preset??1;S.work=saved.work||300;S.rest=saved.rest??18;S.rounds=saved.rounds||6;
+  S.free = saved.v===4 ? !!saved.free : S.mode!=='class';   // 以前の保存（v3）は一度だけ FREE に切り替える
   if(saved.sound&&saved.soundV===2)$('in-sound').value=saved.sound;if(saved.warn===false)$('in-warn').checked=false;if(saved.warnSec)$('in-warnsec').value=saved.warnSec;
 }
 syncInputs();resetTimer();
@@ -676,12 +698,32 @@ function setupRemote(){
   const P=window.AMBIS_PRESETS, ML=window.AMBIS_MODE_LABEL;
   const fmt=sec=>{sec=Math.max(0,Math.ceil(sec));return String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0');};
   const send=(action,arg=null)=>{ if(!allowed(auth.currentUser)) return;
+    if(action==='preset'||action==='mode') setDirty=false;   // プリセット・モードを選んだら、時間の欄をモニターの値に合わせ直す
     if(navigator.vibrate) navigator.vibrate(15);
     setDoc(cmdRef,{id:Date.now()+'-'+Math.random().toString(36).slice(2,8),action,arg,at:Date.now(),by:auth.currentUser.email}).catch(e=>alert('送信できませんでした：'+e.message)); };
   document.querySelectorAll('.r-btn[data-a]').forEach(b=>b.onclick=()=>send(b.dataset.a));
   $('r-start').onclick=()=>send('toggle');
   document.querySelectorAll('.r-mode').forEach(b=>b.onclick=()=>send('mode',b.dataset.m));
   $('r-idle').onclick=()=>send('idle',!(st&&st.idle));
+  // ── 時間の指定（CUSTOM）──
+  let setDirty=false;   // 入力中はモニターの値で上書きしない
+  ['r-wm','r-ws','r-rs','r-rd','r-free'].forEach(id=>{ $(id).addEventListener('input',()=>{setDirty=true;}); $(id).addEventListener('change',()=>{setDirty=true;}); });
+  function fillSet(force){
+    if(!st||(setDirty&&!force)) return;
+    $('r-wm').value=Math.floor((st.work||0)/60); $('r-ws').value=(st.work||0)%60;
+    $('r-rs').value=st.rest||0; $('r-rd').value=st.rounds||1; $('r-free').checked=!!st.free;
+    const cls=st.mode==='class';
+    $('r-set-wlbl').textContent=cls?'クラス時間':'1ラウンド';
+    $('r-set-restrow').style.display=cls?'none':'flex'; $('r-set-rdrow').style.display=cls?'none':'flex';
+  }
+  $('r-set-apply').onclick=()=>{
+    const wm=Math.max(0,+$('r-wm').value||0), ws=Math.min(59,Math.max(0,+$('r-ws').value||0));
+    const work=wm*60+ws;
+    if(work<5){ alert('時間は5秒以上にしてください'); return; }
+    if(st&&st.running&&!confirm('タイマーが動いています。時間を変えると、いまのラウンドはリセットされずに、次の開始から新しい時間になります。よろしいですか？')) return;
+    send('set',{work, rest:Math.max(0,+$('r-rs').value||0), rounds:Math.max(1,+$('r-rd').value||1), free:$('r-free').checked});
+    setDirty=false;
+  };
   $('r-logout').onclick=()=>signOut(auth);
 
   function draw(){
@@ -718,7 +760,7 @@ function setupRemote(){
     if(u&&!ok){ $('r-login-msg').textContent='このアカウントでは操作できません。道場アカウントでログインしてください。'; signOut(auth); return; }
     if(!ok){ renderGis('gis-remote'); return; }
     $('r-login-msg').textContent=''; $('r-user').textContent=u.email;
-    unsub=onSnapshot(stateRef,snap=>{ st=snap.data()||null; renderStatic(); },e=>{ $('r-conn').textContent='接続エラー'; });
+    unsub=onSnapshot(stateRef,snap=>{ const prevMode=st&&st.mode; st=snap.data()||null; renderStatic(); fillSet(!!(st&&prevMode&&st.mode!==prevMode)); },e=>{ $('r-conn').textContent='接続エラー'; });
   });
 }
 
