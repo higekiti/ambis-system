@@ -536,6 +536,7 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
         <div class="stat-card"><div class="label">THIS MONTH</div><div class="value" id="stat-month">0</div><div class="sub">今月の出席（延べ）</div></div>
         <div class="stat-card"><div class="label">INACTIVE</div><div class="value" id="stat-inactive">0</div><div class="sub">休会・退会</div></div>
       </div>
+      <div id="acc-reminder" style="display:none;margin-bottom:16px;background:#fff8e6;border:1px solid var(--gold);border-radius:10px;padding:12px 16px;"></div>
       <div class="table-wrap" id="upcoming-widget" style="margin-bottom:20px;border:1px solid var(--navy);">
         <div class="section-header" style="padding:14px 18px 10px;margin-bottom:0;">
           <div class="section-title" style="font-size:13px;">来訪予定（体験・ビジター・プライベート） <span style="font-size:10px;color:var(--text-muted);font-weight:400;">（今日から7日間）</span></div>
@@ -3534,7 +3535,38 @@ function buildTrialClassOptions(keep){
   }
 }
 // 会員管理トップ：体験・ビジターの来訪予定（今日〜7日後）
+// ══ 毎月の会計データ取り込みのお知らせ ══
+// 毎月1日から、先月分の「会計用Excel」と「Square・Stripeの入金CSV」の準備をお知らせする。
+// 「会計用Excel」を出すか「済みにする」を押すと、その月のお知らせは消える（この端末に記録）。
+function accPrevYm(){ return shiftYm(localDateStr().slice(0,7), -1); }
+function accDoneKey(ym){ return 'ambis_acc_done_'+ym; }
+function accIsDone(ym){ try{ return localStorage.getItem(accDoneKey(ym))==='1'; }catch(e){ return false; } }
+function accMarkDone(ym){ try{ localStorage.setItem(accDoneKey(ym),'1'); }catch(e){} renderAccReminder(); }
+function renderAccReminder(){
+  const box=document.getElementById('acc-reminder'); if(!box) return;
+  const ym=accPrevYm();
+  if(ym<'2026-11' || accIsDone(ym)){ box.style.display='none'; return; }   // 開業前の月は出さない
+  const p=ym.split('-').map(Number);
+  box.style.display='block';
+  box.innerHTML=`<div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+    <div style="flex:1;min-width:240px;">
+      <div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:4px;">${p[0]}年${p[1]}月分の会計データを、書類担当に渡しましょう</div>
+      <div style="font-size:11.5px;color:var(--text-secondary);line-height:1.8;">
+        ① 管理アプリの「会計用Excel」（${p[1]}月分）を保存<br>
+        ② Squareの入金レポート（${p[1]}月分）をCSVで保存<br>
+        ③ Stripeの入金（Payouts）の一覧をCSVで保存（口座振替の人がいれば、月額パンダの入金明細も）<br>
+        ④ 3つのファイルを書類担当の取り込み用フォルダに置いて、書類担当に伝える
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <button class="btn btn-primary btn-sm" onclick="exportAccountingFor('${ym}')">① 会計用Excelを保存</button>
+      <button class="btn btn-ghost btn-sm" onclick="if(confirm('${p[1]}月分の会計データを、書類担当に渡し終わりましたか？')) accMarkDone('${ym}')">すべて済み</button>
+    </div>
+  </div>`;
+}
+function exportAccountingFor(ym){ const keep=payMonth; payMonth=ym; try{ exportAccounting(); } finally { payMonth=keep; } }
 function renderUpcomingVisitors(){
+  renderAccReminder();
   const body=document.getElementById('upcoming-widget-body'); if(!body) return;
   const today=localDateStr();
   const lim=new Date(); lim.setDate(lim.getDate()+7); const limStr=localDateStr(lim);
@@ -5133,7 +5165,7 @@ window.showScheduleTab=showScheduleTab;
 window.sendMemberBillingLink=sendMemberBillingLink;window.sendGuestPaymentLink=sendGuestPaymentLink;
 window.sendTrialPaymentLink=sendTrialPaymentLink;window.sendRentalPaymentLink=sendRentalPaymentLink;
 window.toggleRentalPayLinkBtn=toggleRentalPayLinkBtn;window.copyPayLink=copyPayLink;window.closePayLinkModal=closePayLinkModal;
-window.updateInsNote=updateInsNote;window.onPayMethodChange=onPayMethodChange;window.movePayMonth=movePayMonth;window.setPayFilter=setPayFilter;window.openReceive=openReceive;window.closeReceive=closeReceive;window.saveReceive=saveReceive;window.unmarkPaid=unmarkPaid;window.editPayAmount=editPayAmount;window.updateJoinPay=updateJoinPay;window.exportAccounting=exportAccounting;window.resetTestRecords=resetTestRecords;window.checkMidInput=checkMidInput;window.startJoinFromTrial=startJoinFromTrial;window.exportVisitsExcel=exportVisitsExcel;window.exportVisitsPdf=exportVisitsPdf;window.openPlModal=openPlModal;window.closePlModal=closePlModal;window.savePl=savePl;window.deletePl=deletePl;window.filterPl=filterPl;window.renderPlList=renderPlList;window.togglePlKind=togglePlKind;window.togglePlGuardian=togglePlGuardian;window.onPlMemberSelect=onPlMemberSelect;window.onPlStartChange=onPlStartChange;window.sendPlPaymentLink=sendPlPaymentLink;window.addPlToCalendar=addPlToCalendar;window.togglePlPaste=togglePlPaste;window.applyPlPaste=applyPlPaste;
+window.updateInsNote=updateInsNote;window.accMarkDone=accMarkDone;window.exportAccountingFor=exportAccountingFor;window.onPayMethodChange=onPayMethodChange;window.movePayMonth=movePayMonth;window.setPayFilter=setPayFilter;window.openReceive=openReceive;window.closeReceive=closeReceive;window.saveReceive=saveReceive;window.unmarkPaid=unmarkPaid;window.editPayAmount=editPayAmount;window.updateJoinPay=updateJoinPay;window.exportAccounting=exportAccounting;window.resetTestRecords=resetTestRecords;window.checkMidInput=checkMidInput;window.startJoinFromTrial=startJoinFromTrial;window.exportVisitsExcel=exportVisitsExcel;window.exportVisitsPdf=exportVisitsPdf;window.openPlModal=openPlModal;window.closePlModal=closePlModal;window.savePl=savePl;window.deletePl=deletePl;window.filterPl=filterPl;window.renderPlList=renderPlList;window.togglePlKind=togglePlKind;window.togglePlGuardian=togglePlGuardian;window.onPlMemberSelect=onPlMemberSelect;window.onPlStartChange=onPlStartChange;window.sendPlPaymentLink=sendPlPaymentLink;window.addPlToCalendar=addPlToCalendar;window.togglePlPaste=togglePlPaste;window.applyPlPaste=applyPlPaste;
 window.openPrivateLessonModal=openPrivateLessonModal;window.closePrivateLessonModal=closePrivateLessonModal;window.sendPrivateLessonPaymentLink=sendPrivateLessonPaymentLink;
 
 
