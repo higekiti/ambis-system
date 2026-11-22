@@ -658,22 +658,39 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
     <!-- ══ PAGE: PAYMENT ══ -->
     <div class="page" id="page-payment">
       <div class="stats-row">
-        <div class="stat-card gold"><div class="label">今月の収入</div><div class="value" id="pay-income">0</div><div class="sub">円（支払い済）</div></div>
-        <div class="stat-card"><div class="label">未払い</div><div class="value" id="pay-unpaid">0</div><div class="sub">件</div></div>
+        <div class="stat-card gold"><div class="label">受け取り済み</div><div class="value" id="pay-income">0</div><div class="sub">円（この月の会費・入会金）</div></div>
+        <div class="stat-card"><div class="label">未払い</div><div class="value" id="pay-unpaid">0</div><div class="sub" id="pay-unpaid-sub">件</div></div>
         <div class="stat-card"><div class="label">在籍会員</div><div class="value" id="pay-members">0</div><div class="sub">名</div></div>
-        <div class="stat-card"><div class="label">月額想定収入</div><div class="value" id="pay-expected">0</div><div class="sub">円</div></div>
+        <div class="stat-card"><div class="label">この月の予定額</div><div class="value" id="pay-expected">0</div><div class="sub">円</div></div>
         <div class="stat-card gold"><div class="label">サブスクMRR</div><div class="value" id="pay-mrr">0</div><div class="sub">円/月</div></div>
         <div class="stat-card"><div class="label">支払い遅延・要対応</div><div class="value" id="pay-attention">0</div><div class="sub">件</div></div>
       </div>
 
-      <div class="section-header">
-        <div class="section-title">支払い状況（今月）</div>
-        <div style="font-size:11px;color:var(--text-muted);" id="pay-month-label"></div>
-        <button class="btn btn-primary btn-sm" style="margin-left:auto;" onclick="openPlModal('add')">＋ プライベートレッスン</button>
+      <div class="section-header" style="flex-wrap:wrap;gap:8px;">
+        <div class="section-title">会費の台帳</div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <button class="btn btn-ghost btn-sm" onclick="movePayMonth(-1)">◀</button>
+          <div style="font-size:14px;font-weight:600;color:var(--navy);min-width:110px;text-align:center;" id="pay-month-label"></div>
+          <button class="btn btn-ghost btn-sm" onclick="movePayMonth(1)">▶</button>
+          <button class="btn btn-ghost btn-sm" onclick="movePayMonth(0)">今月</button>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm" onclick="exportAccounting()" title="この月に受け取ったお金を、会計用のExcelで保存">会計用Excel</button>
+          <button class="btn btn-primary btn-sm" onclick="openPlModal('add')">＋ プライベートレッスン</button>
+        </div>
       </div>
+      <div class="filter-tabs" id="pay-filters">
+        <div class="filter-tab active" data-f="all" onclick="setPayFilter('all',this)">すべて</div>
+        <div class="filter-tab" data-f="unpaid" onclick="setPayFilter('unpaid',this)">未払い</div>
+        <div class="filter-tab" data-f="cash" onclick="setPayFilter('cash',this)">現金・窓口</div>
+        <div class="filter-tab" data-f="stripe" onclick="setPayFilter('stripe',this)">カード（Stripe）</div>
+        <div class="filter-tab" data-f="bank" onclick="setPayFilter('bank',this)">口座振替</div>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);margin:-6px 0 10px;">会費は前払いです。月末に「翌月分」が受け取れているかを確認しましょう（▶で翌月へ）。金額の ✎ で、その月だけ金額を変えられます。</div>
       <div class="table-wrap">
-        <table><thead><tr><th>会員</th><th>月会費</th><th>入会費</th><th>ステータス</th><th></th></tr></thead>
+        <table><thead><tr><th>会員</th><th>支払い方法</th><th>区分</th><th>金額</th><th>状態</th><th></th></tr></thead>
         <tbody id="pay-tbody"></tbody></table>
+        <div class="empty-state" id="empty-pay" style="display:none;"><p>この月の対象の会員はいません</p></div>
       </div>
     </div>
 
@@ -995,8 +1012,8 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
         <label>その他の詳細</label>
         <input type="text" id="f-source-other" placeholder="きっかけを入力">
       </div>
-      <div class="form-row"><label>連絡方法（決済リンクの送付方法）</label><select id="f-contactMethod"><option value="line">LINE（手動送付）</option><option value="email">メール（自動送信）</option><option value="cash">現金</option></select></div>
-      <div class="form-row"><label>入会日 *</label><input type="date" id="f-joindate"></div>
+      <div class="form-row"><label>カード登録リンクの送り方（カード払いの人）</label><select id="f-contactMethod"><option value="line">LINE（リンクを手動で送る）</option><option value="email">メール（自動で届く）</option><option value="cash">送らない（現金・口座振替の人）</option></select><div style="font-size:10px;color:var(--text-muted);margin-top:4px;">月会費の払い方（カード／口座振替／現金）は、下の「PAYMENT」の「月会費の支払い方法」で選びます。</div></div>
+      <div class="form-row"><label>入会日 *</label><input type="date" id="f-joindate" onchange="updateJoinPay(true)"></div>
       <div class="form-row"><label>誕生日</label><input type="date" id="f-birthday" onchange="updateInsNote()"></div>
       <div class="section-divider">BELT INFO</div>
       <div class="form-row-2">
@@ -1014,12 +1031,27 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
         </div>
       </div>
       <div class="section-divider">PAYMENT</div>
+      <div class="form-row"><label>月会費の支払い方法</label>
+        <select id="f-paymethod" onchange="onPayMethodChange()"><option value="stripe">カード（Stripe・毎月末日に自動）</option><option value="bank">口座振替（月額パンダ・毎月27日）</option><option value="cash">現金・窓口（毎月窓口で受け取り）</option></select>
+      </div>
       <div class="form-row-2">
-        <div><label>月会費（円）</label><input type="number" id="f-monthly" value="8800"></div>
-        <div><label>入会費（円）</label><input type="number" id="f-entry" value="11000"></div>
+        <div><label>月会費（円）</label><input type="number" id="f-monthly" value="8800" oninput="updateJoinPay()"></div>
+        <div><label>入会金（円）</label><input type="number" id="f-entry" value="11000" oninput="updateJoinPay()"></div>
+      </div>
+      <div id="f-joinpay" style="display:none;background:#f7f8fb;border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:14px;">
+        <div style="font-size:11px;font-weight:600;color:var(--navy);margin-bottom:8px;">入会時の受け取り（窓口）</div>
+        <div class="form-row-2" style="margin-bottom:8px;">
+          <div><label>入会月の会費</label><select id="f-join-kind" onchange="updateJoinPay(true)"><option value="full">全額（1〜15日の入会）</option><option value="half">半額（16日〜月末の入会）</option><option value="none">受け取らない</option></select></div>
+          <div><label>入会月の会費（円）</label><input type="number" id="f-join-amount" oninput="updateJoinPay(false,true)"></div>
+        </div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;" id="f-join-total"></div>
+        <div class="form-row-2" style="margin-bottom:0;">
+          <div><label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="f-join-paid" style="width:auto;" checked> 受け取り済み</label></div>
+          <div><label>受け取り方法</label><select id="f-join-method"><option value="cash">現金</option><option value="card">カード（Square）</option><option value="qr">QR決済（Square）</option><option value="emoney">電子マネー（Square）</option></select></div>
+        </div>
       </div>
       <div class="form-row"><label>備考</label><input type="text" id="f-note" placeholder="怪我・特記事項など"></div>
-      <div class="form-row"><label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="f-weekday-mat" style="width:auto;"> 平日フリーマット通い放題オプション（月額¥2,200）</label></div>
+      <div class="form-row"><label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="f-weekday-mat" style="width:auto;" onchange="updateJoinPay()"> 平日フリーマット通い放題オプション（月額¥2,200）</label></div>
       <div class="section-divider">SPORTS INSURANCE</div>
       <div class="form-row-2">
         <div><label>スポーツ安全保険</label><select id="f-ins-fy" onchange="updateInsNote()"></select></div>
@@ -1548,6 +1580,28 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
 </div>
 
 <!-- ══ MODAL: TRIAL DELETE ══ -->
+<div class="modal-overlay" id="modal-receive">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header"><div class="modal-title" id="rcv-title">受け取りの記録</div><button class="modal-close" onclick="closeReceive()">×</button></div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;" id="rcv-sub"></div>
+      <div class="form-row-2">
+        <div><label>会費（円）</label><input type="number" id="rcv-amount"></div>
+        <div id="rcv-entry-wrap"><label>入会金（円）</label><input type="number" id="rcv-entry"></div>
+      </div>
+      <div class="form-row-2">
+        <div><label>受け取り方法</label><select id="rcv-method"><option value="cash">現金</option><option value="card">カード（Square）</option><option value="qr">QR決済（Square）</option><option value="emoney">電子マネー（Square）</option><option value="bank">口座振替（月額パンダ）</option><option value="stripe">カード（Stripe自動決済）</option></select></div>
+        <div><label>受け取った日</label><input type="date" id="rcv-date"></div>
+      </div>
+      <div class="form-row"><label>メモ</label><input type="text" id="rcv-note" placeholder="例：キャンペーンで入会金無料"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeReceive()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveReceive()">受け取り済みにする</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-pl">
   <div class="modal">
     <div class="modal-header"><div class="modal-title" id="modal-pl-title">プライベートレッスン登録</div><button class="modal-close" onclick="closePlModal()">×</button></div>
@@ -1941,6 +1995,7 @@ function openMemberModal(mode,id){
     const m=members.find(x=>x.id===id); if(!m)return;
     editingMemberId=id;
     document.getElementById('f-mid-row').style.display='none';
+    document.getElementById('f-joinpay').style.display='none';
     document.getElementById('modal-member-title').textContent='会員情報を編集';
     document.getElementById('f-name').value=m.name||'';
     document.getElementById('f-kana').value=m.kana||'';
@@ -1958,6 +2013,7 @@ function openMemberModal(mode,id){
     }
     toggleMemberReferrerRow();
     document.getElementById('f-contactMethod').value=m.contactMethod||'line';
+    document.getElementById('f-paymethod').value=memberPayMethod(m);
     document.getElementById('f-joindate').value=m.joindate||'';
     document.getElementById('f-belt').value=m.belt||'white';
     document.getElementById('f-stripe').value=m.stripe||'0';
@@ -1973,6 +2029,9 @@ function openMemberModal(mode,id){
   } else {
     document.getElementById('modal-member-title').textContent='新規会員登録';
     document.getElementById('f-mid-row').style.display='block';
+    document.getElementById('f-paymethod').value='stripe';
+    document.getElementById('f-joinpay').style.display='block'; document.getElementById('f-join-paid').checked=true; document.getElementById('f-join-method').value='cash';
+    updateJoinPay(true);
     document.getElementById('f-mid').value=firstFreeMemberId(); checkMidInput();
   }
   document.getElementById('modal-member').classList.add('open');
@@ -2132,6 +2191,7 @@ function saveMember(){
     birthday:document.getElementById('f-birthday').value,
     hasWeekdayMatOption:document.getElementById('f-weekday-mat').checked,
     insFY:document.getElementById('f-ins-fy').value,
+    payMethod:document.getElementById('f-paymethod').value,
     insPaidDate:document.getElementById('f-ins-date').value,
   };
   let __stopTarget=null, __stopKind='';
@@ -2151,6 +2211,7 @@ function saveMember(){
     if(used.length){ alert(`会員番号 ${newId} は使えません。\n${used.join('・')} で使われています。\n別の番号にしてください。`); return; }
     const fromT = joinFromTrialId ? trialVisitors.find(t=>t.id===joinFromTrialId) : null;
     members.push({id:newId,...data, ...(fromT?{trialId:fromT.id, trialDate:fromT.date||''}:{})});
+    recordJoinPayment(newId, data);   // 入会金と入会月の会費を台帳に記録
     if(fromT){
       // 元の体験・ビジターの記録を「入会した」にして、会員とつなぐ
       const ti=trialVisitors.findIndex(t=>t.id===fromT.id);
@@ -2371,63 +2432,258 @@ function renderBeltHistory(){
 }
 
 // ══ PAYMENT ══
+// ══ 会費の台帳（支払い管理）══
+// payments ドキュメント：id = pay-{会員番号}-{YYYY-MM}（Stripeの同期と同じID）
+//   status: 'pending' | 'paid'、amount: 会費、entryFee: 入会金、kind: 'join' | 'monthly' | 'pause'
+//   method: 'stripe' | 'bank' | 'cash' | 'card' | 'qr' | 'emoney'、paidDate: 受け取った日、note: メモ
+const PAY_METHOD_LABEL={stripe:'カード（Stripe）',bank:'口座振替',cash:'現金・窓口'};
+const RCV_METHOD_LABEL={stripe:'Stripe自動決済',bank:'口座振替',cash:'現金',card:'カード（Square）',qr:'QR決済（Square）',emoney:'電子マネー（Square）'};
+const WEEKDAY_OPTION_FEE=2200, PAUSE_FEE=500;
+let payMonth=null, payFilter='all';
+// 支払い方法を口座振替・現金にしたら、カード登録リンクは「送らない」に。カードに戻したらLINEに
+function onPayMethodChange(){
+  const pm=document.getElementById('f-paymethod').value, cm=document.getElementById('f-contactMethod');
+  if(pm!=='stripe') cm.value='cash'; else if(cm.value==='cash') cm.value='line';
+}
+function memberPayMethod(m){ return m.payMethod || (m.contactMethod==='cash'?'cash':'stripe'); }
+function ymOf(d){ return (d||'').slice(0,7); }
+function ymLabel(ym){ const p=ym.split('-').map(Number); return `${p[0]}年${p[1]}月分`; }
+function shiftYm(ym,n){ const p=ym.split('-').map(Number); const d=new Date(p[0],p[1]-1+n,1); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+// その月の会費の目安（記録がないときの表示用）
+function expectedDue(m, ym){
+  const base=m.monthlyFee||MONTHLY_FEE, opt=m.hasWeekdayMatOption?WEEKDAY_OPTION_FEE:0;
+  if(m.status==='inactive') return {kind:'pause', amount:PAUSE_FEE, entry:0};
+  if(ymOf(m.joindate)===ym){
+    const day=parseInt((m.joindate||'').slice(8,10),10)||1;
+    return {kind:'join', amount:(day<=15?base:Math.round(base/2))+opt, entry:(m.entryFee!==undefined&&m.entryFee!==null&&m.entryFee!=='')?(+m.entryFee||0):ENTRY_FEE};
+  }
+  return {kind:'monthly', amount:base+opt, entry:0};
+}
+const PAY_KIND_LABEL={join:'入会月',monthly:'月会費',pause:'休会（在籍料）'};
+function payRecord(mid, ym){ return payments.find(p=>p.memberId===mid&&p.month===ym); }
+function payAmountOf(rec, exp){ if(rec&&rec.amount!==undefined&&rec.amount!==null) return +rec.amount||0; if(rec&&rec.source==='stripe') return exp.amount; return exp.amount; }
+function payEntryOf(rec, exp){ if(rec&&rec.entryFee!==undefined&&rec.entryFee!==null&&rec.kind==='join') return +rec.entryFee||0; return exp.kind==='join'?exp.entry:0; }
+// その月に台帳に出す会員（在籍中・休会中で、その月までに入会している人。デモ会員は除く）
+function payTargets(ym){
+  return realMembers().filter(m=>(m.status==='active'||m.status==='inactive') && (!m.joindate || ymOf(m.joindate)<=ym))
+    .concat(realMembers().filter(m=>m.status==='left' && payments.some(p=>p.memberId===m.id&&p.month===ym)));
+}
+function movePayMonth(n){ const cur=localDateStr().slice(0,7); payMonth = n===0 ? cur : shiftYm(payMonth||cur, n); renderPayment(); }
+function setPayFilter(f,el){ payFilter=f; document.querySelectorAll('#pay-filters .filter-tab').forEach(t=>t.classList.toggle('active', t===el)); renderPayment(); }
 function renderPayment(){
   if(!document.getElementById('pay-income')) return;
-  const now=new Date();
-  const ym=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  const label=`${now.getFullYear()}年${now.getMonth()+1}月`;
-  document.getElementById('pay-month-label').textContent=label;
-
-  const activeMembers=realMembers().filter(m=>m.status==='active');
-  const expected=activeMembers.reduce((s,m)=>s+(m.monthlyFee||MONTHLY_FEE),0);
-  document.getElementById('pay-members').textContent=activeMembers.length;
-  document.getElementById('pay-expected').textContent=expected.toLocaleString();
-
-  // 支払いレコードを月ごとに自動生成（なければ）
-  activeMembers.forEach(m=>{
-    const exists=payments.find(p=>p.memberId===m.id&&p.month===ym);
-    if(!exists) payments.push({id:'pay-'+m.id+'-'+ym,memberId:m.id,memberName:m.name,month:ym,status:'pending',monthlyFee:m.monthlyFee||MONTHLY_FEE,entryFee:0});
+  if(!payMonth) payMonth=localDateStr().slice(0,7);
+  const ym=payMonth;
+  document.getElementById('pay-month-label').textContent=ymLabel(ym);
+  const targets=payTargets(ym);
+  let income=0, expected=0, unpaidN=0, unpaidAmt=0;
+  const rows=targets.map(m=>{
+    const exp=expectedDue(m,ym), rec=payRecord(m.id,ym);
+    const amount=payAmountOf(rec,exp), entry=payEntryOf(rec,exp);
+    const paid=!!(rec&&rec.status==='paid');
+    const kind=(rec&&rec.kind)||exp.kind;
+    expected+=amount+entry;
+    if(paid) income+=amount+entry; else { unpaidN++; unpaidAmt+=amount+entry; }
+    return {m,exp,rec,amount,entry,paid,kind,method:memberPayMethod(m)};
   });
-  saveAll();
-
-  const monthPays=payments.filter(p=>p.month===ym);
-  const paid=monthPays.filter(p=>p.status==='paid');
-  const unpaid=monthPays.filter(p=>p.status!=='paid');
-  const income=paid.reduce((s,p)=>s+(p.monthlyFee||0),0);
   document.getElementById('pay-income').textContent=income.toLocaleString();
-  document.getElementById('pay-unpaid').textContent=unpaid.length;
-
-  const mrr=activeMembers.filter(m=>['active','trialing'].includes(m.billingStatus)).reduce((s,m)=>s+(m.monthlyFee||MONTHLY_FEE),0);
-  const attentionCount=activeMembers.filter(m=>['past_due','unpaid','incomplete','incomplete_expired'].includes(m.billingStatus)).length;
+  document.getElementById('pay-unpaid').textContent=unpaidN;
+  document.getElementById('pay-unpaid-sub').textContent=`件（¥${unpaidAmt.toLocaleString()}）`;
+  document.getElementById('pay-members').textContent=realMembers().filter(m=>m.status==='active').length;
+  document.getElementById('pay-expected').textContent=expected.toLocaleString();
+  const activeMembers=realMembers().filter(m=>m.status==='active');
+  const mrr=activeMembers.filter(m=>['active','trialing'].includes(m.billingStatus)).reduce((s,m)=>s+(m.monthlyFee||MONTHLY_FEE)+(m.hasWeekdayMatOption?WEEKDAY_OPTION_FEE:0),0);
   document.getElementById('pay-mrr').textContent=mrr.toLocaleString();
-  document.getElementById('pay-attention').textContent=attentionCount;
+  document.getElementById('pay-attention').textContent=activeMembers.filter(m=>['past_due','unpaid','incomplete','incomplete_expired'].includes(m.billingStatus)).length;
 
-  document.getElementById('pay-tbody').innerHTML=activeMembers.map(m=>{
-    const pay=payments.find(p=>p.memberId===m.id&&p.month===ym);
-    const st=pay?pay.status:'pending';
-    const stLabel=st==='paid'?'支払い済':st==='pending'?'未確認':'未払い';
-    const stCls=st==='paid'?'pay-status-paid':st==='unpaid'?'pay-status-unpaid':'pay-status-pending';
-    const fee=(m.monthlyFee||MONTHLY_FEE).toLocaleString();
-    const bs=m.billingStatus;
-    let stripeLabel, stripeCls;
-    if(!m.stripeUid){ stripeLabel='未登録'; stripeCls='status-neutral'; }
-    else if(['active','trialing'].includes(bs)){ stripeLabel='有効'; stripeCls='status-active'; }
-    else if(['past_due','unpaid'].includes(bs)){ stripeLabel='支払い遅延'; stripeCls='status-inactive'; }
-    else if(['incomplete','incomplete_expired'].includes(bs)){ stripeLabel='要対応'; stripeCls='status-inactive'; }
-    else if(bs==='canceled'){ stripeLabel='解約済み'; stripeCls='status-neutral'; }
-    else { stripeLabel='未確認'; stripeCls='status-neutral'; }
+  let list=rows;
+  if(payFilter==='unpaid') list=rows.filter(r=>!r.paid);
+  else if(payFilter!=='all') list=rows.filter(r=>r.method===payFilter);
+  list.sort((a,b)=>(a.paid-b.paid)||String(a.m.id).localeCompare(String(b.m.id)));
+  document.getElementById('empty-pay').style.display=list.length?'none':'block';
+  document.getElementById('pay-tbody').innerHTML=list.map(r=>{
+    const m=r.m, bs=m.billingStatus;
+    let stripeInfo='';
+    if(r.method==='stripe'){
+      let lb, cl;
+      if(!m.stripeUid){ lb='カード未登録'; cl='status-neutral'; }
+      else if(['active','trialing'].includes(bs)){ lb='自動決済 有効'; cl='status-active'; }
+      else if(['past_due','unpaid'].includes(bs)){ lb='支払い遅延'; cl='status-inactive'; }
+      else if(['incomplete','incomplete_expired'].includes(bs)){ lb='要対応'; cl='status-inactive'; }
+      else if(bs==='canceled'){ lb='解約済み'; cl='status-neutral'; }
+      else { lb='未確認'; cl='status-neutral'; }
+      stripeInfo=`<br><span class="status-pill ${cl}" style="margin-top:4px;">${lb}</span>`;
+    }
+    const st=r.paid
+      ? `<span class="status-pill pay-status-paid">受け取り済み</span><div style="font-size:10px;color:var(--text-muted);margin-top:3px;">${escapeHtml(RCV_METHOD_LABEL[r.rec.method]||(r.rec.source==='stripe'?'Stripe自動決済':''))}${r.rec.paidDate?' '+escapeHtml(r.rec.paidDate.slice(5).replace('-','/')):''}</div>`
+      : `<span class="status-pill pay-status-pending">未払い</span>`;
+    const amt=`<span style="font-family:'Bebas Neue',sans-serif;font-size:18px;">¥${r.amount.toLocaleString()}</span> <button class="btn btn-ghost btn-sm" style="padding:1px 6px;" title="この月の金額を変える" onclick="editPayAmount('${m.id}')">✎</button>${r.entry?`<div style="font-size:10.5px;color:var(--text-secondary);">＋入会金 ¥${r.entry.toLocaleString()}</div>`:''}${r.rec&&r.rec.note?`<div style="font-size:10px;color:var(--text-muted);">${escapeHtml(r.rec.note)}</div>`:''}`;
+    const billBtn = r.method==='stripe' ? (!hasLiveStripeSub(m)?`<button class="btn btn-ghost btn-sm" onclick="sendMemberBillingLink('${m.id}')">${m.stripeUid?'カード登録リンクを再発行':'カード登録リンクを発行'}</button>`:`<button class="btn btn-ghost btn-sm" onclick="sendCardUpdateLink('${m.id}')">カード変更リンク</button>`) : '';
     return `<tr>
-      <td><div class="member-cell"><div class="avatar">${m.photo?`<img src="${safePhotoSrc(m.photo)}">`:(m.name||'').slice(0,2)}</div><div class="member-name-cell"><div class="name">${escapeHtml(m.name)}</div><div class="id">${m.id}</div></div></div></td>
-      <td style="font-family:'Bebas Neue',sans-serif;font-size:18px;">¥${fee}</td>
-      <td style="font-size:12px;color:var(--text-muted);">${m.entryFee?'¥'+m.entryFee.toLocaleString():'―'}</td>
-      <td><span class="status-pill ${stCls}">${stLabel}</span><br><span class="status-pill ${stripeCls}" style="margin-top:4px;">Stripe: ${stripeLabel}</span></td>
+      <td><div class="member-cell"><div class="avatar">${m.photo?`<img src="${safePhotoSrc(m.photo)}">`:escapeHtml((m.name||'').slice(0,2))}</div><div class="member-name-cell"><div class="name">${escapeHtml(m.name)}${m.status==='inactive'?' <span class="status-pill status-inactive" style="font-size:9px;">休会中</span>':''}${m.status==='left'?' <span class="status-pill status-left" style="font-size:9px;">退会</span>':''}</div><div class="id">${m.id}</div></div></div></td>
+      <td style="font-size:12px;">${PAY_METHOD_LABEL[r.method]||''}${stripeInfo}</td>
+      <td style="font-size:12px;color:var(--text-secondary);">${PAY_KIND_LABEL[r.kind]||''}</td>
+      <td>${amt}</td>
+      <td>${st}</td>
       <td><div class="action-btns">
-        ${st!=='paid'?`<button class="btn btn-success btn-sm" onclick="markPaid('${m.id}','${ym}')">支払い確認</button>`:''}
-        ${st==='paid'?`<button class="btn btn-ghost btn-sm" onclick="markPaid('${m.id}','${ym}','pending')">取消</button>`:''}
-        ${!hasLiveStripeSub(m)?`<button class="btn btn-ghost btn-sm" onclick="sendMemberBillingLink('${m.id}')">${m.stripeUid?'カード登録リンクを再発行':'カード登録リンクを発行'}</button>`:`<button class="btn btn-ghost btn-sm" onclick="sendCardUpdateLink('${m.id}')">カード変更リンク</button>`}
+        ${r.paid?`<button class="btn btn-ghost btn-sm" onclick="unmarkPaid('${m.id}')">取消</button>`:`<button class="btn btn-success btn-sm" onclick="openReceive('${m.id}')">受け取り済みにする</button>`}
+        ${billBtn}
       </div></td>
     </tr>`;
   }).join('');
+}
+// 台帳のレコードを取得（なければ作る）
+function ensurePayRecord(m, ym){
+  let rec=payRecord(m.id,ym);
+  if(!rec){ const exp=expectedDue(m,ym); rec={id:'pay-'+m.id+'-'+ym, memberId:m.id, memberName:m.name, month:ym, status:'pending', kind:exp.kind, amount:exp.amount, entryFee:exp.entry, monthlyFee:exp.amount}; payments.push(rec); }
+  return rec;
+}
+let rcvTarget=null;
+function openReceive(mid){
+  const m=members.find(x=>x.id===mid); if(!m) return;
+  const ym=payMonth, exp=expectedDue(m,ym), rec=payRecord(mid,ym);
+  rcvTarget={mid, ym};
+  document.getElementById('rcv-title').textContent=`${m.name} さん（${ymLabel(ym)}）`;
+  document.getElementById('rcv-sub').textContent=`区分：${PAY_KIND_LABEL[(rec&&rec.kind)||exp.kind]||''}　支払い方法：${PAY_METHOD_LABEL[memberPayMethod(m)]||''}`;
+  document.getElementById('rcv-amount').value=payAmountOf(rec,exp);
+  const isJoin=((rec&&rec.kind)||exp.kind)==='join';
+  document.getElementById('rcv-entry-wrap').style.visibility=isJoin?'visible':'hidden';
+  document.getElementById('rcv-entry').value=isJoin?payEntryOf(rec,exp):0;
+  const pm=memberPayMethod(m);
+  document.getElementById('rcv-method').value= pm==='bank'?'bank' : pm==='stripe'?'stripe' : 'cash';
+  document.getElementById('rcv-date').value=localDateStr();
+  document.getElementById('rcv-note').value=(rec&&rec.note)||'';
+  document.getElementById('modal-receive').classList.add('open');
+}
+function closeReceive(){ document.getElementById('modal-receive').classList.remove('open'); rcvTarget=null; }
+function saveReceive(){
+  if(!rcvTarget) return;
+  const m=members.find(x=>x.id===rcvTarget.mid); if(!m) return;
+  const rec=ensurePayRecord(m, rcvTarget.ym);
+  rec.amount=Math.max(0,parseInt(document.getElementById('rcv-amount').value,10)||0); rec.monthlyFee=rec.amount;
+  if(rec.kind==='join') rec.entryFee=Math.max(0,parseInt(document.getElementById('rcv-entry').value,10)||0);
+  rec.method=document.getElementById('rcv-method').value; rec.paidDate=document.getElementById('rcv-date').value||localDateStr();
+  rec.note=document.getElementById('rcv-note').value.trim(); rec.status='paid'; rec.memberName=m.name;
+  saveAll(); closeReceive(); renderPayment(); showToast('受け取り済みにしました');
+}
+function unmarkPaid(mid){
+  const m=members.find(x=>x.id===mid); const rec=payRecord(mid,payMonth); if(!rec) return;
+  if(!confirm(`${m?m.name:''} さんの ${ymLabel(payMonth)} を「未払い」に戻しますか？`)) return;
+  rec.status='pending'; delete rec.paidDate;
+  saveAll(); renderPayment(); showToast('未払いに戻しました');
+}
+function editPayAmount(mid){
+  const m=members.find(x=>x.id===mid); if(!m) return;
+  const ym=payMonth, exp=expectedDue(m,ym), rec=payRecord(mid,ym);
+  const cur=payAmountOf(rec,exp);
+  const v=prompt(`${m.name} さん ${ymLabel(ym)} の会費（円）を入力してください`, cur);
+  if(v===null) return; const n=parseInt(String(v).replace(/[^\d]/g,''),10);
+  if(!(n>=0)){ showToast('金額を数字で入れてください'); return; }
+  const r=ensurePayRecord(m,ym); r.amount=n; r.monthlyFee=n;
+  saveAll(); renderPayment(); showToast('金額を変更しました');
+}
+// 入会のときの受け取りを台帳に記録（会員登録の保存時に呼ぶ）
+function updateJoinPay(resetKind, manualAmount){
+  const box=document.getElementById('f-joinpay'); if(!box||box.style.display==='none') return;
+  const jd=document.getElementById('f-joindate').value; const day=parseInt((jd||'').slice(8,10),10)||1;
+  const base=parseInt(document.getElementById('f-monthly').value,10)||MONTHLY_FEE;
+  const opt=document.getElementById('f-weekday-mat').checked?WEEKDAY_OPTION_FEE:0;
+  const kindEl=document.getElementById('f-join-kind');
+  if(resetKind) kindEl.value= day<=15?'full':'half';
+  const k=kindEl.value;
+  if(!manualAmount) document.getElementById('f-join-amount').value = k==='none'?0 : (k==='full'?base:Math.round(base/2))+opt;
+  const amt=parseInt(document.getElementById('f-join-amount').value,10)||0, ent=parseInt(document.getElementById('f-entry').value,10)||0;
+  document.getElementById('f-join-total').innerHTML=`窓口で受け取る合計：<b style="color:var(--navy);font-size:14px;">¥${(amt+ent).toLocaleString()}</b>（入会金 ¥${ent.toLocaleString()} ＋ 入会月の会費 ¥${amt.toLocaleString()}${opt&&k!=='none'?'・平日オプション込み':''}）`;
+}
+function recordJoinPayment(mid, data){
+  const box=document.getElementById('f-joinpay'); if(!box||box.style.display==='none') return;
+  const ym=ymOf(data.joindate)||localDateStr().slice(0,7);
+  const amt=Math.max(0,parseInt(document.getElementById('f-join-amount').value,10)||0);
+  const ent=Math.max(0,parseInt(document.getElementById('f-entry').value,10)||0);
+  const paid=document.getElementById('f-join-paid').checked;
+  const id='pay-'+mid+'-'+ym;
+  payments=payments.filter(p=>p.id!==id);
+  payments.push({id, memberId:mid, memberName:data.name, month:ym, kind:'join', amount:amt, monthlyFee:amt, entryFee:ent,
+    status:paid?'paid':'pending', method:paid?document.getElementById('f-join-method').value:'', paidDate:paid?localDateStr():'', note:''});
+}
+// ══ 会計用Excel（青色申告の仕訳帳に貼り付ける形）══
+// 書類担当の回答（2026-11-23）に合わせた形：仕訳帳のB〜I列＝
+//   日付／借方勘定科目／借方金額／貸方勘定科目（売上高）／貸方金額／摘要／支払先・店名／証憑No.
+// ・日付は「受け取った日」（実際の日付）。Stripeの月会費は、対象月の前月の末日に決済される
+// ・借方：現金 → 現金、それ以外（カード・QR・電子マネー・Stripe・口座振替）→ 売掛金
+// ・摘要：「区分 対象月分 会員番号 姓様（受取方法）／メモ」。年をまたぐ対象月は「2027年1月分」と年も入れる
+// ・合計は明細に入れず、別シート「集計」に出す
+function accLastDay(ym){ const p=ym.split('-').map(Number); return new Date(p[0],p[1],0); }   // その月の末日
+function accParseDate(str){ const p=String(str||'').slice(0,10).split('-').map(Number); return (p[0]&&p[1]&&p[2])?new Date(p[0],p[1]-1,p[2]):null; }
+function accDebit(methodKey){ return methodKey==='cash' ? '現金' : '売掛金'; }
+function accSurname(name){ const n=String(name||'').trim(); return (n.split(/[\s　]+/)[0]||n); }
+function accMonthLabel(targetYm, date){
+  if(!targetYm) return '';
+  const p=targetYm.split('-').map(Number);
+  return (date && date.getFullYear()!==p[0]) ? `${p[0]}年${p[1]}月分` : `${p[1]}月分`;
+}
+function collectAccounting(ym){
+  const rows=[];   // {date:Date, debit, amount, memo, payee, ref}
+  const add=(date, methodKey, methodLabel, kindLabel, targetYm, mid, name, amount, note, payee, ref)=>{
+    amount=Math.round(+amount||0); if(!date||amount<=0) return;
+    if(`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`!==ym) return;
+    const parts=[kindLabel, accMonthLabel(targetYm,date), mid||'', name?accSurname(name)+'様':''].filter(Boolean);
+    let memo=parts.join(' ')+(methodLabel?`（${methodLabel}）`:'');
+    if(note) memo+='／'+note;
+    rows.push({date, debit:accDebit(methodKey), amount, memo, payee, ref});
+  };
+  // 会費・入会金
+  payments.filter(p=>p.status==='paid').forEach(p=>{
+    const m=members.find(x=>x.id===p.memberId)||{};
+    const isStripe = p.method==='stripe' || (!p.method && p.source==='stripe');
+    const date = p.paidDate ? accParseDate(p.paidDate) : (isStripe ? accLastDay(shiftYm(p.month,-1)) : accParseDate(p.month+'-01'));
+    const methodKey = isStripe ? 'stripe' : (p.method||'cash');
+    const methodLabel = RCV_METHOD_LABEL[methodKey]||'';
+    const name = p.memberName||m.name||'';
+    const amt = (p.amount!==undefined&&p.amount!==null) ? +p.amount : (m.id ? expectedDue(m,p.month).amount : (p.monthlyFee||0));
+    if(p.kind==='join' && p.entryFee) add(date, methodKey, methodLabel, '入会金', '', p.memberId, name, p.entryFee, p.note||'', '会員', 'APP-'+p.id+'-E');
+    const kindLabel = p.kind==='join' ? '月会費（入会月）' : (p.kind==='pause' ? '休会在籍料' : '月会費');
+    add(date, methodKey, methodLabel, kindLabel, p.month, p.memberId, name, amt, p.note||'', '会員', 'APP-'+p.id);
+  });
+  // ビジター（支払いリンク＝Stripe）
+  trialVisitors.filter(t=>t.type==='visitor'&&t.paymentStatus==='paid').forEach(t=>{
+    add(accParseDate(t.date), 'stripe', 'Stripe', 'ビジター', '', '', t.name, t.fee, '', 'ビジター', 'APP-'+t.id);
+  });
+  // プライベートレッスン（カード＝Stripe／窓口＝現金として記録）
+  privateLessons.filter(p=>plIsPaid(p)).forEach(p=>{
+    const counter=p.paymentStatus==='counter';
+    add(accParseDate(p.date||p.createdAt), counter?'cash':'stripe', counter?'窓口':'Stripe', 'プライベートレッスン', '', p.memberId||'', plName(p), p.price, '', p.memberId?'会員':'プライベートレッスン利用者', 'APP-'+p.id);
+  });
+  // レンタルスペース（オンライン＝Stripe／現地払い＝現金）
+  rentalBookings.filter(b=>b.paymentStatus==='paid').forEach(b=>{
+    const online=b.paymentMethod==='online';
+    add(accParseDate(b.date), online?'stripe':'cash', online?'Stripe':'現地払い', 'レンタルスペース', '', '', b.customerName, b.price, '', 'レンタル利用者', 'APP-'+b.id);
+  });
+  rows.sort((x,y)=>x.date-y.date || String(x.ref).localeCompare(String(y.ref)));
+  return rows;
+}
+function exportAccounting(){
+  const ym=payMonth||localDateStr().slice(0,7);
+  const rows=collectAccounting(ym);
+  if(!rows.length){ showToast('この月に受け取った記録はありません'); return; }
+  if(typeof XLSX==='undefined'){ showToast('Excelの準備ができていません。少し待ってからもう一度お試しください'); return; }
+  const p=ym.split('-').map(Number);
+  // 明細（仕訳帳のB〜I列にそのまま貼れる。見出し1行＋明細。合計行は入れない）
+  const head=['日付','借方勘定科目','借方金額（円）','貸方勘定科目','貸方金額（円）','摘要','支払先・店名','証憑No.'];
+  const aoa=[head].concat(rows.map(r=>[r.date, r.debit, r.amount, '売上高', r.amount, r.memo, r.payee, r.ref]));
+  const ws=XLSX.utils.aoa_to_sheet(aoa,{cellDates:true});
+  for(let i=1;i<=rows.length;i++){ const c=ws[XLSX.utils.encode_cell({r:i,c:0})]; if(c){ c.t='d'; c.z='yyyy-mm-dd'; } }
+  ws['!cols']=[12,14,12,12,12,48,18,30].map(w=>({wch:w}));
+  // 集計（別シート）
+  const by={}; rows.forEach(r=>{ by[r.debit]=(by[r.debit]||0)+r.amount; });
+  const total=rows.reduce((s,r)=>s+r.amount,0);
+  const sum=[[`AMBIs 売上（${p[0]}年${p[1]}月に受け取ったもの）`],[`出力：${new Date().toLocaleString('ja-JP')}`],[],['借方勘定科目','金額（円）','件数']]
+    .concat(Object.keys(by).map(k=>[k, by[k], rows.filter(r=>r.debit===k).length]))
+    .concat([['合計', total, rows.length],[],['※金額は税込。Stripe・Square・月額パンダの手数料は含みません（入金明細で記帳）。'],['※「明細」シートの2行目以降を、仕訳帳のB列に貼り付けてください。']]);
+  const ws2=XLSX.utils.aoa_to_sheet(sum); ws2['!cols']=[{wch:18},{wch:14},{wch:8}];
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '明細'); XLSX.utils.book_append_sheet(wb, ws2, '集計');
+  XLSX.writeFile(wb, `会計用_${ym}.xlsx`, {cellDates:true});
+  showToast(`会計用Excelを保存しました（${rows.length}件・¥${total.toLocaleString()}）`);
 }
 
 let _paylinkUnsub=null;
@@ -4877,7 +5133,7 @@ window.showScheduleTab=showScheduleTab;
 window.sendMemberBillingLink=sendMemberBillingLink;window.sendGuestPaymentLink=sendGuestPaymentLink;
 window.sendTrialPaymentLink=sendTrialPaymentLink;window.sendRentalPaymentLink=sendRentalPaymentLink;
 window.toggleRentalPayLinkBtn=toggleRentalPayLinkBtn;window.copyPayLink=copyPayLink;window.closePayLinkModal=closePayLinkModal;
-window.updateInsNote=updateInsNote;window.resetTestRecords=resetTestRecords;window.checkMidInput=checkMidInput;window.startJoinFromTrial=startJoinFromTrial;window.exportVisitsExcel=exportVisitsExcel;window.exportVisitsPdf=exportVisitsPdf;window.openPlModal=openPlModal;window.closePlModal=closePlModal;window.savePl=savePl;window.deletePl=deletePl;window.filterPl=filterPl;window.renderPlList=renderPlList;window.togglePlKind=togglePlKind;window.togglePlGuardian=togglePlGuardian;window.onPlMemberSelect=onPlMemberSelect;window.onPlStartChange=onPlStartChange;window.sendPlPaymentLink=sendPlPaymentLink;window.addPlToCalendar=addPlToCalendar;window.togglePlPaste=togglePlPaste;window.applyPlPaste=applyPlPaste;
+window.updateInsNote=updateInsNote;window.onPayMethodChange=onPayMethodChange;window.movePayMonth=movePayMonth;window.setPayFilter=setPayFilter;window.openReceive=openReceive;window.closeReceive=closeReceive;window.saveReceive=saveReceive;window.unmarkPaid=unmarkPaid;window.editPayAmount=editPayAmount;window.updateJoinPay=updateJoinPay;window.exportAccounting=exportAccounting;window.resetTestRecords=resetTestRecords;window.checkMidInput=checkMidInput;window.startJoinFromTrial=startJoinFromTrial;window.exportVisitsExcel=exportVisitsExcel;window.exportVisitsPdf=exportVisitsPdf;window.openPlModal=openPlModal;window.closePlModal=closePlModal;window.savePl=savePl;window.deletePl=deletePl;window.filterPl=filterPl;window.renderPlList=renderPlList;window.togglePlKind=togglePlKind;window.togglePlGuardian=togglePlGuardian;window.onPlMemberSelect=onPlMemberSelect;window.onPlStartChange=onPlStartChange;window.sendPlPaymentLink=sendPlPaymentLink;window.addPlToCalendar=addPlToCalendar;window.togglePlPaste=togglePlPaste;window.applyPlPaste=applyPlPaste;
 window.openPrivateLessonModal=openPrivateLessonModal;window.closePrivateLessonModal=closePrivateLessonModal;window.sendPrivateLessonPaymentLink=sendPrivateLessonPaymentLink;
 
 
