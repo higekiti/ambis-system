@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="description" content="AMBIs Jiu-Jitsu Academyの会員・はじめてガイド。体験の流れ・女性の安心・道場マナー・道着や帯の仕組み・会員アプリの使い方まで、初心者が知りたいことをまとめました。">
+<title>会員・はじめてガイド | AMBIs Jiu-Jitsu Academy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@500;600&family=Zen+Maru+Gothic:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@400;500&family=Cormorant+Garamond:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0a1628; --navy-mid:#17243e; --ivory:#F6F1E8; --ivory-2:#efe7d9; --white:#fffdfa;
+    --gold:#b8935a; --gold-d:#a07d47; --rose:#C99B94; --rose-d:#b98079;
+    --ink:#2A2620; --body:#4A463F; --muted:#8a8377; --belt:#4A6591;
+    --serif:'Zen Old Mincho',serif; --round:'Zen Maru Gothic',sans-serif; --sans:'Zen Kaku Gothic New',sans-serif; --lat:'Cormorant Garamond',serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:var(--sans);background:var(--ivory);color:var(--body);line-height:2;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:900px;margin:0 auto;padding:0 22px;}
+  a{color:var(--gold-d);}
+  /* header (navy anchor) */
+  header{background:linear-gradient(160deg,var(--navy),var(--navy-mid));text-align:center;padding:60px 22px 52px;}
+  header img{height:88px;margin-bottom:16px;}
+  header .t{font-family:var(--serif);font-size:30px;color:#fff;font-weight:600;letter-spacing:.05em;}
+  header .s{font-family:var(--lat);font-size:15px;color:var(--gold);letter-spacing:.34em;margin-top:8px;font-weight:400;}
+  header .rule{width:54px;height:2px;background:var(--gold);margin:22px auto 0;}
+  /* intro */
+  .intro{background:var(--white);border-radius:18px;padding:34px 28px;margin:-30px auto 44px;max-width:820px;box-shadow:0 12px 40px rgba(42,38,32,.10);position:relative;}
+  .intro .for{font-family:var(--round);font-size:14px;color:var(--rose-d);font-weight:500;letter-spacing:.04em;margin-bottom:8px;}
+  .intro h2{font-family:var(--serif);font-size:23px;color:var(--ink);font-weight:600;margin-bottom:12px;letter-spacing:.02em;}
+  .intro p{font-size:14.5px;color:var(--body);}
+  .toc{list-style:none;margin-top:22px;display:grid;gap:10px;}
+  .toc a{display:flex;gap:12px;text-decoration:none;color:var(--ink);font-size:15px;padding:13px 17px;background:var(--ivory);border-radius:12px;transition:.2s;font-weight:500;}
+  .toc a:hover{background:var(--ivory-2);transform:translateX(2px);}
+  .toc .q{color:var(--rose-d);font-family:var(--lat);font-size:18px;min-width:24px;}
+  /* section */
+  section{padding:8px 0 24px;}
+  .lab{font-family:var(--lat);font-size:15px;letter-spacing:.3em;color:var(--gold-d);}
+  h3{font-family:var(--serif);font-size:26px;color:var(--ink);font-weight:600;margin:6px 0 6px;letter-spacing:.02em;}
+  .lead{font-size:14.5px;color:var(--muted);margin-bottom:24px;}
+  /* card */
+  .card{background:var(--white);border-radius:16px;padding:26px 24px;margin-bottom:18px;box-shadow:0 6px 22px rgba(42,38,32,.06);}
+  .card.mock{display:grid;grid-template-columns:1fr 230px;gap:24px;align-items:center;}
+  .card h4{font-family:var(--round);font-size:18px;color:var(--ink);font-weight:500;margin-bottom:10px;}
+  .card p{font-size:14.5px;}
+  .card ul{margin-top:10px;list-style:none;display:grid;gap:8px;}
+  .card li{font-size:14px;padding-left:22px;position:relative;}
+  .card li::before{content:'';position:absolute;left:2px;top:12px;width:8px;height:8px;border-radius:50%;background:var(--rose);}
+  strong{color:var(--gold-d);font-weight:500;}
+  .tag{display:inline-block;font-family:var(--round);font-size:12px;color:#fff;background:var(--rose);border-radius:20px;padding:3px 13px;font-weight:500;margin-bottom:10px;}
+  .tag.g{background:var(--gold);}
+  /* 女性安心 section (warm highlight) */
+  .care{background:linear-gradient(160deg,#f7ece7,#f3e3dc);border-radius:18px;padding:34px 28px;margin:12px 0 30px;border:1px solid #ecd8d0;}
+  .care .lab{color:var(--rose-d);}
+  .care h3{color:#5b3f3a;}
+  .care .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:20px;}
+  .care .item{background:var(--white);border-radius:12px;padding:16px 18px;}
+  .care .item b{display:block;font-family:var(--round);font-size:15px;color:#7a544d;font-weight:500;margin-bottom:4px;}
+  .care .item span{font-size:13.5px;color:var(--body);line-height:1.8;}
+  @media(max-width:640px){ .care .grid{grid-template-columns:1fr;} .card.mock{grid-template-columns:1fr;} }
+  /* phone mock (navy) */
+  .phone{width:210px;height:400px;margin:0 auto;border-radius:32px;background:#0e1c34;border:2px solid var(--gold);position:relative;overflow:hidden;box-shadow:0 10px 30px rgba(10,22,40,.25);}
+  .phone .notch{width:68px;height:8px;background:#0a1424;border-radius:5px;margin:12px auto 0;}
+  .phone .b{padding:18px 16px;text-align:center;color:#fff;}
+  .ph-ttl{font-family:var(--lat);font-size:13px;letter-spacing:.24em;color:var(--gold);margin-bottom:14px;}
+  .ph-photo{width:76px;height:76px;border-radius:50%;background:#1b2a48;border:2px solid var(--gold);margin:0 auto 10px;}
+  .ph-name{font-size:16px;font-weight:500;font-family:var(--round);}
+  .ph-id{font-family:var(--lat);font-size:14px;color:#93a6c4;margin-bottom:12px;}
+  .ph-belt{background:var(--belt);border-radius:9px;padding:8px;font-size:14px;font-weight:500;font-family:var(--round);}
+  .ph-dots{display:flex;gap:8px;justify-content:center;margin-top:12px;}
+  .ph-dots i{width:11px;height:11px;border-radius:50%;background:#33425f;}
+  .ph-dots i.on{background:var(--gold);}
+  .mock small{display:block;text-align:center;color:var(--muted);font-size:11.5px;margin-top:10px;}
+  /* CTA (navy anchor) */
+  .cta-box{background:linear-gradient(160deg,var(--navy),var(--navy-mid));border-radius:20px;padding:44px 30px;text-align:center;margin:30px 0 8px;}
+  .cta-box .k{font-family:var(--round);font-size:15px;color:var(--gold);letter-spacing:.06em;}
+  .cta-box h3{font-family:var(--serif);color:#fff;font-size:26px;margin:10px 0 6px;}
+  .cta-box .price{font-family:var(--serif);font-size:40px;color:var(--gold-l,#e8cfa0);font-weight:600;margin:6px 0;}
+  .cta-box .price s{color:#7f8ea8;font-size:24px;font-weight:400;}
+  .cta-box p{color:#c9d3e6;font-size:14px;margin:10px 0 4px;}
+  .steps{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:22px 0 20px;}
+  .steps .st{background:rgba(255,255,255,.06);border:1px solid rgba(201,169,110,.3);border-radius:12px;padding:12px 18px;font-size:13.5px;color:#e8eefb;max-width:230px;}
+  .steps .st b{color:var(--gold);font-family:var(--round);}
+  .btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:6px;}
+  .btn{display:inline-block;padding:14px 30px;border-radius:30px;text-decoration:none;font-size:15px;font-weight:500;font-family:var(--round);}
+  .btn.line{background:#06C755;color:#fff;}
+  .btn.ig{background:transparent;border:1px solid #c9a96e;color:#e8cfa0;}
+  /* footer */
+  footer{text-align:center;padding:40px 22px 60px;color:var(--muted);font-size:13px;}
+  footer a{color:var(--gold-d);}
+</style>
+</head>
+<body>
+
+<header>
+  <img src="https://ambis-jj.com/logo-white.svg" alt="AMBIs Jiu-Jitsu Academy">
+  <div class="t">会員・はじめてガイド</div>
+  <div class="s">GETTING STARTED</div>
+  <div class="rule"></div>
+</header>
+
+<div class="wrap">
+
+  <!-- 扉 -->
+  <div class="intro">
+    <div class="for">柔術がはじめての方・体験を迷っている方へ。</div>
+    <h2>全部読まなくて、大丈夫です。</h2>
+    <p>柔術は「わからないことだらけ」から始まります。それが普通です。このガイドは、気になったところだけ開いてください。読めば、最初のハードルはきっと下がります。</p>
+    <ul class="toc">
+      <li><a href="#care"><span class="q">Q.</span>女性一人でも大丈夫？男性と組むの…？</a></li>
+      <li><a href="#c1"><span class="q">Q.</span>体験ってどんな感じ？何を持っていけばいい？</a></li>
+      <li><a href="#c2"><span class="q">Q.</span>道場の作法が不安。スパーは強制されない？</a></li>
+      <li><a href="#c3"><span class="q">Q.</span>帯やストライプって何？道着はどう買う？</a></li>
+      <li><a href="#c7"><span class="q">Q.</span>アプリにログインできない／困ったときは？</a></li>
+    </ul>
+  </div>
+
+  <!-- 女性の安心 -->
+  <section class="care" id="care">
+    <div class="lab">FOR EVERYONE</div>
+    <h3>はじめてでも、一人でも。</h3>
+    <p style="font-size:14.5px;color:#6b4e48;">「私みたいな人、いるのかな」——その不安に、先にお答えします。</p>
+    <div class="grid">
+      <div class="item"><b>組む相手は選べます</b><span>無理に男性と組むことはありません。女性同士で組める時間もつくります。</span></div>
+      <div class="item"><b>力より、技のスポーツ</b><span>体格差があっても成立します。だから女性・シニアにも向いています。</span></div>
+      <div class="item"><b>半分以上が未経験スタート</b><span>みんな最初は白帯。運動が苦手でも、体力に自信がなくても大丈夫。</span></div>
+      <div class="item"><b>更衣室・シャワー完備</b><span>すっぴん・ノーメイクで来る方がほとんど。仕事帰りにも寄れます。</span></div>
+    </div>
+  </section>
+
+  <!-- 第1章 -->
+  <section id="c1">
+    <div class="lab">CHAPTER 01</div>
+    <h3>体験〜入会の流れ</h3>
+    <p class="lead">まずは一度、来てみてください。「向いてるか」は来てみないとわかりません。</p>
+    <div class="card">
+      <span class="tag g">手ぶらでOK</span>
+      <h4>持ち物・服装</h4>
+      <p>体験時は<strong>道着＋帯を無料でお貸しします</strong>。動きやすい服装（Tシャツ・ハーフパンツやスパッツ）でお越しください。</p>
+      <ul>
+        <li>更衣室・シャワー完備（棚あり）</li>
+        <li>タオルは販売、道着レンタルは通常¥1,000／帯のみ¥500</li>
+        <li>爪は短く切ってきてください（安全のため）</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>当日の流れ</h4>
+      <ul>
+        <li>開始の10分前を目安にお越しください</li>
+        <li>初心者クラスは基本の動きから丁寧に。体力を使い切る内容ではありません</li>
+        <li>きつければ自分のペースで休んでOK</li>
+        <li><strong>体験後の勧誘は一切しません。</strong>入会はご自身の判断で</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 第2章 -->
+  <section id="c2">
+    <div class="lab">CHAPTER 02</div>
+    <h3>道場での過ごし方・マナー</h3>
+    <p class="lead">"怖い・きつい"の多くは、知らないから。先に知っておけば大丈夫です。</p>
+    <div class="card">
+      <span class="tag">大切なこと</span>
+      <h4>「タップ」＝安全のルール</h4>
+      <p>相手を軽く2回叩く「タップ（参りました）」をしたら、相手はすぐ技を解きます。柔術は<strong>打撃がなく、無理をしない文化</strong>が徹底されているので、接触スポーツの中では安全な部類です。「痛くなる前にタップ」で大丈夫。</p>
+    </div>
+    <div class="card">
+      <h4>基本の作法・清潔</h4>
+      <ul>
+        <li>マットに上がる前後の礼、道着は毎回洗濯、爪は短く</li>
+        <li>体調が悪い日・肌トラブルがある日は無理をしない</li>
+        <li><strong>スパーリング（技の練習試合）は強制ではありません。</strong>「今日は見学」もOK。遠慮なく伝えてください</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 第3章 -->
+  <section id="c3">
+    <div class="lab">CHAPTER 03</div>
+    <h3>帯・ストライプ・道着</h3>
+    <p class="lead">「続けた自分」をイメージできると、通うのが楽しくなります。</p>
+    <div class="card mock">
+      <div>
+        <h4>帯とストライプの仕組み</h4>
+        <p>大人の帯は<strong>白 → 青 → 紫 → 茶 → 黒</strong>の順。各帯の途中で「ストライプ（線）」が増えていきます。白帯からのスタートが当たり前。焦らず、自分の歩みで。</p>
+        <ul>
+          <li>アプリの<strong>デジタル会員証</strong>に、今の帯とストライプが表示されます</li>
+          <li>昇格すると会員証も自動で更新されます</li>
+        </ul>
+      </div>
+      <div class="mock">
+        <div class="phone"><div class="notch"></div><div class="b">
+          <div class="ph-ttl">MEMBER CARD</div>
+          <div class="ph-photo"></div>
+          <div class="ph-name">あなたの名前</div>
+          <div class="ph-id">AMBIs-00XX</div>
+          <div class="ph-belt">青帯</div>
+          <div class="ph-dots"><i class="on"></i><i class="on"></i><i></i><i></i></div>
+        </div></div>
+        <small>会員証イメージ（実画面に差し替え予定）</small>
+      </div>
+    </div>
+    <div class="card">
+      <h4>道着（ギ）の買い方</h4>
+      <ul>
+        <li>サイズは A1・A2… の表記。身長・体重で選びます（迷ったらスタッフが相談に乗ります）</li>
+        <li>最初は<strong>レンタル（¥1,000/回）で1〜2ヶ月</strong>続けてから購入がおすすめ</li>
+        <li>メーカー・色のルールも入会時にご案内します</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 第7章 -->
+  <section id="c7">
+    <div class="lab">CHAPTER 07</div>
+    <h3>困ったとき・お問い合わせ</h3>
+    <p class="lead">わからないことは、いつでも人に聞けます。</p>
+    <div class="card">
+      <h4>よくあるトラブル</h4>
+      <ul>
+        <li>ログインできない → Googleアカウントでログインする仕組みです。別のGoogleアカウントでないか確認を</li>
+        <li>会員証が出ない・情報が違う → スタッフへお知らせください</li>
+      </ul>
+      <p style="margin-top:14px;">解決しないときは、<strong>LINE公式</strong>または<strong>メール（ambis.bjj@gmail.com）</strong>へお気軽に。</p>
+    </div>
+    <p style="text-align:center;color:var(--muted);font-size:13px;margin-top:20px;">※ 出席・マイルストーン・戦績の詳しい使い方は、アプリの画面が整い次第このガイドに追加します。</p>
+  </section>
+
+  <!-- CTA -->
+  <div class="cta-box">
+    <div class="k">LINE登録キャンペーン ・ 先着25名限定（11/30まで）</div>
+    <h3>読んで、少し安心できたなら。</h3>
+    <div class="price"><s>入会金 11,000円</s> → 0円</div>
+    <p>入会金0円の特典は、<strong style="color:#e8cfa0;">先着25名限定・11/30まで</strong>。LINE登録した方だけの特典です。</p>
+    <div class="steps">
+      <div class="st"><b>① 友だち追加 or フォロー</b><br>LINE または Instagram</div>
+      <div class="st"><b>②「入会金無料希望」と送信</b><br>これだけで完了です</div>
+    </div>
+    <div class="btns">
+      <a class="btn line" href="https://lin.ee/67nT6Qw2">LINEで登録する</a>
+      <a class="btn ig" href="https://www.instagram.com/ambis_bjj/">Instagram DMで送る</a>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <p>TEL <a href="tel:07085978887">070-8597-8887</a> ／ <a href="mailto:ambis.bjj@gmail.com">ambis.bjj@gmail.com</a> ／ <a href="https://ambis-jj.com/">ホームへ</a></p>
+  <p style="margin-top:6px;">© 2026 AMBIs Jiu-Jitsu Academy — 人生に、柔術を。</p>
+</footer>
+
+</body>
+</html>
