@@ -2022,7 +2022,7 @@ function openMemberModal(mode,id){
     document.getElementById('f-status').value=m.status||'active';
     document.getElementById('f-note').value=m.note||'';
     document.getElementById('f-monthly').value=m.monthlyFee||MONTHLY_FEE;
-    document.getElementById('f-entry').value=m.entryFee||ENTRY_FEE;
+    document.getElementById('f-entry').value=(m.entryFee===undefined||m.entryFee===null||m.entryFee==='')?ENTRY_FEE:m.entryFee;
   document.getElementById('f-weekday-mat').checked=!!m.hasWeekdayMatOption;
     buildInsOptions(m.insFY||''); document.getElementById('f-ins-date').value=m.insPaidDate||'';
     document.getElementById('f-birthday').value=m.birthday||''; updateInsNote();
@@ -2117,11 +2117,28 @@ async function runStripeAction(){
   }
 }
 // カード変更リンク（決済の失敗・カードの期限切れなど）
+// 発行したカード登録・変更リンクを会員に記録（リンクの有効期限は24時間）。リマインドのときに同じリンクを送り直せる
+const PAYLINK_TTL_MS=24*3600*1000;
+function rememberMemberLink(memberId, url, kind){
+  const i=members.findIndex(x=>x.id===memberId); if(i<0||!url) return;
+  members[i]={...members[i], lastPayLink:url, lastPayLinkAt:Date.now(), lastPayLinkKind:kind};
+  saveAll();
+}
+function memberLinkLeftMs(m){ return (m&&m.lastPayLink&&m.lastPayLinkAt) ? (m.lastPayLinkAt+PAYLINK_TTL_MS-Date.now()) : -1; }
+function showMemberLastLink(memberId){
+  const m=members.find(x=>x.id===memberId); if(!m) return;
+  const left=memberLinkLeftMs(m);
+  if(left<=0){ showToast('前回のリンクは期限（24時間）が切れています。新しく発行してください'); return; }
+  const h=Math.floor(left/3600000), mi=Math.floor((left%3600000)/60000);
+  showPayLinkModal(`${m.name} さんの${m.lastPayLinkKind==='update'?'カード変更':'カード登録'}リンク（前回発行・あと${h}時間${mi}分有効）`);
+  showPayLinkReady(m.lastPayLink);
+}
 async function sendCardUpdateLink(memberId){
   const m=members.find(x=>x.id===memberId); if(!m) return;
   showPayLinkModal(m.name+' さんのカード変更リンク（決済はされません）');
   try{
     const res=await window.fbCallCreateCardUpdateLink({memberId});
+    rememberMemberLink(memberId, res.data.url, 'update');
     showPayLinkReady(res.data.url);
   }catch(e){ showPayLinkError(e.message||'カード変更リンクの作成に失敗しました'); }
 }
@@ -2187,7 +2204,7 @@ function saveMember(){
     status:document.getElementById('f-status').value,
     note:document.getElementById('f-note').value.trim(),
     monthlyFee:parseInt(document.getElementById('f-monthly').value)||MONTHLY_FEE,
-    entryFee:parseInt(document.getElementById('f-entry').value)||ENTRY_FEE,
+    entryFee:(()=>{ const v=document.getElementById('f-entry').value.trim(); const n=parseInt(v,10); return v===''||isNaN(n) ? ENTRY_FEE : Math.max(0,n); })(),   // 0円（キャンペーン）も保存できるように
     photo:photoData,
     birthday:document.getElementById('f-birthday').value,
     hasWeekdayMatOption:document.getElementById('f-weekday-mat').checked,
@@ -2200,7 +2217,12 @@ function saveMember(){
     const idx=members.findIndex(m=>m.id===editingMemberId);
     if(idx!==-1){
       const prevStatus=members[idx].status;
+      const prevEntry=members[idx].entryFee;
       members[idx]={...members[idx],...data,photo:photoData||members[idx].photo};
+      if(prevEntry!==data.entryFee){
+        const jr=payments.find(p=>p.memberId===editingMemberId && p.kind==='join');
+        if(jr) jr.entryFee=data.entryFee;   // 会費の台帳（入会月）の入会金も直す
+      }
       if(prevStatus==='active' && (data.status==='inactive'||data.status==='left')){ __stopTarget=members[idx]; __stopKind=data.status==='inactive'?'休会':'退会'; }
       else if(prevStatus==='inactive' && data.status==='active'){ __stopTarget=members[idx]; __stopKind='復会'; }
       else if(prevStatus==='inactive' && data.status==='left'){ __stopTarget=members[idx]; __stopKind='退会'; }
@@ -2519,6 +2541,8 @@ function renderPayment(){
       ? `<span class="status-pill pay-status-paid">受け取り済み</span><div style="font-size:10px;color:var(--text-muted);margin-top:3px;">${escapeHtml(RCV_METHOD_LABEL[r.rec.method]||(r.rec.source==='stripe'?'Stripe自動決済':''))}${r.rec.paidDate?' '+escapeHtml(r.rec.paidDate.slice(5).replace('-','/')):''}</div>`
       : `<span class="status-pill pay-status-pending">未払い</span>`;
     const amt=`<span style="font-family:'Bebas Neue',sans-serif;font-size:18px;">¥${r.amount.toLocaleString()}</span> <button class="btn btn-ghost btn-sm" style="padding:1px 6px;" title="この月の金額を変える" onclick="editPayAmount('${m.id}')">✎</button>${r.entry?`<div style="font-size:10.5px;color:var(--text-secondary);">＋入会金 ¥${r.entry.toLocaleString()}</div>`:''}${r.rec&&r.rec.note?`<div style="font-size:10px;color:var(--text-muted);">${escapeHtml(r.rec.note)}</div>`:''}`;
+    const linkLeft=memberLinkLeftMs(m);
+    const lastLinkBtn = (r.method==='stripe' && linkLeft>0) ? `<button class="btn btn-ghost btn-sm" title="前回発行したリンクをもう一度表示（リマインド用）" onclick="showMemberLastLink('${m.id}')">前回のリンク（あと${Math.max(1,Math.floor(linkLeft/3600000))}時間）</button>` : (r.method==='stripe' && m.lastPayLink && !hasLiveStripeSub(m) ? `<span style="font-size:10px;color:var(--text-muted);align-self:center;">前回のリンクは期限切れ</span>` : '');
     const billBtn = r.method==='stripe' ? (!hasLiveStripeSub(m)?`<button class="btn btn-ghost btn-sm" onclick="sendMemberBillingLink('${m.id}')">${m.stripeUid?'カード登録リンクを再発行':'カード登録リンクを発行'}</button>`:`<button class="btn btn-ghost btn-sm" onclick="sendCardUpdateLink('${m.id}')">カード変更リンク</button>`) : '';
     return `<tr>
       <td><div class="member-cell"><div class="avatar">${m.photo?`<img src="${safePhotoSrc(m.photo)}">`:escapeHtml((m.name||'').slice(0,2))}</div><div class="member-name-cell"><div class="name">${escapeHtml(m.name)}${m.status==='inactive'?' <span class="status-pill status-inactive" style="font-size:9px;">休会中</span>':''}${m.status==='left'?' <span class="status-pill status-left" style="font-size:9px;">退会</span>':''}</div><div class="id">${m.id}</div></div></div></td>
@@ -2528,7 +2552,7 @@ function renderPayment(){
       <td>${st}</td>
       <td><div class="action-btns">
         ${r.paid?`<button class="btn btn-ghost btn-sm" onclick="unmarkPaid('${m.id}')">取消</button>`:`<button class="btn btn-success btn-sm" onclick="openReceive('${m.id}')">受け取り済みにする</button>`}
-        ${billBtn}
+        ${billBtn}${lastLinkBtn}
       </div></td>
     </tr>`;
   }).join('');
@@ -2736,7 +2760,7 @@ async function sendMemberBillingLink(memberId){
   showPayLinkModal(m.name+' さんのカード登録リンク（毎月末日に翌月分を決済）');
   try{
     const res=await window.fbCallCreateMemberBillingLink({memberId, priceId, addonPriceId});
-    if(res.data && res.data.url){ showPayLinkReady(res.data.url); return; }
+    if(res.data && res.data.url){ rememberMemberLink(memberId, res.data.url, 'register'); showPayLinkReady(res.data.url); return; }
     // 旧方式（拡張機能経由）のFunctionsが動いている場合の互換処理
     const path=res.data.checkoutSessionPath;
     const parts=path.split('/');
@@ -3547,20 +3571,26 @@ function renderAccReminder(){
   const ym=accPrevYm();
   if(ym<'2026-11' || accIsDone(ym)){ box.style.display='none'; return; }   // 開業前の月は出さない
   const p=ym.split('-').map(Number);
+  const day=new Date().getDate(), late=day>15;
+  const folder=`01_法務・資金/経費精算_確定申告関連/取り込み待ち/${ym}/`;
   box.style.display='block';
+  box.style.background=late?'#fdf0ef':'#fff8e6'; box.style.borderColor=late?'#e74c3c':'var(--gold)';
   box.innerHTML=`<div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;">
-    <div style="flex:1;min-width:240px;">
-      <div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:4px;">${p[0]}年${p[1]}月分の会計データを、書類担当に渡しましょう</div>
+    <div style="flex:1;min-width:260px;">
+      <div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:2px;">先月分（${p[1]}月分）の会計データを <span style="font-family:monospace;font-size:12px;">取り込み待ち/${ym}/</span> に入れてください（15日まで）</div>
+      <div style="font-size:11px;color:${late?'#c0392b':'var(--text-muted)'};margin-bottom:6px;">${late?'15日を過ぎています。書類担当の16日の取り込みに間に合っていないので、早めに入れてください。':`書類担当が16日にまとめて記帳します（あと${15-day+1}日）。`}</div>
       <div style="font-size:11.5px;color:var(--text-secondary);line-height:1.8;">
-        ① 管理アプリの「会計用Excel」（${p[1]}月分）を保存<br>
-        ② Squareの入金レポート（${p[1]}月分）をCSVで保存<br>
-        ③ Stripeの入金（Payouts）の一覧をCSVで保存（口座振替の人がいれば、月額パンダの入金明細も）<br>
-        ④ 3つのファイルを書類担当の取り込み用フォルダに置いて、書類担当に伝える
+        ① 管理アプリの「会計用Excel」（<b>会計用_${ym}.xlsx</b>。名前はそのまま）<br>
+        ② Square：ダッシュボード →「入金」→ 期間を ${p[1]}/1〜末日（入金日）で「エクスポート」<br>
+        ③ Stripe：「レポート」→「入金の照合」→ 同じ期間でダウンロード（難しければ「残高」→「入金」一覧のCSV）<br>
+        ④ 口座振替の会員がいる月：月額パンダ「売上明細一覧」→ ${p[1]}月のCSV<br>
+        ⑤ 事業用口座があれば：ネットバンキングの ${p[1]}月の入出金明細<br>
+        <span style="color:var(--text-muted);">入金がなかったサービスのファイルは不要です。ダウンロードしたファイルの名前は変えなくてOKです。<br>置き場所：${folder}</span>
       </div>
     </div>
     <div style="display:flex;flex-direction:column;gap:6px;">
       <button class="btn btn-primary btn-sm" onclick="exportAccountingFor('${ym}')">① 会計用Excelを保存</button>
-      <button class="btn btn-ghost btn-sm" onclick="if(confirm('${p[1]}月分の会計データを、書類担当に渡し終わりましたか？')) accMarkDone('${ym}')">すべて済み</button>
+      <button class="btn btn-ghost btn-sm" onclick="if(confirm('${p[1]}月分のファイルを、取り込み待ち/${ym}/ に入れ終わりましたか？')) accMarkDone('${ym}')">入れ終わった</button>
     </div>
   </div>`;
 }
@@ -5165,7 +5195,7 @@ window.showScheduleTab=showScheduleTab;
 window.sendMemberBillingLink=sendMemberBillingLink;window.sendGuestPaymentLink=sendGuestPaymentLink;
 window.sendTrialPaymentLink=sendTrialPaymentLink;window.sendRentalPaymentLink=sendRentalPaymentLink;
 window.toggleRentalPayLinkBtn=toggleRentalPayLinkBtn;window.copyPayLink=copyPayLink;window.closePayLinkModal=closePayLinkModal;
-window.updateInsNote=updateInsNote;window.accMarkDone=accMarkDone;window.exportAccountingFor=exportAccountingFor;window.onPayMethodChange=onPayMethodChange;window.movePayMonth=movePayMonth;window.setPayFilter=setPayFilter;window.openReceive=openReceive;window.closeReceive=closeReceive;window.saveReceive=saveReceive;window.unmarkPaid=unmarkPaid;window.editPayAmount=editPayAmount;window.updateJoinPay=updateJoinPay;window.exportAccounting=exportAccounting;window.resetTestRecords=resetTestRecords;window.checkMidInput=checkMidInput;window.startJoinFromTrial=startJoinFromTrial;window.exportVisitsExcel=exportVisitsExcel;window.exportVisitsPdf=exportVisitsPdf;window.openPlModal=openPlModal;window.closePlModal=closePlModal;window.savePl=savePl;window.deletePl=deletePl;window.filterPl=filterPl;window.renderPlList=renderPlList;window.togglePlKind=togglePlKind;window.togglePlGuardian=togglePlGuardian;window.onPlMemberSelect=onPlMemberSelect;window.onPlStartChange=onPlStartChange;window.sendPlPaymentLink=sendPlPaymentLink;window.addPlToCalendar=addPlToCalendar;window.togglePlPaste=togglePlPaste;window.applyPlPaste=applyPlPaste;
+window.updateInsNote=updateInsNote;window.showMemberLastLink=showMemberLastLink;window.accMarkDone=accMarkDone;window.exportAccountingFor=exportAccountingFor;window.onPayMethodChange=onPayMethodChange;window.movePayMonth=movePayMonth;window.setPayFilter=setPayFilter;window.openReceive=openReceive;window.closeReceive=closeReceive;window.saveReceive=saveReceive;window.unmarkPaid=unmarkPaid;window.editPayAmount=editPayAmount;window.updateJoinPay=updateJoinPay;window.exportAccounting=exportAccounting;window.resetTestRecords=resetTestRecords;window.checkMidInput=checkMidInput;window.startJoinFromTrial=startJoinFromTrial;window.exportVisitsExcel=exportVisitsExcel;window.exportVisitsPdf=exportVisitsPdf;window.openPlModal=openPlModal;window.closePlModal=closePlModal;window.savePl=savePl;window.deletePl=deletePl;window.filterPl=filterPl;window.renderPlList=renderPlList;window.togglePlKind=togglePlKind;window.togglePlGuardian=togglePlGuardian;window.onPlMemberSelect=onPlMemberSelect;window.onPlStartChange=onPlStartChange;window.sendPlPaymentLink=sendPlPaymentLink;window.addPlToCalendar=addPlToCalendar;window.togglePlPaste=togglePlPaste;window.applyPlPaste=applyPlPaste;
 window.openPrivateLessonModal=openPrivateLessonModal;window.closePrivateLessonModal=closePrivateLessonModal;window.sendPrivateLessonPaymentLink=sendPrivateLessonPaymentLink;
 
 
