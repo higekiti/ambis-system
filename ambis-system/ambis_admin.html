@@ -687,9 +687,9 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
         <div class="filter-tab" data-f="stripe" onclick="setPayFilter('stripe',this)">カード（Stripe）</div>
         <div class="filter-tab" data-f="bank" onclick="setPayFilter('bank',this)">口座振替</div>
       </div>
-      <div style="font-size:11px;color:var(--text-muted);margin:-6px 0 10px;">会費は前払いです。月末に「翌月分」が受け取れているかを確認しましょう（▶で翌月へ）。金額の ✎ で、その月だけ金額を変えられます。</div>
+      <div style="font-size:11px;color:var(--text-muted);margin:-6px 0 10px;">表示している月の分として受け取る額（入会月は全額／半額、休会中は在籍料）です。会費は前払いなので、月末に「翌月分」が受け取れているかを確認しましょう（▶で翌月へ）。✎ で、その月だけ金額を変えられます。</div>
       <div class="table-wrap">
-        <table><thead><tr><th>会員</th><th>支払い方法</th><th>区分</th><th>金額</th><th>状態</th><th></th></tr></thead>
+        <table><thead><tr><th>会員</th><th>支払い方法</th><th>区分</th><th>この月に受け取る額</th><th>状態</th><th></th></tr></thead>
         <tbody id="pay-tbody"></tbody></table>
         <div class="empty-state" id="empty-pay" style="display:none;"><p>この月の対象の会員はいません</p></div>
       </div>
@@ -2121,8 +2121,22 @@ async function runStripeAction(){
 const PAYLINK_TTL_MS=24*3600*1000;
 function rememberMemberLink(memberId, url, kind){
   const i=members.findIndex(x=>x.id===memberId); if(i<0||!url) return;
+  // サーバー（Functions）側でも同じ内容と、メールの送信状況（linkMail）を記録する。
+  // ここで保存し直すと、サーバーが書いた送信状況を古い内容で上書きしてしまうので、画面用に手元だけ更新する。
   members[i]={...members[i], lastPayLink:url, lastPayLinkAt:Date.now(), lastPayLinkKind:kind};
-  saveAll();
+}
+// カード登録・変更リンクのメール送信状況（Functionsが linkMail に記録）
+function linkMailHtml(m){
+  const lm=m&&m.linkMail; if(!lm) return '';
+  const ts=v=>{ const d=v&&v.toDate?v.toDate():(v&&v.seconds?new Date(v.seconds*1000):(v?new Date(v):null)); return d&&!isNaN(d)?`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`:''; };
+  const what=lm.kind==='update'?'カード変更リンク':'カード登録リンク';
+  const t=ts(lm.updatedAt||lm.queuedAt);
+  let html;
+  if(lm.state==='SUCCESS') html=`<span style="color:#27ae60;">✓ ${what}をメールで送信済み</span>（${escapeHtml(lm.to||'')}${t?'・'+t:''}）`;
+  else if(lm.state==='ERROR') html=`<span style="color:#c0392b;font-weight:600;">✕ メール送信に失敗：${escapeHtml(lm.error||'')}</span>（${escapeHtml(lm.to||'')}）→ メールアドレスを確認して再発行してください`;
+  else if(lm.state==='LINE') html=`<span style="color:var(--text-secondary);">${what}を発行（送り方：LINE。メールは送っていません）${t?' '+t:''}</span>`;
+  else html=`<span style="color:#e67e22;">${what}のメールを送信中…</span>（${escapeHtml(lm.to||'')}）`;
+  return `<div style="font-size:10.5px;margin-top:4px;line-height:1.5;">${html}</div>`;
 }
 function memberLinkLeftMs(m){ return (m&&m.lastPayLink&&m.lastPayLinkAt) ? (m.lastPayLinkAt+PAYLINK_TTL_MS-Date.now()) : -1; }
 function showMemberLastLink(memberId){
@@ -2540,13 +2554,13 @@ function renderPayment(){
     const st=r.paid
       ? `<span class="status-pill pay-status-paid">受け取り済み</span><div style="font-size:10px;color:var(--text-muted);margin-top:3px;">${escapeHtml(RCV_METHOD_LABEL[r.rec.method]||(r.rec.source==='stripe'?'Stripe自動決済':''))}${r.rec.paidDate?' '+escapeHtml(r.rec.paidDate.slice(5).replace('-','/')):''}</div>`
       : `<span class="status-pill pay-status-pending">未払い</span>`;
-    const amt=`<span style="font-family:'Bebas Neue',sans-serif;font-size:18px;">¥${r.amount.toLocaleString()}</span> <button class="btn btn-ghost btn-sm" style="padding:1px 6px;" title="この月の金額を変える" onclick="editPayAmount('${m.id}')">✎</button>${r.entry?`<div style="font-size:10.5px;color:var(--text-secondary);">＋入会金 ¥${r.entry.toLocaleString()}</div>`:''}${r.rec&&r.rec.note?`<div style="font-size:10px;color:var(--text-muted);">${escapeHtml(r.rec.note)}</div>`:''}`;
+    const amt=`<div style="font-size:9.5px;color:var(--text-muted);letter-spacing:.5px;">${r.paid?'受け取った額':'受け取る予定'}</div><span style="font-family:'Bebas Neue',sans-serif;font-size:18px;">¥${r.amount.toLocaleString()}</span> <button class="btn btn-ghost btn-sm" style="padding:1px 6px;" title="この月の金額を変える" onclick="editPayAmount('${m.id}')">✎</button>${r.entry?`<div style="font-size:10.5px;color:var(--text-secondary);">＋入会金 ¥${r.entry.toLocaleString()}</div>`:''}${r.rec&&r.rec.note?`<div style="font-size:10px;color:var(--text-muted);">${escapeHtml(r.rec.note)}</div>`:''}`;
     const linkLeft=memberLinkLeftMs(m);
     const lastLinkBtn = (r.method==='stripe' && linkLeft>0) ? `<button class="btn btn-ghost btn-sm" title="前回発行したリンクをもう一度表示（リマインド用）" onclick="showMemberLastLink('${m.id}')">前回のリンク（あと${Math.max(1,Math.floor(linkLeft/3600000))}時間）</button>` : (r.method==='stripe' && m.lastPayLink && !hasLiveStripeSub(m) ? `<span style="font-size:10px;color:var(--text-muted);align-self:center;">前回のリンクは期限切れ</span>` : '');
     const billBtn = r.method==='stripe' ? (!hasLiveStripeSub(m)?`<button class="btn btn-ghost btn-sm" onclick="sendMemberBillingLink('${m.id}')">${m.stripeUid?'カード登録リンクを再発行':'カード登録リンクを発行'}</button>`:`<button class="btn btn-ghost btn-sm" onclick="sendCardUpdateLink('${m.id}')">カード変更リンク</button>`) : '';
     return `<tr>
       <td><div class="member-cell"><div class="avatar">${m.photo?`<img src="${safePhotoSrc(m.photo)}">`:escapeHtml((m.name||'').slice(0,2))}</div><div class="member-name-cell"><div class="name">${escapeHtml(m.name)}${m.status==='inactive'?' <span class="status-pill status-inactive" style="font-size:9px;">休会中</span>':''}${m.status==='left'?' <span class="status-pill status-left" style="font-size:9px;">退会</span>':''}</div><div class="id">${m.id}</div></div></div></td>
-      <td style="font-size:12px;">${PAY_METHOD_LABEL[r.method]||''}${stripeInfo}</td>
+      <td style="font-size:12px;">${PAY_METHOD_LABEL[r.method]||''}${stripeInfo}${r.method==='stripe'&&!hasLiveStripeSub(m)?linkMailHtml(m):(r.method==='stripe'&&m.linkMail&&m.linkMail.kind==='update'?linkMailHtml(m):'')}</td>
       <td style="font-size:12px;color:var(--text-secondary);">${PAY_KIND_LABEL[r.kind]||''}</td>
       <td>${amt}</td>
       <td>${st}</td>
@@ -4948,6 +4962,7 @@ function __rerenderActivePage(){
     else if(page==='attendance'){ renderAttendance(); renderMonthlyChart(); }
     else if(page==='trial') renderTrialList();
     else if(page==='private') renderPlList();
+    else if(page==='payment' && !modalOpen && (colls.has('members')||colls.has('payments'))) renderPayment();   // メールの送信状況・Stripeの決済をその場で反映
     if(colls.has('trial_visitors')||colls.has('private_lessons')) renderUpcomingVisitors();
     else if(page==='belt') renderBeltHistory();
     else if(page==='dormant') renderDormant();
