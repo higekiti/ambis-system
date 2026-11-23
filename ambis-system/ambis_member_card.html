@@ -593,7 +593,13 @@ input:focus,select:focus{border-color:var(--navy-light);}
 .rm-body{padding:18px 20px;}
 .rm-foot{padding:12px 20px 18px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:space-between;align-items:center;}
 .rm-row{margin-bottom:14px;}
-.rm-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.rm-row-2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin-bottom:14px;}
+.rm-row-2>div{min-width:0;}
+/* iPhoneの日付欄は中身の幅で横に広がるため、枠からはみ出さないようにする */
+.rm-modal input[type=date]{min-width:0;max-width:100%;display:block;-webkit-appearance:none;appearance:none;min-height:40px;background:#fff;}
+.rm-modal input[type=date]::-webkit-date-and-time-value{text-align:left;}
+/* スマホ（幅460px以下）では、2列の欄を縦に並べる（iPhoneの日付欄が隣と重ならないように） */
+@media (max-width:460px){ .rm-row-2{grid-template-columns:1fr;} }
 .rm-row label{display:block;font-size:11px;color:var(--text-secondary);margin-bottom:4px;}
 .rm-row-2 label{display:block;font-size:11px;color:var(--text-secondary);margin-bottom:4px;}
 .rm-modal input[type=text],.rm-modal input[type=date],.rm-modal select,.rm-modal textarea{
