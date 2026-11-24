@@ -693,6 +693,13 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
         <tbody id="pay-tbody"></tbody></table>
         <div class="empty-state" id="empty-pay" style="display:none;"><p>この月の対象の会員はいません</p></div>
       </div>
+      <div class="section-header" style="margin-top:22px;"><div class="section-title">その他の受け取り（プライベートレッスン・ビジター・レンタル）</div></div>
+      <div style="font-size:11px;color:var(--text-muted);margin:-6px 0 10px;">この月に予定・実施したもの（と、この月に受け取ったもの）です。窓口で受け取ったら「受け取り済みにする」で受け取り方法を記録してください。会計用Excelにもその方法で入ります。</div>
+      <div class="table-wrap">
+        <table><thead><tr><th>日付</th><th>種類</th><th>お名前</th><th>金額</th><th>状態</th><th></th></tr></thead>
+        <tbody id="pay-other-tbody"></tbody></table>
+        <div class="empty-state" id="empty-pay-other" style="display:none;"><p>この月のプライベートレッスン・ビジター・レンタルはありません</p></div>
+      </div>
     </div>
 
     <!-- ══ PAGE: DORMANT ══ -->
@@ -1604,6 +1611,24 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-xrcv">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header"><div class="modal-title" id="xrcv-title">受け取りの記録</div><button class="modal-close" onclick="closeXrcv()">×</button></div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;" id="xrcv-sub"></div>
+      <div class="form-row"><label>金額（円）</label><input type="number" id="xrcv-amount"></div>
+      <div class="form-row-2">
+        <div><label>受け取り方法</label><select id="xrcv-method"><option value="cash">現金</option><option value="card">カード（Square）</option><option value="qr">QR決済（Square）</option><option value="emoney">電子マネー（Square）</option><option value="stripe">支払いリンク（Stripe）</option></select></div>
+        <div><label>受け取った日</label><input type="date" id="xrcv-date"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeXrcv()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveXrcv()">受け取り済みにする</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-pl">
   <div class="modal">
     <div class="modal-header"><div class="modal-title" id="modal-pl-title">プライベートレッスン登録</div><button class="modal-close" onclick="closePlModal()">×</button></div>
@@ -1660,7 +1685,11 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
       </div>
       <div class="form-row-2">
         <div><label>道着</label><select id="pl-gi"><option value="">未定</option><option value="no">持参</option><option value="gi">道着＋帯レンタル（¥1,000）</option></select></div>
-        <div><label>支払い</label><select id="pl-pay"><option value="pending">未払い</option><option value="paid">支払い済み（カード）</option><option value="counter">支払い済み（窓口）</option><option value="failed">決済失敗</option></select></div>
+        <div><label>支払い</label><select id="pl-pay" onchange="onPlPayChange()"><option value="pending">未払い</option><option value="paid">支払い済み（カード）</option><option value="counter">支払い済み（窓口）</option><option value="failed">決済失敗</option></select></div>
+      </div>
+      <div class="form-row-2" id="pl-rcv-wrap" style="display:none;">
+        <div><label>窓口での受け取り方法</label><select id="pl-rcv-method"><option value="cash">現金</option><option value="card">カード（Square）</option><option value="qr">QR決済（Square）</option><option value="emoney">電子マネー（Square）</option></select></div>
+        <div><label>受け取った日</label><input type="date" id="pl-rcv-date"></div>
       </div>
       <div class="form-row"><label>目的</label><input type="text" id="pl-goals" placeholder="例：試合対策、覚えたい技がある"></div>
       <div class="form-row"><label>学びたいこと・くわしい内容</label><textarea id="pl-detail" style="min-height:64px;"></textarea></div>
@@ -2532,7 +2561,7 @@ function renderPayment(){
   if(!document.getElementById('pay-income')) return;
   if(!payMonth) payMonth=localDateStr().slice(0,7);
   const ym=payMonth, nmo=+shiftYm(ym,1).split('-')[1], cmo=+ym.split('-')[1];
-  document.getElementById('pay-month-label').textContent=ymLabel(ym)+'に受け取る';
+  document.getElementById('pay-month-label').textContent=`${ym.split('-')[0]}年${cmo}月に受け取る`;
   document.getElementById('pay-help').innerHTML=`会費は前払いです。<b>${cmo}月中に、${nmo}月分の会費</b>を受け取ります（現金は窓口で／口座振替は27日ごろ引き落とし（間に合わない月は窓口で）／Stripeは月末に自動決済）。${cmo}月に入会した人は「入会金＋${cmo}月分＋${nmo}月分」をまとめて受け取ります。✎ で、その月だけ金額を変えられます。`;
   const targets=payTargets(ym);
   let income=0, expected=0, unpaidN=0, unpaidAmt=0;
@@ -2607,6 +2636,84 @@ function renderPayment(){
       </div></td>
     </tr>`;
   }).join('');
+  renderPayOther(ym);
+}
+// ── その他の受け取り（プライベートレッスン・ビジター・レンタル）──
+function otherIncomeItems(ym){
+  const inM=d=>!!d && String(d).slice(0,7)===ym;
+  const out=[];
+  privateLessons.forEach(p=>{
+    const paid=plIsPaid(p);
+    if(!(inM(p.date) || (paid&&inM(p.rcvDate)))) return;
+    if(p.status==='cancel' && !paid) return;
+    out.push({type:'pl', id:p.id, date:p.date||'', time:p.start||'', kind:'プライベートレッスン', name:plName(p), amount:+p.price||0, paid,
+      method:p.rcvMethod||(p.paymentStatus==='paid'?'stripe':p.paymentStatus==='counter'?'cash':''), rcvDate:p.rcvDate||''});
+  });
+  trialVisitors.filter(t=>t.type==='visitor').forEach(t=>{
+    const paid=t.paymentStatus==='paid';
+    if(!(inM(t.date) || (paid&&inM(t.rcvDate)))) return;
+    out.push({type:'visitor', id:t.id, date:t.date||'', time:t.classStart||'', kind:'ビジター', name:t.name||'', amount:+t.fee||0, paid, method:t.rcvMethod||(paid?'stripe':''), rcvDate:t.rcvDate||''});
+  });
+  rentalBookings.forEach(b=>{
+    const paid=b.paymentStatus==='paid';
+    if(!(inM(b.date) || (paid&&inM(b.rcvDate)))) return;
+    if(b.bookingStatus==='cancelled' && !paid) return;
+    out.push({type:'rental', id:b.id, date:b.date||'', time:b.startTime||'', kind:'レンタルスペース', name:b.customerName||'', amount:+b.price||0, paid,
+      method:b.rcvMethod||(paid?(b.paymentMethod==='online'?'stripe':'cash'):''), rcvDate:b.rcvDate||''});
+  });
+  return out.sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+}
+function renderPayOther(ym){
+  const tb=document.getElementById('pay-other-tbody'); if(!tb) return;
+  const items=otherIncomeItems(ym);
+  document.getElementById('empty-pay-other').style.display=items.length?'none':'block';
+  tb.innerHTML=items.map(it=>{
+    const d=it.date?it.date.slice(5).replace('-','/'):'未定';
+    const st=it.paid
+      ? `<span class="status-pill pay-status-paid">受け取り済み</span><div style="font-size:10px;color:var(--text-muted);margin-top:3px;">${escapeHtml(RCV_METHOD_LABEL[it.method]||'')}${it.rcvDate?' '+escapeHtml(it.rcvDate.slice(5).replace('-','/')):''}</div>`
+      : `<span class="status-pill pay-status-pending">未払い</span>`;
+    return `<tr>
+      <td style="font-size:12px;">${d}${it.time?' '+escapeHtml(it.time):''}</td>
+      <td style="font-size:12px;color:var(--text-secondary);">${it.kind}</td>
+      <td>${escapeHtml(it.name)}</td>
+      <td><span style="font-family:'Bebas Neue',sans-serif;font-size:17px;">¥${it.amount.toLocaleString()}</span></td>
+      <td>${st}</td>
+      <td><div class="action-btns">${it.paid?`<button class="btn btn-ghost btn-sm" onclick="unmarkXrcv('${it.type}','${it.id}')">取消</button>`:`<button class="btn btn-success btn-sm" onclick="openXrcv('${it.type}','${it.id}')">受け取り済みにする</button>`}</div></td>
+    </tr>`;
+  }).join('');
+}
+let xrcvTarget=null;
+function xrcvFind(type,id){ const arr=type==='pl'?privateLessons:type==='visitor'?trialVisitors:rentalBookings; return arr.find(x=>x.id===id); }
+function openXrcv(type,id){
+  const r=xrcvFind(type,id); if(!r) return;
+  const it=otherIncomeItems(payMonth).find(x=>x.type===type&&x.id===id) || {kind:'',name:'',amount:0,date:''};
+  xrcvTarget={type,id};
+  document.getElementById('xrcv-title').textContent=`${it.name||''} 様（${it.kind}）`;
+  document.getElementById('xrcv-sub').textContent=it.date?`日付：${it.date}`:'';
+  document.getElementById('xrcv-amount').value=it.amount;
+  document.getElementById('xrcv-method').value='cash';
+  const today=localDateStr();
+  document.getElementById('xrcv-date').value=(it.date && it.date<today)?it.date:today;
+  document.getElementById('modal-xrcv').classList.add('open');
+}
+function closeXrcv(){ document.getElementById('modal-xrcv').classList.remove('open'); xrcvTarget=null; }
+function saveXrcv(){
+  if(!xrcvTarget) return;
+  const r=xrcvFind(xrcvTarget.type, xrcvTarget.id); if(!r) return;
+  const amt=Math.max(0,parseInt(document.getElementById('xrcv-amount').value,10)||0);
+  const mk=document.getElementById('xrcv-method').value, d=document.getElementById('xrcv-date').value||localDateStr();
+  r.rcvMethod=mk; r.rcvDate=d;
+  if(xrcvTarget.type==='pl'){ r.price=amt; r.paymentStatus = mk==='stripe' ? 'paid' : 'counter'; }
+  else if(xrcvTarget.type==='visitor'){ r.fee=amt; r.paymentStatus='paid'; }
+  else { r.price=amt; r.paymentStatus='paid'; }
+  saveAll(); closeXrcv(); renderPayment(); showToast('受け取り済みにしました');
+}
+function unmarkXrcv(type,id){
+  const r=xrcvFind(type,id); if(!r) return;
+  if(!confirm(`${r.name||r.customerName||''} 様の受け取りを「未払い」に戻しますか？`)) return;
+  r.paymentStatus = type==='rental' ? 'unpaid' : 'pending';
+  delete r.rcvMethod; delete r.rcvDate;
+  saveAll(); renderPayment(); showToast('未払いに戻しました');
 }
 // 台帳のレコードを取得（なければ作る）
 function ensurePayRecord(m, ym){
@@ -2774,17 +2881,18 @@ function collectAccounting(ym){
   });
   // ビジター（支払いリンク＝Stripe）
   trialVisitors.filter(t=>t.type==='visitor'&&t.paymentStatus==='paid').forEach(t=>{
-    add(accParseDate(t.date), 'stripe', 'Stripe', 'ビジター', '', '', t.name, t.fee, '', 'ビジター', 'APP-'+t.id);
+    const mk=t.rcvMethod||'stripe';
+    add(accParseDate(t.rcvDate||t.date), mk, RCV_METHOD_LABEL[mk]||'', 'ビジター', '', '', t.name, t.fee, '', 'ビジター', 'APP-'+t.id);
   });
   // プライベートレッスン（カード＝Stripe／窓口＝現金として記録）
   privateLessons.filter(p=>plIsPaid(p)).forEach(p=>{
-    const counter=p.paymentStatus==='counter';
-    add(accParseDate(p.date||p.createdAt), counter?'cash':'stripe', counter?'窓口':'Stripe', 'プライベートレッスン', '', p.memberId||'', plName(p), p.price, '', p.memberId?'会員':'プライベートレッスン利用者', 'APP-'+p.id);
+    const counter=p.paymentStatus==='counter', mk=p.rcvMethod||(counter?'cash':'stripe');
+    add(accParseDate(p.rcvDate||p.date||p.createdAt), mk, RCV_METHOD_LABEL[mk]||'', 'プライベートレッスン', '', p.memberId||'', plName(p), p.price, '', p.memberId?'会員':'プライベートレッスン利用者', 'APP-'+p.id);
   });
   // レンタルスペース（オンライン＝Stripe／現地払い＝現金）
   rentalBookings.filter(b=>b.paymentStatus==='paid').forEach(b=>{
-    const online=b.paymentMethod==='online';
-    add(accParseDate(b.date), online?'stripe':'cash', online?'Stripe':'現地払い', 'レンタルスペース', '', '', b.customerName, b.price, '', 'レンタル利用者', 'APP-'+b.id);
+    const mk=b.rcvMethod||(b.paymentMethod==='online'?'stripe':'cash');
+    add(accParseDate(b.rcvDate||b.date), mk, RCV_METHOD_LABEL[mk]||'', 'レンタルスペース', '', '', b.customerName, b.price, '', 'レンタル利用者', 'APP-'+b.id);
   });
   rows.sort((x,y)=>x.date-y.date || String(x.ref).localeCompare(String(y.ref)));
   return rows;
@@ -3469,7 +3577,7 @@ function renderRentalPayment(){
 }
 function markRentalPaid(id,status){
   const idx=rentalBookings.findIndex(b=>b.id===id);
-  if(idx!==-1) rentalBookings[idx].paymentStatus=status;
+  if(idx!==-1){ const b=rentalBookings[idx]; b.paymentStatus=status; if(status==='paid'){ if(!b.rcvDate) b.rcvDate=localDateStr(); } else { delete b.rcvDate; delete b.rcvMethod; } }
   saveAll();
   renderRentalPayment();
   showToast(status==='paid'?'支払いを確認しました':'支払い確認を取消しました');
@@ -4157,13 +4265,14 @@ function onPlStartChange(){
   const [h,mi]=s.split(':').map(Number); const e=h*60+mi+60;
   document.getElementById('pl-end').value=String(Math.floor(e/60)).padStart(2,'0')+':'+String(e%60).padStart(2,'0');
 }
+function onPlPayChange(){ const c=document.getElementById('pl-pay').value==='counter'; document.getElementById('pl-rcv-wrap').style.display=c?'grid':'none'; if(c&&!document.getElementById('pl-rcv-date').value) document.getElementById('pl-rcv-date').value=document.getElementById('pl-date').value||localDateStr(); }
 function openPlModal(mode,id){
   editingPlId=null;
   const ids=['pl-name','pl-kana','pl-phone','pl-email','pl-age','pl-guardian','pl-belt','pl-guard','pl-weight','pl-height','pl-wishes','pl-date','pl-start','pl-end','pl-goals','pl-detail','pl-health','pl-note','pl-dojo','pl-paste'];
   ids.forEach(x=>document.getElementById(x).value='');
   document.getElementById('pl-gender').value=''; document.getElementById('pl-gi').value='';
   document.getElementById('pl-kind').value='member'; document.getElementById('pl-status').value='request';
-  document.getElementById('pl-pay').value='pending'; document.getElementById('pl-price').value=PRIVATE_LESSON_FEE;
+  document.getElementById('pl-pay').value='pending'; document.getElementById('pl-price').value=PRIVATE_LESSON_FEE; document.getElementById('pl-rcv-method').value='cash'; document.getElementById('pl-rcv-date').value='';
   const sel=document.getElementById('pl-member-sel');
   sel.innerHTML='<option value="">（選ぶと名前・連絡先が入ります）</option>'+members.filter(m=>m.status!=='left').map(m=>`<option value="${escapeHtml(m.id)}">${escapeHtml(m.name)}</option>`).join('');
   document.getElementById('pl-paste-box').style.display='none'; document.getElementById('pl-paste-msg').textContent='';
@@ -4178,6 +4287,7 @@ function openPlModal(mode,id){
     Object.entries(f).forEach(([k,v])=>{ if(v!==undefined&&v!==null) document.getElementById(k).value=v; });
     document.getElementById('pl-status').value=plStatusOf(p);
     document.getElementById('pl-pay').value=p.paymentStatus||'pending';
+    document.getElementById('pl-rcv-method').value=(p.rcvMethod&&p.rcvMethod!=='stripe')?p.rcvMethod:'cash'; document.getElementById('pl-rcv-date').value=p.rcvDate||p.date||'';
     document.getElementById('pl-price').value=p.price||PRIVATE_LESSON_FEE;
     document.getElementById('pl-paste-wrap').style.display='none';
     document.getElementById('pl-actions-row').style.display='block';
@@ -4189,6 +4299,7 @@ function openPlModal(mode,id){
     document.getElementById('pl-del-btn').style.display='none';
   }
   togglePlKind(); togglePlGuardian();
+  onPlPayChange();
   document.getElementById('modal-pl').classList.add('open');
 }
 function closePlModal(){ document.getElementById('modal-pl').classList.remove('open'); }
@@ -4203,6 +4314,7 @@ function collectPl(){
     dojo: kind==='guest'?v('pl-dojo'):'',
     wishes:v('pl-wishes'), date:v('pl-date'), start:v('pl-start'), end:v('pl-end'),
     status:v('pl-status'), price:parseInt(v('pl-price'),10)||0, giRental:v('pl-gi'), paymentStatus:v('pl-pay'),
+    rcvMethod: v('pl-pay')==='counter' ? v('pl-rcv-method') : (v('pl-pay')==='paid'?'stripe':''), rcvDate: v('pl-pay')==='counter' ? (v('pl-rcv-date')||v('pl-date')||localDateStr()) : '',
     goals:v('pl-goals'), detail:v('pl-detail'), health:v('pl-health'), note:v('pl-note'),
   };
   data.memberName=data.name;   // 以前の決済データとの互換
@@ -5050,7 +5162,7 @@ function __rerenderActivePage(){
     else if(page==='attendance'){ renderAttendance(); renderMonthlyChart(); }
     else if(page==='trial') renderTrialList();
     else if(page==='private') renderPlList();
-    else if(page==='payment' && !modalOpen && (colls.has('members')||colls.has('payments'))) renderPayment();   // メールの送信状況・Stripeの決済をその場で反映
+    else if(page==='payment' && !modalOpen && (colls.has('members')||colls.has('payments')||colls.has('private_lessons')||colls.has('trial_visitors')||colls.has('rental_bookings'))) renderPayment();   // メールの送信状況・Stripeの決済をその場で反映
     if(colls.has('trial_visitors')||colls.has('private_lessons')) renderUpcomingVisitors();
     else if(page==='belt') renderBeltHistory();
     else if(page==='dormant') renderDormant();
@@ -5298,7 +5410,7 @@ window.showScheduleTab=showScheduleTab;
 window.sendMemberBillingLink=sendMemberBillingLink;window.sendGuestPaymentLink=sendGuestPaymentLink;
 window.sendTrialPaymentLink=sendTrialPaymentLink;window.sendRentalPaymentLink=sendRentalPaymentLink;
 window.toggleRentalPayLinkBtn=toggleRentalPayLinkBtn;window.copyPayLink=copyPayLink;window.closePayLinkModal=closePayLinkModal;
-window.updateInsNote=updateInsNote;window.updateRcvTotal=updateRcvTotal;window.showMemberLastLink=showMemberLastLink;window.accMarkDone=accMarkDone;window.exportAccountingFor=exportAccountingFor;window.onPayMethodChange=onPayMethodChange;window.movePayMonth=movePayMonth;window.setPayFilter=setPayFilter;window.openReceive=openReceive;window.closeReceive=closeReceive;window.saveReceive=saveReceive;window.unmarkPaid=unmarkPaid;window.editPayAmount=editPayAmount;window.updateJoinPay=updateJoinPay;window.exportAccounting=exportAccounting;window.resetTestRecords=resetTestRecords;window.checkMidInput=checkMidInput;window.startJoinFromTrial=startJoinFromTrial;window.exportVisitsExcel=exportVisitsExcel;window.exportVisitsPdf=exportVisitsPdf;window.openPlModal=openPlModal;window.closePlModal=closePlModal;window.savePl=savePl;window.deletePl=deletePl;window.filterPl=filterPl;window.renderPlList=renderPlList;window.togglePlKind=togglePlKind;window.togglePlGuardian=togglePlGuardian;window.onPlMemberSelect=onPlMemberSelect;window.onPlStartChange=onPlStartChange;window.sendPlPaymentLink=sendPlPaymentLink;window.addPlToCalendar=addPlToCalendar;window.togglePlPaste=togglePlPaste;window.applyPlPaste=applyPlPaste;
+window.updateInsNote=updateInsNote;window.openXrcv=openXrcv;window.closeXrcv=closeXrcv;window.saveXrcv=saveXrcv;window.unmarkXrcv=unmarkXrcv;window.onPlPayChange=onPlPayChange;window.updateRcvTotal=updateRcvTotal;window.showMemberLastLink=showMemberLastLink;window.accMarkDone=accMarkDone;window.exportAccountingFor=exportAccountingFor;window.onPayMethodChange=onPayMethodChange;window.movePayMonth=movePayMonth;window.setPayFilter=setPayFilter;window.openReceive=openReceive;window.closeReceive=closeReceive;window.saveReceive=saveReceive;window.unmarkPaid=unmarkPaid;window.editPayAmount=editPayAmount;window.updateJoinPay=updateJoinPay;window.exportAccounting=exportAccounting;window.resetTestRecords=resetTestRecords;window.checkMidInput=checkMidInput;window.startJoinFromTrial=startJoinFromTrial;window.exportVisitsExcel=exportVisitsExcel;window.exportVisitsPdf=exportVisitsPdf;window.openPlModal=openPlModal;window.closePlModal=closePlModal;window.savePl=savePl;window.deletePl=deletePl;window.filterPl=filterPl;window.renderPlList=renderPlList;window.togglePlKind=togglePlKind;window.togglePlGuardian=togglePlGuardian;window.onPlMemberSelect=onPlMemberSelect;window.onPlStartChange=onPlStartChange;window.sendPlPaymentLink=sendPlPaymentLink;window.addPlToCalendar=addPlToCalendar;window.togglePlPaste=togglePlPaste;window.applyPlPaste=applyPlPaste;
 window.openPrivateLessonModal=openPrivateLessonModal;window.closePrivateLessonModal=closePrivateLessonModal;window.sendPrivateLessonPaymentLink=sendPrivateLessonPaymentLink;
 
 
