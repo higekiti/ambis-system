@@ -1045,6 +1045,9 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
           <div><label>入会月の会費</label><select id="f-join-kind" onchange="updateJoinPay(true)"><option value="full">全額（1〜15日の入会）</option><option value="half">半額（16日〜月末の入会）</option><option value="none">受け取らない</option></select></div>
           <div><label>入会月の会費（円）</label><input type="number" id="f-join-amount" oninput="updateJoinPay(false,true)"></div>
         </div>
+        <div id="f-join-next-wrap" style="display:none;margin-bottom:8px;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px;"><input type="checkbox" id="f-join-next-on" style="width:auto;" onchange="updateJoinPay(false,true)"> <span id="f-join-next-label">翌月分も一緒に受け取る</span>（¥<input type="number" id="f-join-next-amount" style="width:90px;display:inline-block;padding:4px 6px;" oninput="updateJoinPay(false,true)">）</label>
+        </div>
         <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;" id="f-join-total"></div>
         <div class="form-row-2" style="margin-bottom:0;">
           <div><label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="f-join-paid" style="width:auto;" checked> 受け取り済み</label></div>
@@ -1587,9 +1590,15 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
     <div class="modal-body">
       <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;" id="rcv-sub"></div>
       <div class="form-row-2">
-        <div><label>会費（円）</label><input type="number" id="rcv-amount"></div>
-        <div id="rcv-entry-wrap"><label>入会金（円）</label><input type="number" id="rcv-entry"></div>
+        <div><label id="rcv-amount-label">会費（円）</label><input type="number" id="rcv-amount" oninput="updateRcvTotal()"></div>
+        <div id="rcv-entry-wrap"><label>入会金（円）</label><input type="number" id="rcv-entry" oninput="updateRcvTotal()"></div>
       </div>
+      <div id="rcv-next-wrap" style="display:none;background:#f7f8fb;border-radius:8px;padding:9px 12px;margin-bottom:12px;">
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:6px;"><input type="checkbox" id="rcv-next-on" style="width:auto;" onchange="updateRcvTotal()"> <span id="rcv-next-label">翌月分も一緒に受け取った</span></label>
+        <input type="number" id="rcv-next-amount" oninput="updateRcvTotal()">
+        <div id="rcv-next-note" style="font-size:10.5px;color:var(--text-muted);margin-top:4px;"></div>
+      </div>
+      <div id="rcv-total" style="font-size:12.5px;color:var(--navy);margin:-4px 0 12px;"></div>
       <div class="form-row-2">
         <div><label>受け取り方法</label><select id="rcv-method"><option value="cash">現金</option><option value="card">カード（Square）</option><option value="qr">QR決済（Square）</option><option value="emoney">電子マネー（Square）</option><option value="bank">口座振替（月額パンダ）</option><option value="stripe">カード（Stripe自動決済）</option></select></div>
         <div><label>受け取った日</label><input type="date" id="rcv-date"></div>
@@ -2481,6 +2490,7 @@ let payMonth=null, payFilter='all';
 function onPayMethodChange(){
   const pm=document.getElementById('f-paymethod').value, cm=document.getElementById('f-contactMethod');
   if(pm!=='stripe') cm.value='cash'; else if(cm.value==='cash') cm.value='line';
+  updateJoinPay(true);
 }
 function memberPayMethod(m){ return m.payMethod || (m.contactMethod==='cash'?'cash':'stripe'); }
 function ymOf(d){ return (d||'').slice(0,7); }
@@ -2554,7 +2564,19 @@ function renderPayment(){
     const st=r.paid
       ? `<span class="status-pill pay-status-paid">受け取り済み</span><div style="font-size:10px;color:var(--text-muted);margin-top:3px;">${escapeHtml(RCV_METHOD_LABEL[r.rec.method]||(r.rec.source==='stripe'?'Stripe自動決済':''))}${r.rec.paidDate?' '+escapeHtml(r.rec.paidDate.slice(5).replace('-','/')):''}</div>`
       : `<span class="status-pill pay-status-pending">未払い</span>`;
-    const amt=`<div style="font-size:9.5px;color:var(--text-muted);letter-spacing:.5px;">${r.paid?'受け取った額':'受け取る予定'}</div><span style="font-family:'Bebas Neue',sans-serif;font-size:18px;">¥${r.amount.toLocaleString()}</span> <button class="btn btn-ghost btn-sm" style="padding:1px 6px;" title="この月の金額を変える" onclick="editPayAmount('${m.id}')">✎</button>${r.entry?`<div style="font-size:10.5px;color:var(--text-secondary);">＋入会金 ¥${r.entry.toLocaleString()}</div>`:''}${r.rec&&r.rec.note?`<div style="font-size:10px;color:var(--text-muted);">${escapeHtml(r.rec.note)}</div>`:''}`;
+    let amt;
+    if(r.kind==='join'){
+      const nym=shiftYm(payMonth,1), np=nym.split('-').map(Number), cp=payMonth.split('-').map(Number);
+      const nrec=payRecord(m.id,nym), withNext=!!(nrec&&nrec.status==='paid'&&nrec.withJoin);
+      const nAmt=withNext?payAmountOf(nrec,expectedDue({...m,joindate:''},nym)):0;
+      const total=r.entry+r.amount+nAmt;
+      const lines=[`入会金 ¥${r.entry.toLocaleString()}`, `${cp[1]}月分 ¥${r.amount.toLocaleString()}`];
+      if(withNext) lines.push(`${np[1]}月分 ¥${nAmt.toLocaleString()}`);
+      else if(r.method==='stripe') lines.push(`<span style="color:var(--text-muted);">${np[1]}月分は月末にStripeで自動決済</span>`);
+      amt=`<div style="font-size:9.5px;color:var(--text-muted);letter-spacing:.5px;">${r.paid?'入会時に受け取った額':'入会時に受け取る予定'}</div><span style="font-family:'Bebas Neue',sans-serif;font-size:18px;">¥${total.toLocaleString()}</span> <button class="btn btn-ghost btn-sm" style="padding:1px 6px;" title="当月分の金額を変える" onclick="editPayAmount('${m.id}')">✎</button><div style="font-size:10.5px;color:var(--text-secondary);line-height:1.6;">${lines.join('<br>')}</div>${r.rec&&r.rec.note?`<div style="font-size:10px;color:var(--text-muted);">${escapeHtml(r.rec.note)}</div>`:''}`;
+    } else {
+      amt=`<div style="font-size:9.5px;color:var(--text-muted);letter-spacing:.5px;">${r.paid?'受け取った額':'受け取る予定'}</div><span style="font-family:'Bebas Neue',sans-serif;font-size:18px;">¥${r.amount.toLocaleString()}</span> <button class="btn btn-ghost btn-sm" style="padding:1px 6px;" title="この月の金額を変える" onclick="editPayAmount('${m.id}')">✎</button>${r.rec&&r.rec.withJoin?`<div style="font-size:10px;color:var(--text-muted);">入会時に一緒に受け取り</div>`:(r.rec&&r.rec.note?`<div style="font-size:10px;color:var(--text-muted);">${escapeHtml(r.rec.note)}</div>`:'')}`;
+    }
     const linkLeft=memberLinkLeftMs(m);
     const lastLinkBtn = (r.method==='stripe' && linkLeft>0) ? `<button class="btn btn-ghost btn-sm" title="前回発行したリンクをもう一度表示（リマインド用）" onclick="showMemberLastLink('${m.id}')">前回のリンク（あと${Math.max(1,Math.floor(linkLeft/3600000))}時間）</button>` : (r.method==='stripe' && m.lastPayLink && !hasLiveStripeSub(m) ? `<span style="font-size:10px;color:var(--text-muted);align-self:center;">前回のリンクは期限切れ</span>` : '');
     const billBtn = r.method==='stripe' ? (!hasLiveStripeSub(m)?`<button class="btn btn-ghost btn-sm" onclick="sendMemberBillingLink('${m.id}')">${m.stripeUid?'カード登録リンクを再発行':'カード登録リンクを発行'}</button>`:`<button class="btn btn-ghost btn-sm" onclick="sendCardUpdateLink('${m.id}')">カード変更リンク</button>`) : '';
@@ -2589,10 +2611,30 @@ function openReceive(mid){
   document.getElementById('rcv-entry-wrap').style.visibility=isJoin?'visible':'hidden';
   document.getElementById('rcv-entry').value=isJoin?payEntryOf(rec,exp):0;
   const pm=memberPayMethod(m);
+  // 入会月：当月分（全額／半額）＋翌月分。翌月分はカード（Stripe）の人は月末に自動決済なので出さない
+  const p0=ym.split('-').map(Number);
+  document.getElementById('rcv-amount-label').textContent = isJoin ? `${p0[1]}月分の会費（円）` : '会費（円）';
+  const nym=shiftYm(ym,1), np=nym.split('-').map(Number), nrec=payRecord(mid,nym);
+  const showNext = isJoin && pm!=='stripe';
+  document.getElementById('rcv-next-wrap').style.display = showNext ? 'block' : 'none';
+  document.getElementById('rcv-next-label').textContent = `${np[1]}月分（翌月分）も一緒に受け取った`;
+  document.getElementById('rcv-next-on').checked = showNext && !(nrec&&nrec.status==='paid');
+  document.getElementById('rcv-next-amount').value = expectedDue({...m, joindate:''}, nym).amount;
+  document.getElementById('rcv-next-note').textContent = (nrec&&nrec.status==='paid') ? `${np[1]}月分はすでに受け取り済みです（チェックすると上書きします）` : (pm==='bank' ? '口座振替の引き落としが始まるまでの月は、窓口で受け取ります' : '現金の人は、毎月窓口で受け取ります');
+  rcvTarget.isJoin=isJoin; rcvTarget.showNext=showNext; rcvTarget.nym=nym;
   document.getElementById('rcv-method').value= pm==='bank'?'bank' : pm==='stripe'?'stripe' : 'cash';
   document.getElementById('rcv-date').value=localDateStr();
   document.getElementById('rcv-note').value=(rec&&rec.note)||'';
+  updateRcvTotal();
   document.getElementById('modal-receive').classList.add('open');
+}
+function updateRcvTotal(){
+  const n=id=>Math.max(0,parseInt(document.getElementById(id).value,10)||0);
+  const join=rcvTarget&&rcvTarget.isJoin, next=rcvTarget&&rcvTarget.showNext&&document.getElementById('rcv-next-on').checked;
+  document.getElementById('rcv-next-amount').disabled=!next;
+  const total=n('rcv-amount')+(join?n('rcv-entry'):0)+(next?n('rcv-next-amount'):0);
+  const parts=[]; if(join) parts.push(`入会金 ¥${n('rcv-entry').toLocaleString()}`); parts.push(`${join?'当月分':'会費'} ¥${n('rcv-amount').toLocaleString()}`); if(next) parts.push(`翌月分 ¥${n('rcv-next-amount').toLocaleString()}`);
+  document.getElementById('rcv-total').innerHTML=`受け取る合計：<b style="font-size:15px;">¥${total.toLocaleString()}</b>　<span style="color:var(--text-muted);font-size:11px;">（${parts.join('＋')}）</span>`;
 }
 function closeReceive(){ document.getElementById('modal-receive').classList.remove('open'); rcvTarget=null; }
 function saveReceive(){
@@ -2603,6 +2645,13 @@ function saveReceive(){
   if(rec.kind==='join') rec.entryFee=Math.max(0,parseInt(document.getElementById('rcv-entry').value,10)||0);
   rec.method=document.getElementById('rcv-method').value; rec.paidDate=document.getElementById('rcv-date').value||localDateStr();
   rec.note=document.getElementById('rcv-note').value.trim(); rec.status='paid'; rec.memberName=m.name;
+  // 入会時に翌月分も一緒に受け取ったときは、翌月の台帳も受け取り済みにする
+  if(rcvTarget.showNext && document.getElementById('rcv-next-on').checked){
+    const nrec=ensurePayRecord(m, rcvTarget.nym);
+    nrec.kind='monthly'; nrec.amount=Math.max(0,parseInt(document.getElementById('rcv-next-amount').value,10)||0); nrec.monthlyFee=nrec.amount;
+    nrec.method=rec.method; nrec.paidDate=rec.paidDate; nrec.status='paid'; nrec.memberName=m.name; nrec.withJoin=true;
+    nrec.note='入会時に一緒に受け取り';
+  }
   saveAll(); closeReceive(); renderPayment(); showToast('受け取り済みにしました');
 }
 function unmarkPaid(mid){
@@ -2632,7 +2681,15 @@ function updateJoinPay(resetKind, manualAmount){
   const k=kindEl.value;
   if(!manualAmount) document.getElementById('f-join-amount').value = k==='none'?0 : (k==='full'?base:Math.round(base/2))+opt;
   const amt=parseInt(document.getElementById('f-join-amount').value,10)||0, ent=parseInt(document.getElementById('f-entry').value,10)||0;
-  document.getElementById('f-join-total').innerHTML=`窓口で受け取る合計：<b style="color:var(--navy);font-size:14px;">¥${(amt+ent).toLocaleString()}</b>（入会金 ¥${ent.toLocaleString()} ＋ 入会月の会費 ¥${amt.toLocaleString()}${opt&&k!=='none'?'・平日オプション込み':''}）`;
+  // 翌月分：カード（Stripe）以外の人は、入会時に窓口で一緒に受け取ることが多い
+  const pm=document.getElementById('f-paymethod').value, nw=document.getElementById('f-join-next-wrap');
+  const jm=(jd||localDateStr()).slice(0,7), nym=shiftYm(jm,1), np=nym.split('-').map(Number);
+  nw.style.display = pm==='stripe' ? 'none' : 'block';
+  document.getElementById('f-join-next-label').textContent=`${np[1]}月分（翌月分）も一緒に受け取る`;
+  if(resetKind){ document.getElementById('f-join-next-on').checked = pm!=='stripe'; document.getElementById('f-join-next-amount').value = base+opt; }
+  const nOn = pm!=='stripe' && document.getElementById('f-join-next-on').checked;
+  const nAmt = nOn ? (parseInt(document.getElementById('f-join-next-amount').value,10)||0) : 0;
+  document.getElementById('f-join-total').innerHTML=`窓口で受け取る合計：<b style="color:var(--navy);font-size:14px;">¥${(amt+ent+nAmt).toLocaleString()}</b>（入会金 ¥${ent.toLocaleString()} ＋ 入会月の会費 ¥${amt.toLocaleString()}${nOn?` ＋ ${np[1]}月分 ¥${nAmt.toLocaleString()}`:''}${opt&&k!=='none'?'・平日オプション込み':''}）${pm==='stripe'?`<br><span style="font-size:11px;color:var(--text-muted);">${np[1]}月分からは、月末にStripeで自動決済されます</span>`:''}`;
 }
 function recordJoinPayment(mid, data){
   const box=document.getElementById('f-joinpay'); if(!box||box.style.display==='none') return;
@@ -2644,6 +2701,13 @@ function recordJoinPayment(mid, data){
   payments=payments.filter(p=>p.id!==id);
   payments.push({id, memberId:mid, memberName:data.name, month:ym, kind:'join', amount:amt, monthlyFee:amt, entryFee:ent,
     status:paid?'paid':'pending', method:paid?document.getElementById('f-join-method').value:'', paidDate:paid?localDateStr():'', note:''});
+  // 翌月分も一緒に受け取った場合
+  if(paid && data.payMethod!=='stripe' && document.getElementById('f-join-next-on').checked){
+    const nym=shiftYm(ym,1), nid='pay-'+mid+'-'+nym, nAmt=Math.max(0,parseInt(document.getElementById('f-join-next-amount').value,10)||0);
+    payments=payments.filter(p=>p.id!==nid);
+    payments.push({id:nid, memberId:mid, memberName:data.name, month:nym, kind:'monthly', amount:nAmt, monthlyFee:nAmt, entryFee:0,
+      status:'paid', method:document.getElementById('f-join-method').value, paidDate:localDateStr(), note:'入会時に一緒に受け取り', withJoin:true});
+  }
 }
 // ══ 会計用Excel（青色申告の仕訳帳に貼り付ける形）══
 // 書類担当の回答（2026-11-23）に合わせた形：仕訳帳のB〜I列＝
@@ -5210,7 +5274,7 @@ window.showScheduleTab=showScheduleTab;
 window.sendMemberBillingLink=sendMemberBillingLink;window.sendGuestPaymentLink=sendGuestPaymentLink;
 window.sendTrialPaymentLink=sendTrialPaymentLink;window.sendRentalPaymentLink=sendRentalPaymentLink;
 window.toggleRentalPayLinkBtn=toggleRentalPayLinkBtn;window.copyPayLink=copyPayLink;window.closePayLinkModal=closePayLinkModal;
-window.updateInsNote=updateInsNote;window.showMemberLastLink=showMemberLastLink;window.accMarkDone=accMarkDone;window.exportAccountingFor=exportAccountingFor;window.onPayMethodChange=onPayMethodChange;window.movePayMonth=movePayMonth;window.setPayFilter=setPayFilter;window.openReceive=openReceive;window.closeReceive=closeReceive;window.saveReceive=saveReceive;window.unmarkPaid=unmarkPaid;window.editPayAmount=editPayAmount;window.updateJoinPay=updateJoinPay;window.exportAccounting=exportAccounting;window.resetTestRecords=resetTestRecords;window.checkMidInput=checkMidInput;window.startJoinFromTrial=startJoinFromTrial;window.exportVisitsExcel=exportVisitsExcel;window.exportVisitsPdf=exportVisitsPdf;window.openPlModal=openPlModal;window.closePlModal=closePlModal;window.savePl=savePl;window.deletePl=deletePl;window.filterPl=filterPl;window.renderPlList=renderPlList;window.togglePlKind=togglePlKind;window.togglePlGuardian=togglePlGuardian;window.onPlMemberSelect=onPlMemberSelect;window.onPlStartChange=onPlStartChange;window.sendPlPaymentLink=sendPlPaymentLink;window.addPlToCalendar=addPlToCalendar;window.togglePlPaste=togglePlPaste;window.applyPlPaste=applyPlPaste;
+window.updateInsNote=updateInsNote;window.updateRcvTotal=updateRcvTotal;window.showMemberLastLink=showMemberLastLink;window.accMarkDone=accMarkDone;window.exportAccountingFor=exportAccountingFor;window.onPayMethodChange=onPayMethodChange;window.movePayMonth=movePayMonth;window.setPayFilter=setPayFilter;window.openReceive=openReceive;window.closeReceive=closeReceive;window.saveReceive=saveReceive;window.unmarkPaid=unmarkPaid;window.editPayAmount=editPayAmount;window.updateJoinPay=updateJoinPay;window.exportAccounting=exportAccounting;window.resetTestRecords=resetTestRecords;window.checkMidInput=checkMidInput;window.startJoinFromTrial=startJoinFromTrial;window.exportVisitsExcel=exportVisitsExcel;window.exportVisitsPdf=exportVisitsPdf;window.openPlModal=openPlModal;window.closePlModal=closePlModal;window.savePl=savePl;window.deletePl=deletePl;window.filterPl=filterPl;window.renderPlList=renderPlList;window.togglePlKind=togglePlKind;window.togglePlGuardian=togglePlGuardian;window.onPlMemberSelect=onPlMemberSelect;window.onPlStartChange=onPlStartChange;window.sendPlPaymentLink=sendPlPaymentLink;window.addPlToCalendar=addPlToCalendar;window.togglePlPaste=togglePlPaste;window.applyPlPaste=applyPlPaste;
 window.openPrivateLessonModal=openPrivateLessonModal;window.closePrivateLessonModal=closePrivateLessonModal;window.sendPrivateLessonPaymentLink=sendPrivateLessonPaymentLink;
 
 
