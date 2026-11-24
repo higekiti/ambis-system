@@ -871,12 +871,12 @@
             width: 100%; height: 200px;
             object-fit: cover; object-position: center;
             display: block;
-            filter: grayscale(0.3) brightness(0.85) contrast(1.05);
+            filter: brightness(0.95) contrast(1.02);
             transition: transform 0.4s ease, filter 0.4s ease;
         }
         .gallery-preview-grid a:hover img {
             transform: scale(1.04);
-            filter: grayscale(0) brightness(0.95) contrast(1.05);
+            filter: brightness(1) contrast(1.02);
         }
         @media (max-width: 768px) {
             .gallery-preview-grid { grid-template-columns: repeat(2, 1fr); gap: 2px; }
@@ -925,6 +925,16 @@
         .gallery-cs-grid img { grid-column:span 2; width:100%; height:240px; object-fit:cover; object-position:center; display:block; }
         .gallery-cs-grid img:nth-child(4), .gallery-cs-grid img:nth-child(5) { grid-column:span 3; height:240px; }
         @media (max-width: 768px) { .gallery-hero { height:260px; } .gallery-cs-grid { grid-template-columns: repeat(2,1fr) !important; } .gallery-cs-grid img { grid-column:span 1 !important; height:180px; } }
+
+        /* ===== DOJO PHOTO BAND ===== */
+        .dojo-band { margin: 0; padding: 0 24px clamp(56px, 8vw, 96px); background: var(--cream); line-height: 0; }
+        .dojo-band img { width: 100%; max-width: 1100px; height: auto; aspect-ratio: 2 / 1; object-fit: cover; display: block; margin: 0 auto; filter: brightness(0.97) contrast(1.02); }
+        /* ===== ACCESS PHOTOS ===== */
+        .access-photos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 4px 0 22px 34px; }
+        .access-photos figure { margin: 0; }
+        .access-photos img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; }
+        .access-photos figcaption { font-size: 11px; color: var(--text-muted); margin-top: 5px; line-height: 1.5; letter-spacing: 0.04em; }
+        @media (max-width: 768px) { .access-photos { margin-left: 0; } }
 
         /* ===== ACCESS ===== */
         #access { background: var(--cream); }
@@ -1400,7 +1410,7 @@
                     <div style="font-size:13px;font-weight:700;color:var(--cream);margin-bottom:14px;">オープン特典</div>
                     <div style="font-size:14px;font-weight:700;color:var(--cream);line-height:1.4;">道着 ＋ 帯<br>プレゼント</div>
                     <div style="font-size:12px;color:rgba(255,255,255,0.62);margin-top:6px;">¥20,000相当</div>
-                    <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.08);font-size:12px;color:rgba(255,255,255,0.62);">先着10名・残り4名<br><span style="font-size:11px;color:rgba(255,255,255,0.62);">※入会後3か月継続が条件</span></div>
+                    <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.08);font-size:12px;color:rgba(255,255,255,0.62);">先着10名・残り3名<br><span style="font-size:11px;color:rgba(255,255,255,0.62);">※入会後3か月継続が条件</span></div>
                 </div>
             </div>
             <p style="font-size:12px;color:rgba(200,167,105,0.7);margin-top:14px;letter-spacing:0.03em;">LINE登録（先着25名）で入会金無料。<br>さらに11月中のご入会が先着10名以内なら、道着・帯プレゼントも両方適用されます（11/30まで）。</p>
@@ -1477,6 +1487,11 @@
         </div>
     </div>
 </section>
+
+<!-- ===== DOJO PHOTO BAND ===== -->
+<figure class="dojo-band">
+    <img src="files/dojo-band-01.jpg" srcset="files/dojo-band-01-sm.jpg 1200w, files/dojo-band-01.jpg 2400w" sizes="(max-width: 1148px) 100vw, 1100px" alt="朝の光が差し込むAMBIsの道場。マットにLife With Jiu-Jitsuの文字" loading="lazy" width="2400" height="1200">
+</figure>
 
 <!-- ===== VALUES (dark) ===== -->
 <section id="values" class="section-padding" style="overflow-x:hidden;">
@@ -1771,30 +1786,30 @@
 <section id="gallery" class="section-padding" style="padding-top:48px;padding-bottom:48px;">
     <div class="container">
         <div style="text-align:center;" class="fi">
-            <span class="section-tag">Progress</span>
-            <h2 class="section-title white" style="margin-bottom:16px;">道場ができるまで</h2>
+            <span class="section-tag">Gallery</span>
+            <h2 class="section-title white" style="margin-bottom:16px;">道場の風景</h2>
             <div class="section-divider center"></div>
             <p class="section-subtitle white gallery-sub" style="white-space:nowrap;margin:0 auto 0;">
-                80㎡のマットスペース＋更衣室・シャワー完備。2026年11月22日、AMBIsがオープンしました。
+                80㎡のマットと、更衣室・シャワー。2026年11月22日、ここから始まりました。
             </p>
         </div>
         <div class="gallery-preview-grid fi">
             <a href="gallery.html">
-                <img src="files/construction-45.jpg" alt="道場に敷いたマットとLife With Jiu-Jitsuの文字" loading="lazy">
+                <img src="files/dojo-thumb-01.jpg" alt="壁のLife With Jiu-Jitsu／人生に、柔術を。" loading="lazy" style="object-position: center 45%;">
             </a>
             <a href="gallery.html">
-                <img src="files/construction-02.jpg" alt="工事現場のドリルと道場スペース" loading="lazy" style="object-position: center 30%;">
+                <img src="files/dojo-thumb-02.jpg" alt="道場正面のAMBIsのロゴ" loading="lazy" style="object-position: center 45%;">
             </a>
             <a href="gallery.html">
-                <img src="files/construction-35.jpg" alt="内装クリーニング後の道場" loading="lazy">
+                <img src="files/dojo-thumb-03.jpg" alt="朝の光が差し込む道場" loading="lazy" style="object-position: center 60%;">
             </a>
             <a href="gallery.html">
-                <img src="files/construction-04.jpg" alt="職人による内装工事作業の様子" loading="lazy" style="object-position: center 20%;">
+                <img src="files/dojo-thumb-04.jpg" alt="マットの質感と、奥に広がる道場" loading="lazy" style="object-position: center 40%;">
             </a>
         </div>
         <div style="text-align:center;" class="fi">
             <a href="gallery.html" style="display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(200,167,105,0.4);color:var(--gold);font-size:13px;font-weight:600;letter-spacing:0.1em;padding:11px 28px;text-decoration:none;transition:var(--transition);" onmouseover="this.style.background='rgba(200,167,105,0.08)'" onmouseout="this.style.background='transparent'">
-                すべての写真を見る →
+                写真と、できるまでの記録を見る →
             </a>
         </div>
     </div>
@@ -1831,7 +1846,7 @@
             <!-- Stage 2 -->
             <div style="margin-bottom:20px;">
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-                    <span style="background:var(--gold);color:var(--navy-dark);font-size:11px;font-weight:700;letter-spacing:0.14em;padding:3px 10px;">STEP 2 — 11月中のご入会 先着10名（残り4名）</span>
+                    <span style="background:var(--gold);color:var(--navy-dark);font-size:11px;font-weight:700;letter-spacing:0.14em;padding:3px 10px;">STEP 2 — 11月中のご入会 先着10名（残り3名）</span>
                 </div>
                 <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">
                     <span style="font-size:17px;font-weight:700;color:var(--cream);">道着＆帯 プレゼント</span>
@@ -2239,6 +2254,11 @@
                         <strong>Facility</strong>
                         <span>80㎡ マットスペース・更衣室・ウォーターサーバー・シャワー完備</span>
                     </div>
+                </div>
+                <div class="access-photos">
+                    <figure><img src="files/access-entrance.jpg" alt="5階エレベーターを降りて右側の壁にある金色のロゴ" loading="lazy" width="600" height="450"><figcaption>5階で降りたら、右側の金のロゴが目印です</figcaption></figure>
+                    <figure><img src="files/access-dojo.jpg" alt="80㎡のマットスペース" loading="lazy" width="600" height="450"><figcaption>80㎡のマットスペース</figcaption></figure>
+                    <figure><img src="files/access-locker.jpg" alt="更衣室" loading="lazy" width="600" height="450"><figcaption>更衣室（男女別）</figcaption></figure>
                 </div>
                 <div class="access-row">
                     <span class="a-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17H5V9l3-5h8l3 5v8z"/><circle cx="7.5" cy="17" r="2.5"/><circle cx="16.5" cy="17" r="2.5"/></svg></span>
