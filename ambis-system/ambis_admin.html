@@ -1040,7 +1040,7 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
       </div>
       <div class="section-divider">PAYMENT</div>
       <div class="form-row"><label>月会費の支払い方法</label>
-        <select id="f-paymethod" onchange="onPayMethodChange()"><option value="stripe">カード（Stripe・毎月末日に自動）</option><option value="bank">口座振替（月額パンダ・毎月27日）</option><option value="cash">現金・窓口（毎月窓口で受け取り）</option></select>
+        <select id="f-paymethod" onchange="onPayMethodChange()"><option value="stripe">カード（Stripe・毎月末日に自動）</option><option value="bank">口座振替（月額パンダ・毎月26日）</option><option value="cash">現金・窓口（毎月窓口で受け取り）</option></select>
       </div>
       <div class="form-row-2">
         <div><label>月会費（円）</label><input type="number" id="f-monthly" value="8800" oninput="updateJoinPay()"></div>
@@ -1058,7 +1058,7 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
         <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;" id="f-join-total"></div>
         <div class="form-row-2" style="margin-bottom:0;">
           <div><label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="f-join-paid" style="width:auto;" checked> 受け取り済み</label></div>
-          <div><label>受け取り方法</label><select id="f-join-method"><option value="cash">現金</option><option value="card">カード（Square）</option><option value="qr">QR決済（Square）</option><option value="emoney">電子マネー（Square）</option></select></div>
+          <div><label>受け取り方法</label><select id="f-join-method"><option value="cash">現金</option><option value="card">カード（Square）</option><option value="qr">QR決済（Square）</option></select></div>
         </div>
       </div>
       <div class="form-row"><label>備考</label><input type="text" id="f-note" placeholder="怪我・特記事項など"></div>
@@ -1599,7 +1599,7 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
       <div id="rcv-items" style="margin-bottom:6px;"></div>
       <div id="rcv-total" style="font-size:12.5px;color:var(--navy);margin:0 0 12px;"></div>
       <div class="form-row-2">
-        <div><label>受け取り方法</label><select id="rcv-method"><option value="cash">現金</option><option value="card">カード（Square）</option><option value="qr">QR決済（Square）</option><option value="emoney">電子マネー（Square）</option><option value="bank">口座振替（月額パンダ）</option><option value="stripe">カード（Stripe自動決済）</option></select></div>
+        <div><label>受け取り方法</label><select id="rcv-method"><option value="cash">現金</option><option value="card">カード（Square）</option><option value="qr">QR決済（Square）</option><option value="bank">口座振替（月額パンダ）</option><option value="stripe">カード（Stripe自動決済）</option></select></div>
         <div><label>受け取った日</label><input type="date" id="rcv-date"></div>
       </div>
       <div class="form-row"><label>メモ</label><input type="text" id="rcv-note" placeholder="例：キャンペーンで入会金無料"></div>
@@ -1618,7 +1618,7 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
       <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;" id="xrcv-sub"></div>
       <div class="form-row"><label>金額（円）</label><input type="number" id="xrcv-amount"></div>
       <div class="form-row-2">
-        <div><label>受け取り方法</label><select id="xrcv-method"><option value="cash">現金</option><option value="card">カード（Square）</option><option value="qr">QR決済（Square）</option><option value="emoney">電子マネー（Square）</option><option value="stripe">支払いリンク（Stripe）</option></select></div>
+        <div><label>受け取り方法</label><select id="xrcv-method"><option value="cash">現金</option><option value="card">カード（Square）</option><option value="qr">QR決済（Square）</option><option value="stripe">支払いリンク（Stripe）</option></select></div>
         <div><label>受け取った日</label><input type="date" id="xrcv-date"></div>
       </div>
     </div>
@@ -1688,7 +1688,7 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
         <div><label>支払い</label><select id="pl-pay" onchange="onPlPayChange()"><option value="pending">未払い</option><option value="paid">支払い済み（カード）</option><option value="counter">支払い済み（窓口）</option><option value="failed">決済失敗</option></select></div>
       </div>
       <div class="form-row-2" id="pl-rcv-wrap" style="display:none;">
-        <div><label>窓口での受け取り方法</label><select id="pl-rcv-method"><option value="cash">現金</option><option value="card">カード（Square）</option><option value="qr">QR決済（Square）</option><option value="emoney">電子マネー（Square）</option></select></div>
+        <div><label>窓口での受け取り方法</label><select id="pl-rcv-method"><option value="cash">現金</option><option value="card">カード（Square）</option><option value="qr">QR決済（Square）</option></select></div>
         <div><label>受け取った日</label><input type="date" id="pl-rcv-date"></div>
       </div>
       <div class="form-row"><label>目的</label><input type="text" id="pl-goals" placeholder="例：試合対策、覚えたい技がある"></div>
@@ -2540,7 +2540,7 @@ function movePayMonth(n){ const cur=localDateStr().slice(0,7); payMonth = n===0 
 function setPayFilter(f,el){ payFilter=f; document.querySelectorAll('#pay-filters .filter-tab').forEach(t=>t.classList.toggle('active', t===el)); renderPayment(); }
 // ── 会費は前払い：その月（受け取る月）に受け取るのは「翌月分」の会費 ──
 // ・現金：窓口で、当月中に翌月分を受け取る
-// ・口座振替（月額パンダ）：27日ごろに翌月分が引き落とし。間に合わない月は窓口で受け取る
+// ・口座振替（月額パンダ）：26日ごろに翌月分が引き落とし。間に合わない月は窓口で受け取る
 // ・Stripe：月末に翌月分を自動決済
 // ・入会した月だけは「入会金＋入会月の会費（全額／半額）＋翌月分」をまとめて受け取る
 function collectItems(m, ym){
@@ -2562,7 +2562,7 @@ function renderPayment(){
   if(!payMonth) payMonth=localDateStr().slice(0,7);
   const ym=payMonth, nmo=+shiftYm(ym,1).split('-')[1], cmo=+ym.split('-')[1];
   document.getElementById('pay-month-label').textContent=`${ym.split('-')[0]}年${cmo}月に受け取る`;
-  document.getElementById('pay-help').innerHTML=`会費は前払いです。<b>${cmo}月中に、${nmo}月分の会費</b>を受け取ります（現金は窓口で／口座振替は27日ごろ引き落とし（間に合わない月は窓口で）／Stripeは月末に自動決済）。${cmo}月に入会した人は「入会金＋${cmo}月分＋${nmo}月分」をまとめて受け取ります。✎ で、その月だけ金額を変えられます。`;
+  document.getElementById('pay-help').innerHTML=`会費は前払いです。<b>${cmo}月中に、${nmo}月分の会費</b>を受け取ります（現金は窓口で／口座振替は26日ごろ引き落とし（間に合わない月は窓口で）／Stripeは月末に自動決済）。${cmo}月に入会した人は「入会金＋${cmo}月分＋${nmo}月分」をまとめて受け取ります。✎ で、その月だけ金額を変えられます。`;
   const targets=payTargets(ym);
   let income=0, expected=0, unpaidN=0, unpaidAmt=0;
   const rows=targets.map(m=>{
@@ -2608,7 +2608,7 @@ function renderPayment(){
     const lines=[];
     r.items.forEach(it=>{
       const how = it.paid ? `<span style="color:#2e7d4f;">✓ ${escapeHtml(mLabel(it.rec.method)||(it.rec.source==='stripe'?'Stripe自動決済':''))}${it.rec.paidDate?' '+escapeHtml(it.rec.paidDate.slice(5).replace('-','/')):''}</span>`
-        : (r.method==='stripe' && it.kind!=='join' ? '<span style="color:var(--text-muted);">月末に自動決済</span>' : r.method==='bank' && it.kind!=='join' ? '<span style="color:var(--text-muted);">27日ごろ引き落とし（間に合わなければ窓口）</span>' : '<span style="color:#b4573a;">未</span>');
+        : (r.method==='stripe' && it.kind!=='join' ? '<span style="color:var(--text-muted);">月末に自動決済</span>' : r.method==='bank' && it.kind!=='join' ? '<span style="color:var(--text-muted);">26日ごろ引き落とし（間に合わなければ窓口）</span>' : '<span style="color:#b4573a;">未</span>');
       if(it.kind==='join') lines.push(`入会金 ¥${it.entry.toLocaleString()}　${how}`);
       lines.push(`${itemLabel(it)} ¥${it.amount.toLocaleString()} <button class="btn btn-ghost btn-sm" style="padding:0 5px;font-size:10px;" title="${itemLabel(it)}の金額を変える" onclick="editPayAmount('${m.id}','${it.ym}')">✎</button>　${how}`);
     });
@@ -2844,7 +2844,7 @@ function recordJoinPayment(mid, data){
 // 書類担当の回答（2026-11-23）に合わせた形：仕訳帳のB〜I列＝
 //   日付／借方勘定科目／借方金額／貸方勘定科目（売上高）／貸方金額／摘要／支払先・店名／証憑No.
 // ・日付は「受け取った日」（実際の日付）。Stripeの月会費は、対象月の前月の末日に決済される
-// ・借方：現金 → 現金、それ以外（カード・QR・電子マネー・Stripe・口座振替）→ 売掛金
+// ・借方：現金 → 現金、それ以外（カード・QR・Stripe・口座振替）→ 売掛金
 // ・摘要：「区分 対象月分 会員番号 姓様（受取方法）／メモ」。年をまたぐ対象月は「2027年1月分」と年も入れる
 // ・合計は明細に入れず、別シート「集計」に出す
 function accLastDay(ym){ const p=ym.split('-').map(Number); return new Date(p[0],p[1],0); }   // その月の末日
