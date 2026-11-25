@@ -635,7 +635,7 @@ const firebaseConfig = {
   appId: "1:950081158370:web:8e33879ed3b429a99272bb"
 };
 const GIS_CLIENT_ID = "950081158370-hqu69kt33t4na39re896fv09t607b6uv.apps.googleusercontent.com";
-const ALLOWED = ['ambis.bjj@gmail.com']; // 操作できるアカウント（スタッフを増やすときはこことFirestoreルールに追加）
+const ALLOWED = ['ambis.bjj@gmail.com', 'ayanashimizu0@gmail.com']; // 操作できるアカウント（スタッフを増やすときはこことFirestoreルールに追加）
 
 const app = initializeApp(firebaseConfig);
 try{ initializeAppCheck(app,{provider:new ReCaptchaV3Provider('6LcZgYItAAAAADKzEtB6ccNQbYe5AV_3d9pknKOK'),isTokenAutoRefreshEnabled:true}); }catch(e){}
