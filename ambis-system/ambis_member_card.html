@@ -119,7 +119,7 @@ async function loadAndInit(user){
   if(Array.isArray(fbAttendance))    { attendance = fbAttendance; localStorage.setItem('ambis_attendance',        JSON.stringify(attendance)); }
   if(Array.isArray(fbTournaments))  { localStorage.setItem('ambis_tournaments',        JSON.stringify(fbTournaments)); }
   if(Array.isArray(fbBeltHistory))  { localStorage.setItem('ambis_belt_history',       JSON.stringify(fbBeltHistory)); }
-  if(Array.isArray(fbNews))                { localStorage.setItem('ambis_news',               JSON.stringify(fbNews)); }
+  if(Array.isArray(fbNews))                { window.__newsCache=fbNews; try{ localStorage.setItem('ambis_news', JSON.stringify(fbNews)); }catch(e){ try{ localStorage.setItem('ambis_news', JSON.stringify(fbNews.map(n=>{ const c={...n}; delete c.images; return c; }))); }catch(e2){} } }
   if(Array.isArray(fbSchedule))        { localStorage.setItem('ambis_schedule',           JSON.stringify(fbSchedule)); }
   if(Array.isArray(fbScheduleEx))    { localStorage.setItem('ambis_schedule_exceptions',JSON.stringify(fbScheduleEx)); }
   if(Array.isArray(fbMatchRecords)){ localStorage.setItem('ambis_match_records',      JSON.stringify(fbMatchRecords)); }
@@ -518,6 +518,19 @@ input:focus,select:focus{border-color:var(--navy-light);}
 .news-body{font-size:12px;color:var(--text-secondary);line-height:1.8;margin-bottom:6px;}
 .news-footer{display:flex;align-items:center;justify-content:space-between;}
 .news-date{font-size:10px;color:var(--text-muted);}
+.news-photos{display:grid;gap:4px;margin:4px 0 8px;border-radius:8px;overflow:hidden;}
+.news-photos.n1{grid-template-columns:1fr;}
+.news-photos.n2{grid-template-columns:1fr 1fr;}
+.news-photos.n3{grid-template-columns:1fr 1fr 1fr;}
+.news-photos img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;cursor:pointer;}
+.news-photos.n1 img{aspect-ratio:4/3;}
+.news-video{position:relative;margin:4px 0 8px;border-radius:8px;overflow:hidden;aspect-ratio:16/9;background:#000;cursor:pointer;}
+.news-video img{width:100%;height:100%;object-fit:cover;display:block;opacity:.9;}
+.news-video iframe{width:100%;height:100%;border:0;display:block;}
+.news-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:54px;height:54px;border-radius:50%;background:rgba(18,46,83,.85);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;padding-left:4px;box-sizing:border-box;}
+#news-photo-view{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9999;display:flex;align-items:center;justify-content:center;}
+#news-photo-view img{max-width:100%;max-height:100%;object-fit:contain;}
+#news-photo-view .npv-close{position:absolute;top:14px;right:18px;color:#fff;font-size:30px;line-height:1;}
 .news-line-btn{font-size:10px;padding:3px 10px;border-radius:4px;background:#06c755;color:#fff;text-decoration:none;border:none;}
 
 /* ── CALENDAR ── */
@@ -1506,24 +1519,43 @@ function switchGiShop(tab,el){
 }
 
 // ── NEWS ──
+function mYoutubeId(url){
+  const m=String(url||'').trim().match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/))([A-Za-z0-9_-]{11})/);
+  return m?m[1]:'';
+}
 function renderNewsMember(){
-  const news=JSON.parse(localStorage.getItem('ambis_news')||'[]');
+  const news=window.__newsCache || JSON.parse(localStorage.getItem('ambis_news')||'[]');
   const body=document.getElementById('news-body-member');
   if(!body) return;
-  const sorted=[...news].sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
+  const sorted=[...news].sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));
   if(!sorted.length){body.innerHTML=startStateHTML('道場からのお知らせは、ここに届きます。','クラスの変更やイベントの情報を、いちばん早くお届けします。');return;}
   const catCls={info:'news-cat-info',result:'news-cat-result',event:'news-cat-event',schedule:'news-cat-schedule',other:'news-cat-other'};
   const catLabel={info:'お知らせ',result:'試合結果',event:'イベント',schedule:'スケジュール変更',other:'その他'};
-  body.innerHTML=sorted.map(n=>`
+  body.innerHTML=sorted.map(n=>{
+    const imgs=(n.images||[]).filter(src=>/^data:image\//.test(src));
+    const gallery=imgs.length?`<div class="news-photos n${Math.min(imgs.length,3)}">${imgs.map(src=>`<img src="${src}" alt="" loading="lazy" onclick="openNewsPhoto(this.src)">`).join('')}</div>`:'';
+    const yid=mYoutubeId(n.youtube);
+    const video=yid?`<div class="news-video" onclick="playNewsVideo(this,'${yid}')"><img src="https://i.ytimg.com/vi/${yid}/hqdefault.jpg" alt="" loading="lazy"><span class="news-play">▶</span></div>`:'';
+    return `
     <div class="news-item">
-      <div class="news-cat ${catCls[n.category]||'news-cat-other'}">${catLabel[n.category]||n.category}</div>
-      <div class="news-title">${n.title}</div>
-      <div class="news-body">${n.body}</div>
+      <div class="news-cat ${catCls[n.category]||'news-cat-other'}">${catLabel[n.category]||escapeHtml(n.category)}</div>
+      <div class="news-title">${escapeHtml(n.title)}</div>
+      <div class="news-body">${escapeHtml(n.body).replace(/\n/g,'<br>')}</div>
+      ${gallery}${video}
       <div class="news-footer">
-        <div class="news-date">${n.createdAt}</div>
-        ${n.lineUrl?`<a href="${n.lineUrl}" target="_blank" rel="noopener" class="news-line-btn">LINEで確認</a>`:''}
+        <div class="news-date">${escapeHtml(n.createdAt)}</div>
+        ${n.lineUrl?`<a href="${escapeHtml(n.lineUrl)}" target="_blank" rel="noopener" class="news-line-btn">LINEで確認</a>`:''}
       </div>
-    </div>`).join('');
+    </div>`;}).join('');
+}
+function playNewsVideo(el,id){
+  el.onclick=null;
+  el.innerHTML=`<iframe src="https://www.youtube-nocookie.com/embed/${id}?autoplay=1&playsinline=1&rel=0" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+}
+function openNewsPhoto(src){
+  let ov=document.getElementById('news-photo-view');
+  if(!ov){ ov=document.createElement('div'); ov.id='news-photo-view'; ov.onclick=()=>ov.remove(); document.body.appendChild(ov); }
+  ov.innerHTML=`<img src="${src}" alt=""><div class="npv-close">×</div>`;
 }
 
 // ── MILESTONE ──

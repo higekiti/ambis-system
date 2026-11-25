@@ -1277,6 +1277,14 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
         </select>
       </div>
       <div class="form-row"><label>本文 *</label><textarea id="news-body" rows="4" placeholder="内容を入力..."></textarea></div>
+      <div class="form-row"><label>写真（任意・3枚まで）</label>
+        <input type="file" id="news-photo-input" accept="image/*" multiple style="display:none;" onchange="addNewsPhotos(this.files)">
+        <div id="news-photos" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;"></div>
+        <div style="font-size:10.5px;color:var(--text-muted);margin-top:4px;">スマホで見やすい大きさに自動で縮めて保存します。会員さんの顔が写る写真は、本人の了解を取ってから載せてください。</div>
+      </div>
+      <div class="form-row"><label>YouTube動画のURL（任意）</label><input type="text" id="news-youtube" placeholder="https://youtu.be/... （限定公開がおすすめ）" oninput="checkNewsYoutube()">
+        <div id="news-youtube-note" style="font-size:10.5px;color:var(--text-muted);margin-top:4px;">YouTubeで「限定公開」にした動画のURLを貼ると、アプリの中で再生できます。</div>
+      </div>
       <div class="form-row"><label>LINE URL（任意）</label><input type="text" id="news-line" placeholder="https://line.me/..."></div>
     </div>
     <div class="modal-footer">
@@ -4953,35 +4961,87 @@ const newsCatMap={info:'お知らせ',result:'試合結果',event:'イベント'
 const newsCatColors={info:'#eef2ff',result:'#eafaf1',event:'#fff8e6',schedule:'#fdf3e6',other:'#f5f5f5'};
 const newsCatTextColors={info:'#3a5fc8',result:'#27ae60',event:'#e67e22',schedule:'#c0392b',other:'#666'};
 
+function youtubeId(url){
+  const u=String(url||'').trim(); if(!u) return '';
+  const m=u.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/))([A-Za-z0-9_-]{11})/);
+  return m?m[1]:'';
+}
+function newsBodyHtml(t){ return escapeHtml(t).replace(/\n/g,'<br>'); }
 function renderNews(){
   if(!document.getElementById('news-list')) return;
   const container=document.getElementById('news-list');
   const empty=document.getElementById('empty-news');
-  const sorted=[...news].sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
+  const sorted=[...news].sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));
   if(!sorted.length){container.innerHTML='';empty.style.display='block';return;}
   empty.style.display='none';
-  container.innerHTML=sorted.map(n=>`
+  container.innerHTML=sorted.map(n=>{
+    const imgs=(n.images||[]).map(src=>`<img src="${src}" style="width:84px;height:84px;object-fit:cover;border-radius:6px;border:1px solid var(--border);">`).join('');
+    const yid=youtubeId(n.youtube);
+    const vid=yid?`<a href="https://youtu.be/${yid}" target="_blank" rel="noopener" style="position:relative;display:inline-block;"><img src="https://i.ytimg.com/vi/${yid}/mqdefault.jpg" style="width:150px;height:84px;object-fit:cover;border-radius:6px;"><span style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.6);color:#fff;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:12px;">▶</span></a>`:'';
+    return `
     <div style="padding:16px 18px;border-bottom:1px solid var(--border);">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px;">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-          <span style="font-size:10px;padding:2px 8px;border-radius:3px;background:${newsCatColors[n.category]||'#f5f5f5'};color:${newsCatTextColors[n.category]||'#666'};">${newsCatMap[n.category]||n.category}</span>
-          <span style="font-size:13px;font-weight:500;color:var(--text-primary);">${n.title}</span>
+          <span style="font-size:10px;padding:2px 8px;border-radius:3px;background:${newsCatColors[n.category]||'#f5f5f5'};color:${newsCatTextColors[n.category]||'#666'};">${newsCatMap[n.category]||escapeHtml(n.category)}</span>
+          <span style="font-size:13px;font-weight:500;color:var(--text-primary);">${escapeHtml(n.title)}</span>
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0;">
-          ${n.lineUrl?`<a href="${n.lineUrl}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">LINE</a>`:''}
+          ${n.lineUrl?`<a href="${escapeHtml(n.lineUrl)}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">LINE</a>`:''}
           <button onclick="deleteNews('${n.id}')" class="btn btn-danger btn-sm">削除</button>
         </div>
       </div>
-      <div style="font-size:12px;color:var(--text-secondary);line-height:1.7;margin-bottom:6px;">${n.body}</div>
-      <div style="font-size:10px;color:var(--text-muted);">${n.createdAt}</div>
-    </div>`).join('');
+      <div style="font-size:12px;color:var(--text-secondary);line-height:1.7;margin-bottom:6px;">${newsBodyHtml(n.body)}</div>
+      ${imgs||vid?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">${imgs}${vid}</div>`:''}
+      <div style="font-size:10px;color:var(--text-muted);">${escapeHtml(n.createdAt)}</div>
+    </div>`;}).join('');
 }
 
+let newsPhotos=[];   // 投稿画面で選んだ写真（縮小済みのdata URL）
+const NEWS_MAX_PHOTOS=3, NEWS_MAX_TOTAL=850000;   // Firestoreの1件1MBの上限に収める
+function renderNewsPhotos(){
+  const box=document.getElementById('news-photos'); if(!box) return;
+  box.innerHTML=newsPhotos.map((src,i)=>`<div style="position:relative;"><img src="${src}" style="width:76px;height:76px;object-fit:cover;border-radius:6px;border:1px solid var(--border);"><button type="button" onclick="removeNewsPhoto(${i})" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;border:none;background:#333;color:#fff;font-size:11px;cursor:pointer;">×</button></div>`).join('')
+    + (newsPhotos.length<NEWS_MAX_PHOTOS?`<button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('news-photo-input').click()">＋ 写真を追加</button>`:'');
+}
+function removeNewsPhoto(i){ newsPhotos.splice(i,1); renderNewsPhotos(); }
+function shrinkImage(file, maxEdge, quality){
+  return new Promise((res,rej)=>{
+    const url=URL.createObjectURL(file); const im=new Image();
+    im.onload=()=>{ const r=Math.min(1,maxEdge/Math.max(im.naturalWidth,im.naturalHeight));
+      const c=document.createElement('canvas'); c.width=Math.round(im.naturalWidth*r); c.height=Math.round(im.naturalHeight*r);
+      const g=c.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,c.width,c.height); g.drawImage(im,0,0,c.width,c.height);
+      URL.revokeObjectURL(url); res(c.toDataURL('image/jpeg',quality)); };
+    im.onerror=()=>{ URL.revokeObjectURL(url); rej(new Error('画像を読み込めませんでした')); };
+    im.src=url;
+  });
+}
+async function addNewsPhotos(files){
+  const list=[...(files||[])].filter(f=>/^image\//.test(f.type)||/\.(jpe?g|png|webp|heic|heif)$/i.test(f.name));
+  document.getElementById('news-photo-input').value='';
+  for(const f of list){
+    if(newsPhotos.length>=NEWS_MAX_PHOTOS){ showToast('写真は3枚までです'); break; }
+    try{
+      let d=await shrinkImage(f,1280,0.78);
+      if(d.length>300000) d=await shrinkImage(f,1080,0.7);
+      if(d.length>300000) d=await shrinkImage(f,900,0.65);
+      newsPhotos.push(d);
+    }catch(e){ showToast('写真を読み込めませんでした（HEICの場合は、JPEGに変えるかスクリーンショットで試してください）'); }
+  }
+  renderNewsPhotos();
+}
+function checkNewsYoutube(){
+  const v=document.getElementById('news-youtube').value.trim(), note=document.getElementById('news-youtube-note');
+  if(!v){ note.style.color=''; note.textContent='YouTubeで「限定公開」にした動画のURLを貼ると、アプリの中で再生できます。'; return; }
+  if(youtubeId(v)){ note.style.color='#2e7d4f'; note.textContent='✓ YouTubeの動画を確認しました'; }
+  else { note.style.color='#c0392b'; note.textContent='YouTubeの動画のURLを貼ってください（例：https://youtu.be/xxxxxxxxxxx）'; }
+}
 function openNewsModal(){
   document.getElementById('news-title').value='';
   document.getElementById('news-category').value='info';
   document.getElementById('news-body').value='';
   document.getElementById('news-line').value='';
+  document.getElementById('news-youtube').value=''; checkNewsYoutube();
+  newsPhotos=[]; renderNewsPhotos();
   document.getElementById('modal-news').classList.add('open');
 }
 
@@ -4989,20 +5049,30 @@ function saveNews(){
   const title=document.getElementById('news-title').value.trim();
   const body=document.getElementById('news-body').value.trim();
   if(!title||!body){showToast('タイトルと本文を入力してください');return;}
-  news.push({
+  const yt=document.getElementById('news-youtube').value.trim();
+  if(yt && !youtubeId(yt)){ showToast('YouTubeのURLを確認してください'); return; }
+  const total=newsPhotos.reduce((a,d)=>a+d.length,0);
+  if(total>NEWS_MAX_TOTAL){ showToast('写真の容量が大きすぎます。枚数を減らしてください'); return; }
+  const item={
     id:'news-'+Date.now(),
     title,body,
     category:document.getElementById('news-category').value,
     lineUrl:document.getElementById('news-line').value.trim(),
     createdAt:localDateStr(),
-  });
+  };
+  if(newsPhotos.length) item.images=[...newsPhotos];
+  if(yt) item.youtube=yt;
+  news.push(item);
   saveAll();
   document.getElementById('modal-news').classList.remove('open');
+  newsPhotos=[];
   renderNews();
   showToast('ニュースを投稿しました。会員アプリに反映されます。');
 }
 
 function deleteNews(id){
+  const n=news.find(x=>x.id===id);
+  if(!confirm(`「${n?n.title:''}」を削除しますか？（会員アプリからも消えます）`)) return;
   news=news.filter(n=>n.id!==id);
   saveAll(); renderNews();
   showToast('ニュースを削除しました');
@@ -5213,21 +5283,22 @@ function syncRoster(){
 }
 
 // ══ SAVE ALL (Firestore + localStorage backup) ══
+function __lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){ console.warn('localStorage full:',k); } }
 function saveAll(){
   // localStorageバックアップ（オフライン対応）
-  localStorage.setItem('ambis_members',JSON.stringify(members));
-  localStorage.setItem('ambis_attendance',JSON.stringify(attendance));
-  localStorage.setItem('ambis_belt_history',JSON.stringify(beltHistory));
-  localStorage.setItem('ambis_payments',JSON.stringify(payments));
-  localStorage.setItem('ambis_tournaments',JSON.stringify(tournaments));
-  localStorage.setItem('ambis_coaching',JSON.stringify(coachingNotes));
-  localStorage.setItem('ambis_news',JSON.stringify(news));
-  localStorage.setItem('ambis_schedule',JSON.stringify(classSchedule));
-  localStorage.setItem('ambis_schedule_exceptions',JSON.stringify(scheduleExceptions));
-  localStorage.setItem('ambis_withdrawal_reasons',JSON.stringify(withdrawalReasons));
-  localStorage.setItem('ambis_rental_bookings',JSON.stringify(rentalBookings));
-  localStorage.setItem('ambis_trial_visitors',JSON.stringify(trialVisitors));
-  localStorage.setItem('ambis_private_lessons',JSON.stringify(privateLessons));
+  __lsSet('ambis_members',JSON.stringify(members));
+  __lsSet('ambis_attendance',JSON.stringify(attendance));
+  __lsSet('ambis_belt_history',JSON.stringify(beltHistory));
+  __lsSet('ambis_payments',JSON.stringify(payments));
+  __lsSet('ambis_tournaments',JSON.stringify(tournaments));
+  __lsSet('ambis_coaching',JSON.stringify(coachingNotes));
+  __lsSet('ambis_news',JSON.stringify(news));
+  __lsSet('ambis_schedule',JSON.stringify(classSchedule));
+  __lsSet('ambis_schedule_exceptions',JSON.stringify(scheduleExceptions));
+  __lsSet('ambis_withdrawal_reasons',JSON.stringify(withdrawalReasons));
+  __lsSet('ambis_rental_bookings',JSON.stringify(rentalBookings));
+  __lsSet('ambis_trial_visitors',JSON.stringify(trialVisitors));
+  __lsSet('ambis_private_lessons',JSON.stringify(privateLessons));
   // Firestoreにも非同期で保存
   if(window.db){
     saveToFirestore('members', members, {merge:true});
@@ -5410,7 +5481,7 @@ window.showScheduleTab=showScheduleTab;
 window.sendMemberBillingLink=sendMemberBillingLink;window.sendGuestPaymentLink=sendGuestPaymentLink;
 window.sendTrialPaymentLink=sendTrialPaymentLink;window.sendRentalPaymentLink=sendRentalPaymentLink;
 window.toggleRentalPayLinkBtn=toggleRentalPayLinkBtn;window.copyPayLink=copyPayLink;window.closePayLinkModal=closePayLinkModal;
-window.updateInsNote=updateInsNote;window.openXrcv=openXrcv;window.closeXrcv=closeXrcv;window.saveXrcv=saveXrcv;window.unmarkXrcv=unmarkXrcv;window.onPlPayChange=onPlPayChange;window.updateRcvTotal=updateRcvTotal;window.showMemberLastLink=showMemberLastLink;window.accMarkDone=accMarkDone;window.exportAccountingFor=exportAccountingFor;window.onPayMethodChange=onPayMethodChange;window.movePayMonth=movePayMonth;window.setPayFilter=setPayFilter;window.openReceive=openReceive;window.closeReceive=closeReceive;window.saveReceive=saveReceive;window.unmarkPaid=unmarkPaid;window.editPayAmount=editPayAmount;window.updateJoinPay=updateJoinPay;window.exportAccounting=exportAccounting;window.resetTestRecords=resetTestRecords;window.checkMidInput=checkMidInput;window.startJoinFromTrial=startJoinFromTrial;window.exportVisitsExcel=exportVisitsExcel;window.exportVisitsPdf=exportVisitsPdf;window.openPlModal=openPlModal;window.closePlModal=closePlModal;window.savePl=savePl;window.deletePl=deletePl;window.filterPl=filterPl;window.renderPlList=renderPlList;window.togglePlKind=togglePlKind;window.togglePlGuardian=togglePlGuardian;window.onPlMemberSelect=onPlMemberSelect;window.onPlStartChange=onPlStartChange;window.sendPlPaymentLink=sendPlPaymentLink;window.addPlToCalendar=addPlToCalendar;window.togglePlPaste=togglePlPaste;window.applyPlPaste=applyPlPaste;
+window.updateInsNote=updateInsNote;window.addNewsPhotos=addNewsPhotos;window.removeNewsPhoto=removeNewsPhoto;window.checkNewsYoutube=checkNewsYoutube;window.openXrcv=openXrcv;window.closeXrcv=closeXrcv;window.saveXrcv=saveXrcv;window.unmarkXrcv=unmarkXrcv;window.onPlPayChange=onPlPayChange;window.updateRcvTotal=updateRcvTotal;window.showMemberLastLink=showMemberLastLink;window.accMarkDone=accMarkDone;window.exportAccountingFor=exportAccountingFor;window.onPayMethodChange=onPayMethodChange;window.movePayMonth=movePayMonth;window.setPayFilter=setPayFilter;window.openReceive=openReceive;window.closeReceive=closeReceive;window.saveReceive=saveReceive;window.unmarkPaid=unmarkPaid;window.editPayAmount=editPayAmount;window.updateJoinPay=updateJoinPay;window.exportAccounting=exportAccounting;window.resetTestRecords=resetTestRecords;window.checkMidInput=checkMidInput;window.startJoinFromTrial=startJoinFromTrial;window.exportVisitsExcel=exportVisitsExcel;window.exportVisitsPdf=exportVisitsPdf;window.openPlModal=openPlModal;window.closePlModal=closePlModal;window.savePl=savePl;window.deletePl=deletePl;window.filterPl=filterPl;window.renderPlList=renderPlList;window.togglePlKind=togglePlKind;window.togglePlGuardian=togglePlGuardian;window.onPlMemberSelect=onPlMemberSelect;window.onPlStartChange=onPlStartChange;window.sendPlPaymentLink=sendPlPaymentLink;window.addPlToCalendar=addPlToCalendar;window.togglePlPaste=togglePlPaste;window.applyPlPaste=applyPlPaste;
 window.openPrivateLessonModal=openPrivateLessonModal;window.closePrivateLessonModal=closePrivateLessonModal;window.sendPrivateLessonPaymentLink=sendPrivateLessonPaymentLink;
 
 
