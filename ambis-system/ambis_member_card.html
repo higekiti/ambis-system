@@ -537,6 +537,14 @@ input:focus,select:focus{border-color:var(--navy-light);}
 .news-like.on{border-color:#C8A769;background:#fbf6ec;color:#122E53;font-weight:600;}
 .news-like.on .nl-ic{filter:none;opacity:1;}
 .news-like .nl-n:empty{display:none;}
+.news-alert{display:flex;align-items:center;gap:12px;background:#122E53;color:#fff;border-radius:12px;padding:12px 14px;margin-bottom:12px;cursor:pointer;box-shadow:0 2px 8px rgba(18,46,83,.18);}
+.news-alert .na-ic{font-size:20px;}
+.news-alert .na-txt{flex:1;min-width:0;}
+.news-alert .na-lb{font-size:10.5px;color:#C8A769;letter-spacing:.04em;font-weight:600;}
+.news-alert .na-tt{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.news-alert .na-go{font-size:22px;color:#C8A769;line-height:1;}
+.news-badge{display:none;margin-left:auto;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#e0464b;color:#fff;font-size:10.5px;font-weight:700;align-items:center;justify-content:center;box-sizing:border-box;}
+.menu-dot{display:none;position:absolute;top:-2px;right:-3px;width:9px;height:9px;border-radius:50%;background:#e0464b;border:2px solid #fff;box-sizing:content-box;}
 .news-line-btn{font-size:10px;padding:3px 10px;border-radius:4px;background:#06c755;color:#fff;text-decoration:none;border:none;}
 
 /* ── CALENDAR ── */
@@ -684,9 +692,9 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
     <div class="topbar-brand">AMBIs</div>
     <div class="topbar-sub">JIU-JITSU ACADEMY · KUMAMOTO</div>
   </div>
-  <button class="menu-btn" id="menu-btn" onclick="toggleDrawer()">
+  <button class="menu-btn" id="menu-btn" onclick="toggleDrawer()" style="position:relative;">
     <span></span><span></span><span></span>
-  </button>
+  <i class="menu-dot" id="menu-dot"></i></button>
 </div>
 
 <!-- DRAWER -->
@@ -699,7 +707,7 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(
   </div>
   <div class="nav-section-label">MENU</div>
   <div class="nav-item active" id="nav-card" onclick="showPage('card',this)"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="14" x2="10" y2="14"/></svg></span>会員証</div>
-  <div class="nav-item" id="nav-news" onclick="showPage('news',this)"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg></span>道場ニュース</div>
+  <div class="nav-item" id="nav-news" onclick="showPage('news',this)"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg></span>道場ニュース<span class="news-badge" id="news-badge"></span></div>
   <div class="nav-item" id="nav-milestone" onclick="showPage('milestone',this)"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg></span>マイルストーン</div>
   <div class="nav-item" id="nav-schedule" onclick="showPage('schedule',this)"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>クラススケジュール</div>
   <div class="nav-item" id="nav-members" onclick="showPage('members',this)"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>メンバー一覧</div>
@@ -1217,7 +1225,7 @@ function showPage(page,el){
   closeDrawer();
   if(page==='members') renderMemberList();
   if(page==='tournament') renderTournaments();
-  if(page==='news'){ renderNewsMember(); refreshNewsLikes(); }
+  if(page==='news'){ renderNewsMember(); refreshNewsLikes(); markNewsSeen(); }
   if(page==='milestone') renderMilestone();
   if(page==='schedule') renderSchedule();
   if(page==='record') renderRecord();
@@ -1405,7 +1413,8 @@ function initCard(){
   }
 
   const startStrip=myAtt.length?streakStripHTML(myAtt):myAtt.length===0?`<div class="start-strip"><div class="sst-mark">✦</div><div><div class="sst-title">最初の一歩は、ここから。</div><div class="sst-sub">はじめての練習から、あなたの記録が始まります。</div></div></div>`:'';
-  content.innerHTML=nextClassBannerHTML()+cardHTML+startStrip+beltHTML+buildCalendar(member.id,myAtt);
+  content.innerHTML=newsAlertHTML()+nextClassBannerHTML()+cardHTML+startStrip+beltHTML+buildCalendar(member.id,myAtt);
+  updateNewsBadge();
   setTimeout(maybeShowOnboarding,400);
   setTimeout(()=>{
     const mini=document.getElementById('mini-qr');
@@ -1525,6 +1534,28 @@ function switchGiShop(tab,el){
 }
 
 // ── NEWS ──
+// ── 新しいニュースのお知らせ（アプリ内）──
+// 読んだニュースのIDを、このスマホに覚えておく（ニュースの画面を開いたら全部「読んだ」）
+function newsAll(){ return window.__newsCache || JSON.parse(localStorage.getItem('ambis_news')||'[]'); }
+function newsSeenIds(){ try{ return new Set(JSON.parse(localStorage.getItem('ambis_news_seen')||'[]')); }catch(e){ return new Set(); } }
+function unreadNews(){ const seen=newsSeenIds(); return newsAll().filter(n=>n&&n.id&&!seen.has(n.id)).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt))); }
+function newsAlertHTML(){
+  const u=unreadNews(); if(!u.length) return '';
+  return `<div class="news-alert" onclick="showPage('news',document.getElementById('nav-news'))">
+    <span class="na-ic">📣</span>
+    <div class="na-txt"><div class="na-lb">新しいお知らせ${u.length>1?`（${u.length}件）`:''}</div><div class="na-tt">${escapeHtml(u[0].title||'')}</div></div>
+    <span class="na-go">›</span></div>`;
+}
+function updateNewsBadge(){
+  const n=unreadNews().length;
+  const b=document.getElementById('news-badge'); if(b){ b.textContent=n?String(n):''; b.style.display=n?'inline-flex':'none'; }
+  const d=document.getElementById('menu-dot'); if(d) d.style.display=n?'block':'none';
+}
+function markNewsSeen(){
+  try{ localStorage.setItem('ambis_news_seen', JSON.stringify(newsAll().map(n=>n.id).filter(Boolean))); }catch(e){}
+  updateNewsBadge();
+  document.querySelectorAll('.news-alert').forEach(el=>el.remove());
+}
 function mYoutubeId(url){
   const m=String(url||'').trim().match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/))([A-Za-z0-9_-]{11})/);
   return m?m[1]:'';
