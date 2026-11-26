@@ -65,6 +65,7 @@ window.fbDeleteDoc = async (collName, id) => {
   try { await deleteDoc(doc(db, collName, String(id))); return true; }
   catch(e) { console.error('Firestore delete error:', collName, e); return false; }
 };
+window.fbLoadColl = loadFromFirestore;   // ニュースの「いいね」読み込み用
 
 // ── 状態管理 ──
 let appReady = false; // アプリ表示済みフラグ
@@ -531,6 +532,11 @@ input:focus,select:focus{border-color:var(--navy-light);}
 #news-photo-view{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9999;display:flex;align-items:center;justify-content:center;}
 #news-photo-view img{max-width:100%;max-height:100%;object-fit:contain;}
 #news-photo-view .npv-close{position:absolute;top:14px;right:18px;color:#fff;font-size:30px;line-height:1;}
+.news-like{display:inline-flex;align-items:center;gap:4px;border:1px solid #e3e6ee;background:#fff;border-radius:999px;padding:3px 10px;font-size:12px;color:#5a6275;cursor:pointer;line-height:1.4;}
+.news-like .nl-ic{font-size:14px;filter:grayscale(1);opacity:.75;}
+.news-like.on{border-color:#C8A769;background:#fbf6ec;color:#122E53;font-weight:600;}
+.news-like.on .nl-ic{filter:none;opacity:1;}
+.news-like .nl-n:empty{display:none;}
 .news-line-btn{font-size:10px;padding:3px 10px;border-radius:4px;background:#06c755;color:#fff;text-decoration:none;border:none;}
 
 /* ── CALENDAR ── */
@@ -1211,7 +1217,7 @@ function showPage(page,el){
   closeDrawer();
   if(page==='members') renderMemberList();
   if(page==='tournament') renderTournaments();
-  if(page==='news') renderNewsMember();
+  if(page==='news'){ renderNewsMember(); refreshNewsLikes(); }
   if(page==='milestone') renderMilestone();
   if(page==='schedule') renderSchedule();
   if(page==='record') renderRecord();
@@ -1544,9 +1550,44 @@ function renderNewsMember(){
       ${gallery}${video}
       <div class="news-footer">
         <div class="news-date">${escapeHtml(n.createdAt)}</div>
-        ${n.lineUrl?`<a href="${escapeHtml(n.lineUrl)}" target="_blank" rel="noopener" class="news-line-btn">LINEで確認</a>`:''}
+        <div style="display:flex;align-items:center;gap:8px;">
+          ${n.lineUrl?`<a href="${escapeHtml(n.lineUrl)}" target="_blank" rel="noopener" class="news-line-btn">LINEで確認</a>`:''}
+          ${newsLikeBtnHTML(n.id)}
+        </div>
       </div>
     </div>`;}).join('');
+}
+// ── ニュースの「いいね」（👏）──
+// news_likes/{newsId}__{memberId} = {newsId, memberId, at}。押せるのは本人の分だけ（Firestoreルールで確認）
+window.__newsLikes = window.__newsLikes || [];
+function myLikeMemberId(){ return window.loggedInMemberId || ''; }
+function newsLikeBtnHTML(newsId){
+  const list=window.__newsLikes.filter(l=>l.newsId===newsId);
+  const mine=!!list.find(l=>l.memberId===myLikeMemberId());
+  return `<button type="button" class="news-like${mine?' on':''}" onclick="toggleNewsLike('${newsId}',this)" aria-pressed="${mine}"><span class="nl-ic">👏</span><span class="nl-n">${list.length||''}</span></button>`;
+}
+async function refreshNewsLikes(){
+  if(!window.fbLoadColl) return;
+  const r=await window.fbLoadColl('news_likes');
+  if(Array.isArray(r)){ window.__newsLikes=r; renderNewsMember(); }
+}
+let __likeBusy=false;
+async function toggleNewsLike(newsId, btn){
+  const mid=myLikeMemberId(); if(!mid || __likeBusy || !window.fbSetDoc) return;
+  __likeBusy=true;
+  const id=newsId+'__'+mid;
+  const had=window.__newsLikes.some(l=>l.newsId===newsId&&l.memberId===mid);
+  // 先に表示を変える（押した感じを早く返す）
+  if(had) window.__newsLikes=window.__newsLikes.filter(l=>!(l.newsId===newsId&&l.memberId===mid));
+  else window.__newsLikes.push({newsId, memberId:mid, at:new Date().toISOString()});
+  renderNewsMember();
+  const ok = had ? await window.fbDeleteDoc('news_likes', id) : await window.fbSetDoc('news_likes', id, {newsId, memberId:mid, at:new Date().toISOString()});
+  if(!ok){   // 失敗したら元に戻す
+    if(had) window.__newsLikes.push({newsId, memberId:mid, at:''});
+    else window.__newsLikes=window.__newsLikes.filter(l=>!(l.newsId===newsId&&l.memberId===mid));
+    renderNewsMember();
+  }
+  __likeBusy=false;
 }
 function playNewsVideo(el,id){
   el.onclick=null;

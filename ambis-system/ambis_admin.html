@@ -1752,6 +1752,7 @@ let payments    = JSON.parse(localStorage.getItem('ambis_payments')    || '[]');
 let tournaments = JSON.parse(localStorage.getItem('ambis_tournaments') || '[]');
 let coachingNotes = JSON.parse(localStorage.getItem('ambis_coaching')  || '[]');
 let news          = JSON.parse(localStorage.getItem('ambis_news')      || '[]');
+let newsLikes     = [];   // 会員アプリの「いいね」（読み取りのみ・保存はしない）
 let classSchedule = JSON.parse(localStorage.getItem('ambis_schedule')  || 'null') || [
   {id:'sch-1',dow:1,name:'初心者クラス',start:'19:00',end:'20:00',type:'beginner'},
   {id:'sch-2',dow:1,name:'オールレベルクラス',start:'20:00',end:'21:00',type:'all'},
@@ -4992,10 +4993,19 @@ function renderNews(){
       </div>
       <div style="font-size:12px;color:var(--text-secondary);line-height:1.7;margin-bottom:6px;">${newsBodyHtml(n.body)}</div>
       ${imgs||vid?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">${imgs}${vid}</div>`:''}
-      <div style="font-size:10px;color:var(--text-muted);">${escapeHtml(n.createdAt)}</div>
+      <div style="display:flex;align-items:center;gap:10px;font-size:10px;color:var(--text-muted);">
+        <span>${escapeHtml(n.createdAt)}</span>
+        ${newsLikeSummary(n.id)}
+      </div>
     </div>`;}).join('');
 }
 
+function newsLikeSummary(newsId){
+  const list=(newsLikes||[]).filter(l=>l.newsId===newsId);
+  if(!list.length) return '<span>👏 0</span>';
+  const names=list.map(l=>{ const m=members.find(x=>x.id===l.memberId); return m?m.name:l.memberId; });
+  return `<span title="${escapeHtml(names.join('、'))}" style="cursor:help;">👏 ${list.length}<span style="margin-left:6px;color:var(--text-secondary);">${escapeHtml(names.slice(0,5).join('、'))}${names.length>5?' ほか':''}</span></span>`;
+}
 let newsPhotos=[];   // 投稿画面で選んだ写真（縮小済みのdata URL）
 const NEWS_MAX_PHOTOS=3, NEWS_MAX_TOTAL=850000;   // Firestoreの1件1MBの上限に収める
 function renderNewsPhotos(){
@@ -5198,6 +5208,7 @@ const __SYNC_DEFS=[
   ['rental_bookings',   ()=>rentalBookings,     v=>{rentalBookings=v;},     'ambis_rental_bookings'],
   ['trial_visitors',    ()=>trialVisitors,      v=>{trialVisitors=v;},      'ambis_trial_visitors'],
   ['private_lessons',   ()=>privateLessons,     v=>{privateLessons=v;},     'ambis_private_lessons'],
+  ['news_likes',        ()=>newsLikes,          v=>{newsLikes=v;},          'ambis_news_likes'],
 ];
 let __liveStarted=false, __rerenderTimer=null, __pendingColls=new Set();
 function startLiveSync(){
@@ -5237,7 +5248,7 @@ function __rerenderActivePage(){
     else if(page==='belt') renderBeltHistory();
     else if(page==='dormant') renderDormant();
     else if(page==='birthday') renderBirthday();
-    else if(page==='news') renderNews();
+    else if(page==='news' && !modalOpen) renderNews();
     else if(page==='schedule'){ renderSchedule(); renderExceptions(); }
     else if(page==='tournament') renderTournaments();
     // 支払い管理・レンタル・分析・コーチングは、入力中の画面を崩さないよう、ページを開き直したときに最新を表示
